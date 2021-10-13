@@ -964,8 +964,24 @@ class Handle_CSV {
                  +'@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . \n'
                  +'@prefix : <#> . \n\n';
         var res = Papa.parse(text, {skipEmptyLines:true, dynamicTyping:true});
-        if (res.errors && res.errors.length > 0) {
-            throw new Exception(res.errors[0].message);
+        if (res.errors && res.errors.length > 0)
+        {
+          var bad = false;
+          if (res.errors[0].code === "UndetectableDelimiter") {
+            var data = res.data;
+            var count = 0;
+            for (var i=0; i < data.length; i++){
+              if (i == 0)
+                count = data[i].length;
+              else if (data[i].length != count)
+                bad = true;
+            }
+          }
+          else
+            bad = true;     
+
+          if (bad)
+            throw new Error(res.errors[0].message);
         }
 
         var col = res.data[0];
