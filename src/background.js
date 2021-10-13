@@ -322,7 +322,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
         if (type === "json" || type === "xml" || type === "csv") {
           if (Browser.isFirefoxWebExt) {
-            window.open(_url);
+            Browser.api.tabs.create({url:_url});
             return { cancel: false };
           }
           else {
