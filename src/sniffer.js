@@ -947,9 +947,10 @@
 
                      function scan_obj(v)
                      {
-                       for(var key in v)
+                       if (typeof v === 'object')
                        {
-                         v[key] = scan_item(v[key]);
+                         for(var key in v)
+                           v[key] = scan_item(v[key]);
                        }
                        return v;
                      }
@@ -962,9 +963,13 @@
                          return scan_obj(v)
                      }
 
-                     for(var i=0; i < o.items.length; i++)
-                     {
-                       o.items[i] = scan_obj(o.items[i]);
+                     try {
+                       if (o) {
+                         for(var i=0; i < o.items.length; i++)
+                           o.items[i] = scan_obj(o.items[i]);
+                       }
+                     } catch(ex) {
+                       console.log(ex);
                      }
 
                     return o;
