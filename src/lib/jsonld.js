@@ -8478,7 +8478,7 @@ function _escapeVal(value) {
 }
 
 function _escapeIri(value) {
-  return _escapeVal(value).replace(' ', '%20');
+  return _escapeVal(value).replaceAll(' ', '%20').replaceAll(',', '%2C');
 }
 
 /***/ }),
