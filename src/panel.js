@@ -1414,7 +1414,7 @@ async function prepare_data(for_query, curTab, fmt)
     var src_fmt = null;
 
     
-    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.sonld_nano.json_text!==null)) {
+    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
       src_fmt = "jsonld";
 
       if (gData.jsonld.json_text!==null)
@@ -1568,8 +1568,18 @@ async function prepare_data(for_query, curTab, fmt)
         }
       }
     } else {
+      var errors = null;
+
+      if (for_query && src_fmt==="ttl") {
+        var handler = new Handle_Turtle(0, true, false);
+        var ret = await handler.parse_nano(quad_data, gData.baseURL, true);
+        if (ret.errors.length>0)
+          errors = ret.errors;
+
+        quad_data = ret.data;
+      }
       data = data.concat(quad_data);
-      return out_from(for_query, data, null);
+      return out_from(for_query, data, errors);
     }
 
   } catch(ex) {

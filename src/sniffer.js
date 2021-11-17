@@ -923,9 +923,53 @@
                     posh: {text: null}
                 };
 
-                var microdata = jQuery.microdata.json(micro_items, function (o) {
+                var microdata = jQuery.microdata.json(micro_items, 
+                   function (o) 
+                   {
+                     function scan_array(v)
+                     {
+                       if (v.length > 0)
+                       {
+                         var v_str = {};
+                         var v_arr = [];
+                         for(var e of v)
+                         {
+                           if (typeof e === 'string')
+                             v_str[e] = 1;
+                           else
+                             v_arr.push(e);
+                         } 
+                         return v_arr.concat(Object.keys(v_str))
+                       }     
+                       else
+                         return v;
+                     }
+
+                     function scan_obj(v)
+                     {
+                       for(var key in v)
+                       {
+                         v[key] = scan_item(v[key]);
+                       }
+                       return v;
+                     }
+
+                     function scan_item(v)
+                     {
+                       if (Array.isArray(v))
+                         return scan_array(v);
+                       else
+                         return scan_obj(v)
+                     }
+
+                     for(var i=0; i < o.items.length; i++)
+                     {
+                       o.items[i] = scan_obj(o.items[i]);
+                     }
+
                     return o;
-                });
+                   }
+                 );
                 var rdfa = get_rdfa_data(); //null;
 
                 docData.micro.data = microdata;
