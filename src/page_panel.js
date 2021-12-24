@@ -25,7 +25,6 @@ var items;
 var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
-var baseURL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
 var gOidc = new OidcWeb();
@@ -36,6 +35,7 @@ var gData = {
         url: null,
         ext: null,
         ttl_data: null,
+        baseURL: null
       };
 
 var src_view = null;
@@ -201,10 +201,10 @@ $(document).ready(function()
 // Trap any link clicks and open them in the current tab.
 $(document).on('click', 'a', function(e) {
   function check_URI(uri) {
-    if (baseURL[baseURL.length-1]==="#")
-      return uri.startsWith(baseURL);
+    if (gData.baseURL[gData.baseURL.length-1]==="#")
+      return uri.startsWith(gData.baseURL);
     else
-      return uri.startsWith(baseURL+'#');
+      return uri.startsWith(gData.baseURL+'#');
   }
 
   var tab_data = DOM.qSel(`${selectedTab}_items`);
@@ -371,7 +371,7 @@ async function start_parse_data(data_text, data_type, data_url, ext)
 
   var url = new URL(doc_URL);
   url.hash ='';
-  baseURL = url.toString();
+  gData.baseURL = url.toString();
 
   g_RestCons.load(doc_URL);
 
@@ -381,39 +381,39 @@ async function start_parse_data(data_text, data_type, data_url, ext)
       var ns = new Namespace();
       handler.ns_pref = ns.get_ns_desc();
       handler.ns_pref_size = ns.get_ns_size();
-      var ret = await handler.parse([data_text], baseURL);
+      var ret = await handler.parse([data_text], gData.baseURL);
       show_Data(ret.errors, ret.data);
     }
   else if (data_type==="jsonld")
     {
       var handler = new Handle_JSONLD();
-      var ret = await handler.parse([data_text], baseURL);
+      var ret = await handler.parse([data_text], gData.baseURL);
       show_Data(ret.errors, ret.data);
     }
   else if (data_type==="rdf")
     {
       var handler = new Handle_RDF_XML();
-      var ret = await handler.parse([data_text], baseURL);
+      var ret = await handler.parse([data_text], gData.baseURL);
       show_Data(ret.errors, ret.data);
     }
   else if (data_type==="json")
     {
       var handler = new Handle_JSON();
-      var ret = await handler.parse([data_text], baseURL);
+      var ret = await handler.parse([data_text], gData.baseURL);
       gData.text = ret.text;
       show_Data(ret.errors, ret.data);
     }
   else if (data_type==="csv")
     {
       var handler = new Handle_CSV();
-      var ret = await handler.parse([data_text], baseURL);
+      var ret = await handler.parse([data_text], gData.baseURL);
       gData.ttl_data = ret.ttl_data;
       show_Data(ret.errors, ret.data);
     }
   else if (data_type==="rss" || data_type==="atom")
     {
       var handler = new Handle_RSS();
-      var ret = await handler.parse([data_text], baseURL);
+      var ret = await handler.parse([data_text], gData.baseURL);
       gData.ttl_data = ret.ttl_data;
       show_Data(ret.errors, ret.data);
     }
@@ -980,44 +980,44 @@ async function prepare_data(for_query, curTab, fmt)
       if (src_fmt==="ttl") {
         var handler = new Convert_Turtle();
         if (fmt==="jsonld") {
-          var text_data = await handler.to_jsonld(data, null, baseURL);
+          var text_data = await handler.to_jsonld(data, null, gData.baseURL);
           return out_from(for_query, text_data, handler.skipped_error);
         } else {
-          var text_data = await handler.to_rdf(data, null, baseURL);
+          var text_data = await handler.to_rdf(data, null, gData.baseURL);
           return out_from(for_query, text_data, handler.skipped_error);
         }
       }
       else if (src_fmt==="jsonld") {
         var handler = new Convert_JSONLD();
         if (fmt==="ttl") {
-          var text_data = await handler.to_ttl(data, baseURL);
+          var text_data = await handler.to_ttl(data, gData.baseURL);
           return out_from(for_query, text_data, handler.skipped_error);
         } else {
-          var text_data = await handler.to_rdf(data, baseURL);
+          var text_data = await handler.to_rdf(data, gData.baseURL);
           return out_from(for_query, text_data, handler.skipped_error);
         }
       }
       else if (src_fmt==="json"){
         var conv = new Convert_JSON();
         if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, baseURL);
+          var text_data = await conv.to_ttl(data, gData.baseURL);
           return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, baseURL);
+          var text_data = await conv.to_rdf(data, gData.baseURL);
           return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, baseURL);
+          var text_data = await conv.to_jsonld(data, gData.baseURL);
           return out_from(for_query, text_data, conv.skipped_error);
         }
       }
       else if (src_fmt==="rdf") {
         if (fmt==="ttl") {
           var conv = new Convert_RDF_XML();
-          var text_data = await conv.to_ttl(data, baseURL);
+          var text_data = await conv.to_ttl(data, gData.baseURL);
           return out_from(for_query, text_data, conv.skipped_error);
         } else if (fmt==="jsonld") {
           var conv = new Convert_RDF_XML();
-          var text_data = await conv.to_jsonld(data, baseURL);
+          var text_data = await conv.to_jsonld(data, gData.baseURL);
           return out_from(for_query, text_data, conv.skipped_error);
         }
       }
