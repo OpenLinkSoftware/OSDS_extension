@@ -38,6 +38,8 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     var handle_csv = (chk_csv && chk_csv==="1");
     var chk_json = setting.getValue("ext.osds.handle_json");
     var handle_json = (chk_json && chk_json==="1");
+    var chk_xml = setting.getValue("ext.osds.handle_xml");
+    var handle_xml = (chk_xml && chk_xml==="1");
 
     var handle = false;
     var could_handle = false;
@@ -89,6 +91,12 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
       handle = handle_csv;
       type = "csv";
       ext = "csv";
+      could_handle = true;
+    }
+    else if (handle_xml && d.url.match(/(.xml)$/i) ) {
+      handle = handle_xml;
+      type = "xml";
+      ext = "xml";
       could_handle = true;
     }
 
@@ -218,10 +226,16 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         headerContent.value = "text/plain";
         could_handle = true;
       }
-      else if (headerContent.value.match(/\/(rss\+xml)/) || headerContent.value.match(/\/(atom\+xml)/)) {
+      else if (headerContent.value.match(/\/(rss\+xml)/)) {
         handle = true;
         v_cancel = true;
         type = "rss";
+        could_handle = true;
+      }
+      else if (headerContent.value.match(/\/(atom\+xml)/)) {
+        handle = true;
+        v_cancel = true;
+        type = "atom";
         could_handle = true;
       }
       else if (headerContent.value.match(/\/(csv)/)) {
@@ -502,7 +516,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
   try {
 //??    Browser.api.browserAction.disable();
-
     Browser.api.contextMenus.create(
         {"title": "Super Links", 
          "contexts":["page"],

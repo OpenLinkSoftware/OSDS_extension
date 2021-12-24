@@ -80,17 +80,18 @@
     </head>
     <body class="sniffer">
 
-      <div id="msg_snackbar">
+      <div class="super_links_msg"> 
+        <div style="width:16px;">
+          <img src="images/throbber.gif" class="super_links_img">
+        </div>
+        <div id="super_links_msg_text"></div>
+      </div>
+      <div id="super_links_snackbar">
         <div id="msg1"></div>
         <div id="msg2"></div>
-      </div>
+      </div>`
 
-      <div class="throbber_msg" style="display:none; font-size: 14px; flex-direction: row; height:20px; padding: 10px 10px 10px 20px;"> 
-        <div style="width:16px;">
-          <img src="images/throbber.gif" class="throbber_img">
-        </div>
-        <div id="throbber_msg_text">&nbsp;Uploading&nbsp;data&nbsp;...</div>
-      </div>
+
 
       <div class="popup" id="alert-dlg" title="Info">
         <p id="alert-msg" style="font-size: 14px;">
@@ -214,6 +215,7 @@
           <li><a href="#json" title="Metadata encoded using JSON Notation">JSON</a></li>
           <li><a href="#csv" title="Metadata encoded using CSV Notation">CSV</a></li>
           <li><a href="#rss" title="Metadata encoded using RSS Notation">RSS</a></li>
+          <li><a href="#atom" title="Metadata encoded using Atom Notation">Atom</a></li>
         </ul>
       </div>
 
@@ -357,6 +359,15 @@
         </div>
 
         <div id="rss_items">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="atom_items">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

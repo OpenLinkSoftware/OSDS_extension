@@ -915,7 +915,6 @@ async function parse_Data(dData)
 
   var url = new URL(doc_URL);
   url.hash ='';
-//??  url.search = '';
   gData.baseURL = url.toString();
 
   var val = {d:dData, start_id:0, bnode_types:{}};

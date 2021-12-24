@@ -1183,28 +1183,32 @@ class Handle_RSS {
 
     if (prop === 'pubDate' || prop === 'isoDate' || prop === 'lastBuildDate') 
       ttl = `terms:issued "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
-    else if (prop === 'date') 
+    else if (prop === 'date' || prop === 'dc:date') 
       ttl = `dc:date "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
+    else if (prop === 'sy:updateBase')
+      ttl = `${prop} "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
     else if (prop === 'language')
-      ttl = `dc:language "${val}"`;
+      ttl = `dc:language ${this.fix_text(val)}`;
     else if (prop === 'copyright')
-      ttl = `dc:rights "${val}"`;
+      ttl = `dc:rights ${this.fix_text(val)}`;
     else if (prop === 'managingEditor' || prop === 'author' || prop === 'creator')
-      ttl = `dc:creator "${val}"`;
+      ttl = `dc:creator ${this.fix_text(val)}`;
     else if (prop === 'contentSnippet' && val.length > 0)
       ttl = `${pref}:description ${this.fix_text(val)}`;
-    else if (prop === 'content' && val.length > 0)
-      ttl = `content:encoded ${this.fix_text(val)}`;
     else if (prop === 'title')
       ttl = `rss:title ${this.fix_text(val)}`;
-    else if (prop === 'feedUrl')
+    else if (prop === 'feedUrl' && val)
       ttl = `dc:source <${val}> `;
     else if (prop === 'link')
       ttl = `${pref}:link <${val}> `;
     else if (prop === 'categories')
       ttl = `sioc:topic <${channel_link}#${encodeURI(val)}> `;
-    else if (val.length > 0) 
-      ttl = `${pref}:${prop} "${val}"`;
+    else if (val && val.length > 0) {
+      if (prop.indexOf(':') == -1)
+        ttl = `${pref}:${prop} ${this.fix_text(val)}`;
+      else
+        ttl = `${prop} ${this.fix_text(val)}`;
+    }
 
 
     return ttl;
@@ -1238,17 +1242,19 @@ class Handle_RSS {
                  +'@prefix sioc: <http://rdfs.org/sioc/ns#> . \n'
                  +'@prefix core: <http://www.w3.org/2004/02/skos/core#> . \n'
                  +'@prefix content: <http://purl.org/rss/1.0/modules/content/> . \n'
+                 +'@prefix sy: <http://purl.org/rss/1.0/modules/syndication/> . \n'
                  +'@prefix : <#> . \n\n';
 
-        var parser = new RSSParser();
-/**
+//        var parser = new RSSParser();
+/**/
         var parser = new RSSParser({
               customFields: {
-                  feed: [],
-                  item: ['description'],
+                  feed: ['language','dc:language','date','dc:date','rights','dc:rights','sy:updateBase',
+                  'sy:updateFrequency', 'sy:updatePeriod'],
+                  item: [],
               }
         });
-**/
+/**/
         var feed = await parser.parseString(text);
 
         var channel_link = feed.link ? feed.link : feed.guid;
@@ -1302,6 +1308,7 @@ class Handle_RSS {
               if (iprop === 'items' || 
                   iprop.indexOf(':')!=-1 || 
                   iprop === 'guid' ||
+                  iprop === 'content' ||
                   iprop === 'paginationLinks') 
                 continue;
 

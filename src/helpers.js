@@ -34,7 +34,7 @@ class SPARQL_Upload {
     var u = new URL(this.sparql_ep);
     this.idp_url = u.origin;
 
-    this.save2sparql = new Save2Sparql(this.sparql_ep, this.sparql_graph, this.baseURI, this.oidc, true, this.messages);
+    this.save2sparql = new Save2Sparql(this.sparql_ep, this.sparql_graph, this.baseURI, this.oidc, this.messages);
   }
 
 
@@ -79,7 +79,7 @@ class SPARQL_Upload {
   async reexec()
   {
     if (this.state === 'init') {
-      var rc = await slinks.check_login();
+      var rc = await this.check_login();
       if (rc) {
         return await this.mexec();
       }

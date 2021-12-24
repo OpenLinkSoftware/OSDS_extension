@@ -1074,7 +1074,7 @@
     });
 
 
-
+/**
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
     async function showSnackbar(text1, text2) {
@@ -1086,6 +1086,6 @@
         setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
         await delay(tm);
     }
-
+**/
 
 })();
