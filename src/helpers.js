@@ -101,7 +101,7 @@ class SPARQL_Upload {
       for(var v of this.data) {
         this.messages.throbber_show('&nbsp;Preparing&nbsp;data...');
 
-        if (v.error.length > 0) {
+        if (v.error.length > 0 && v.txt.length == 0) {
           
           this.messages.snackbar_show('Unable prepare data:' +v.error);
 

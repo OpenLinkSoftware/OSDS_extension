@@ -269,13 +269,13 @@ class Convert_JSONLD {
         var ret = await handler.parse([textData[i]], baseURL);
 
         if (ret.errors.length > 0) 
-          self.skipped_error.push(""+error);
+          this.skipped_error = this.skipped_error.concat(ret.errors);
 
         if (ret.data.length > 0)
           output.push(ret.data);
 
       } catch (ex) {
-        self.skipped_error.push(ex.toString());
+        this.skipped_error.push(ex.toString());
       }
     }
     return output;
@@ -342,12 +342,12 @@ class Convert_JSON {
       var ret = await handler.parse([textData], baseURL);
 
       if (ret.errors.length > 0) 
-        self.skipped_error.push(""+error);
+        this.skipped_error = this.skipped_error.concat(ret.errors);
       else
         output = ret.data;
 
     } catch (ex) {
-      self.skipped_error.push(ex.toString());
+      this.skipped_error.push(ex.toString());
     }
     return output;
   }

@@ -30,8 +30,8 @@
     this.prefixes = {};
     this.use_prefixes = true;
     
-    this.escape    = /["\\\t\n\r\b\f\u0000-\u0019\ud800-\udbff]/;
-    this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
+    this.escape    = /["\\\t\n\r\b\f,\u0000-\u0019\ud800-\udbff]/;
+    this.escapeAll = /["\\\t\n\r\b\f,\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
     this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
                            '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
     this.test_esc = /[!'()*&?#$,:@=;+.\/]/g;
@@ -245,7 +245,8 @@
          else
          {
            if (!this.skip_docpref && value.startsWith(this.docURI_pref)) {
-             return ":"+this.pre(value.substring(this.docURI_pref.length));      
+             var id = this.pre(value.substring(this.docURI_pref.length));
+             return ":"+id;      
            }
            else
              return "<"+this.pre(value)+">";      
