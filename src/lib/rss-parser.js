@@ -593,12 +593,13 @@ utils.copyFromXML = function (xml, dest, fields) {
     }
     var _options = options,
         keepArray = _options.keepArray,
+        keepAttrs = _options.keepAttrs,
         includeSnippet = _options.includeSnippet;
 
     if (xml[from] !== undefined) {
       dest[to] = keepArray ? xml[from] : xml[from][0];
     }
-    if (dest[to] && typeof dest[to]._ === 'string') {
+    if (dest[to] && typeof dest[to]._ === 'string' && keepAttrs === 'undefined') {
       dest[to] = dest[to]._;
     }
     if (includeSnippet && dest[to] && typeof dest[to] === 'string') {

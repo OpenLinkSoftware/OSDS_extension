@@ -1156,10 +1156,31 @@ class Handle_RSS {
   }
 
 
+  getVal_or_Attr(val, attr)
+  {
+    var ret = null;
+    if (typeof val === "string")
+      ret = val;
+    else if (val.$ && val.$[attr])
+      ret = val.$[attr]
+    return ret;
+  }
+
+  getValAttr(val)
+  {
+    var ret = null;
+    if (val && val.$)
+      return {v: val._, a: val.$}
+    else
+      return {v: val, a:{}}
+  }
+
+
   fix_text(val)
   {
     var qv = '"';
 
+    val = typeof val === 'string' ? val: val.toString();
     if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
       qv = "'''";
       val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
@@ -1170,52 +1191,118 @@ class Handle_RSS {
     return qv+val+qv;
   }
 
-  categories_2_ttl(val, link)
+  removeTags(val)
   {
-    return `<${link}#${encodeURI(val)}> a core:Concept; core:prefLabel "${val}" .\n`
+    return this.fix_text(val.replace(/<\/?[^>]+(>|$)/g, ""));
   }
 
+  categories_2_ttl(val, link)
+  {
+    return `<${link}#${encodeURI(val)}> a skos:Concept; skos:prefLabel "${val}" .\n`
+  }
+
+  contains(s, lst)
+  {
+     var pos = -1;
+     for(var v of lst) {
+       pos = s.indexOf(v);
+       if (pos != -1)
+         break;
+     }
+     return pos;
+  }
 
   prop2str(prop, val, isItem, channel_link)
   {
     var ttl = '';
     var pref = isItem?'dc':'rss';
+    var v = this.getValAttr(val);
 
-    if (prop === 'pubDate' || prop === 'isoDate' || prop === 'lastBuildDate') 
-      ttl = `terms:issued "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
+    if (prop === 'pubdate' || prop === 'isoDate' || prop === 'lastBuildDate') 
+      ttl = `terms:issued "${(new Date(v.v)).toISOString()}"^^xsd:dateTime`;
+    else if (prop === 'pubDate') 
+      ttl = `schema:datePublished "${(new Date(v.v)).toISOString()}"^^xsd:dateTime`;
     else if (prop === 'date' || prop === 'dc:date') 
-      ttl = `dc:date "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
-    else if (prop === 'sy:updateBase')
-      ttl = `${prop} "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
-    else if (prop === 'language')
-      ttl = `dc:language ${this.fix_text(val)}`;
+      ttl = `schema:date "${(new Date(v.v)).toISOString()}"^^xsd:dateTime`;
+    else if (prop === 'language' || prop === 'dc:language')
+      ttl = `schema:inLanguage ${this.fix_text(v.v)}`;
+    else if (prop === 'guid') {
+      if (v.a.isPermalink !== 'false')
+        ttl = `schema:url <${v.v}>`;
+    }
     else if (prop === 'copyright')
-      ttl = `dc:rights ${this.fix_text(val)}`;
-    else if (prop === 'managingEditor' || prop === 'author' || prop === 'creator')
-      ttl = `dc:creator ${this.fix_text(val)}`;
-    else if (prop === 'contentSnippet' && val.length > 0)
-      ttl = `${pref}:description ${this.fix_text(val)}`;
-    else if (prop === 'title')
-      ttl = `rss:title ${this.fix_text(val)}`;
-    else if (prop === 'feedUrl' && val)
-      ttl = `dc:source <${val}> `;
-    else if (prop === 'link')
-      ttl = `${pref}:link <${val}> `;
+      ttl = `schema:copyrightHolder ${this.fix_text(v.v)}`;
+    else if (prop === 'managingEditor' || prop === 'author')
+      ttl = `dc:creator ${this.fix_text(v.v)}`;
+    else if (prop === 'contentSnippet' && v.v.length > 0){
+      if (!isItem)
+        ttl = `schema:description ${this.removeTags(v.v)}`;
+    }
+    else if (prop === 'title') 
+      ttl = `schema:title ${this.fix_text(v.v)};\n`
+          + `    rdfs:label ${this.fix_text(v.v)}`;
+    else if (prop === 'feedUrl' && v.v)
+      ttl = `dc:source <${v.v}> `;
+    else if (prop === 'source' && v.a.url)
+      ttl = `dc:source <${v.a.url}> `;
+    else if (prop === 'a_link' && v.a.href)
+      ttl = `dc:source <${v.a.href}> `;
+    else if (prop === 'media_content' && v.a.url)
+      ttl = `media:content <${v.a.url}> `;
+    else if (prop === 'docs' && v.v)
+      ttl = `dc:documentation <${v.v}> `;
+    else if (prop === 'image' && v.v)
+      ttl = `schema:image <${v.v}> `;
+    else if (prop === 'ttl' && v.v)
+      ttl = `dct:temporal ${this.fix_text(v.v)} `;
+    else if (prop === 'description' && v.v)
+      ttl = `schema:text ${this.removeTags(v.v)} `;
+    else if (prop === 'wfw:commentRss' && v.v)
+      ttl = `wfw:commentRss ${this.removeTags(v.v)} `;
+    else if (prop === 'link') {
+      val = this.getVal_or_Attr(val,'href');
+      ttl = `schema:relatedLink <${val}>`;
+      var p = val.indexOf('#');
+      if (p != -1) {
+        ttl+= `;\n    schema:seeAlso <${val.substring(0,p)}>`
+      }
+    }
+    else if (prop === 'webMaster' && v.v)
+      ttl = `schema:contactPoint [ a schema:ContactPoint ; schema:email ${this.fix_text(v.v)}] `;
     else if (prop === 'categories')
-      ttl = `sioc:topic <${channel_link}#${encodeURI(val)}> `;
-    else if (val && val.length > 0) {
+      ttl = `sioc:topic <${channel_link}#${encodeURI(v.v)}> `;
+    else if (prop === 'enclosure') {
+      ttl = `schema:associatedMedia [ a schema:MediaObject `;
+      if (v.a.url)
+        ttl += `; schema:url <${v.a.url}> `;
+      if (v.a.type)
+        ttl += `; schema:encodingFormat ${this.fix_text(v.a.type)} `;
+      if (v.a.length)
+        ttl += `; schema:contentSize ${this.fix_text(v.a.length)} `;
+      ttl += `] `;
+    }
+    else if (v.v && v.v.length > 0) {
       if (prop.indexOf(':') == -1)
-        ttl = `${pref}:${prop} ${this.fix_text(val)}`;
+        ttl = `schema:${prop} ${this.fix_text(v.v)}`;
       else
-        ttl = `${prop} ${this.fix_text(val)}`;
+        ttl = `${prop} ${this.fix_text(v.v)}`;
     }
 
 
     return ttl;
   }
 
+  ttl_for_item(ID, )
+  {
+    var ttl = '';
 
-  async parse(textData, baseURL, bnode_types) 
+    return ttl;
+  }
+
+
+
+  async parse(textData, baseURL, bnode_types)
+
   {
     var self = this;
     var output = '';
@@ -1240,31 +1327,56 @@ class Handle_RSS {
                  +'@prefix rss:  <http://purl.org/rss/1.0/> . \n'
                  +'@prefix terms: <http://purl.org/dc/terms/> . \n'
                  +'@prefix sioc: <http://rdfs.org/sioc/ns#> . \n'
-                 +'@prefix core: <http://www.w3.org/2004/02/skos/core#> . \n'
+                 +'@prefix skos: <http://www.w3.org/2004/02/skos/core#> . \n'
                  +'@prefix content: <http://purl.org/rss/1.0/modules/content/> . \n'
-                 +'@prefix sy: <http://purl.org/rss/1.0/modules/syndication/> . \n'
+                 +'@prefix schema: <http://schema.org/> . \n'
+                 +'@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . \n'
+                 +'@prefix a: <http://www.w3.org/2005/Atom> . \n'
+                 +'@prefix wfw: <http://wellformedweb.org/CommentAPI/> . \n'
                  +'@prefix : <#> . \n\n';
 
-//        var parser = new RSSParser();
-/**/
         var parser = new RSSParser({
+              xml2js: {ignoreAttrs: false},
               customFields: {
-                  feed: ['language','dc:language','date','dc:date','rights','dc:rights','sy:updateBase',
-                  'sy:updateFrequency', 'sy:updatePeriod'],
-                  item: [],
+                  feed: ['language','dc:language',
+                         ['r:language', 'language'],
+                         ['r:copyright', 'copyright'],
+                         ['r:pubDate', 'pubDate'],
+                         ['r:pubdate', 'pubdate'],
+                         ['r:lastBuildDate', 'lastBuildDate'],
+                         ['r:author', 'author'],
+                         ['r:managingEditor', 'managingEditor'],
+                         ['r:source', 'source'],
+                         ['r:docs', 'docs'],
+                         ['r:image', 'image'],
+                         ['r:ttl', 'ttl'],
+                         ['a:link', 'a_link'],
+                         ['media:content', 'media_content'],
+                         'date','pubdate', 'docs', 'image'
+                         ],
+                  item: [['r:enclosure','enclosure', {keepAttrs:true}],
+                         ['guid','guid', {keepAttrs:true}],
+                         ['r:title', 'title'],
+                         ['r:source', 'source'],
+                         ['r:description', 'description'],
+                         ['media:content', 'media_content'],
+                         ['a:link', 'a_link'],
+                         'source', 'description','wfw:commentRss'
+                        ],
               }
         });
-/**/
+
         var feed = await parser.parseString(text);
 
-        var channel_link = feed.link ? feed.link : feed.guid;
-        if (!channel_link)
-          channel_link = baseURL;
+        var channel_link = feed.link ? this.getVal_or_Attr(feed.link, 'href') : baseURL;
 
-        ttl +=  `<${channel_link}> a rss:channel`;
+        ttl +=  `:this schema:mainEntity <${channel_link}> .`
+               +`<${channel_link}> a schema:DataFeed;\n`
+               +`    schema:url <${channel_link}>` 
 
         for (var prop in feed) {
-          if (prop === 'items') 
+          if (prop === 'items' ||
+              prop === 'creator') 
             continue;
 
           var s = self.prop2str(prop, feed[prop], false, channel_link);
@@ -1278,13 +1390,17 @@ class Handle_RSS {
 
         var items = feed.items;
         if (items && items.length > 0) {
-          ttl += ' ;\n\n';
-          ttl += 'rss:items [ a rdf:Seq ';
+          ttl += ' ;\n';
 
           var ID = 0;
           for(var it of items) {
 
             ID++;
+
+            if (ID > 1)
+              ttl += ';\n'
+
+            ttl += '\n    schema:dataFeedElement [ a schema:DataFeedItem ';
 
             var item_link = it.link ? it.link : it.guid;
             if (!item_link) {
@@ -1300,14 +1416,9 @@ class Handle_RSS {
             }
 
             
-            ttl += ' ;\n';
-            ttl += `  rdf:_${ID} <${item_link}>\n`;
-
-            ttl_items += `<${item_link}> a rss:item`;
             for (var iprop in it) {
               if (iprop === 'items' || 
                   iprop.indexOf(':')!=-1 || 
-                  iprop === 'guid' ||
                   iprop === 'content' ||
                   iprop === 'paginationLinks') 
                 continue;
@@ -1315,16 +1426,14 @@ class Handle_RSS {
               var s = self.prop2str(iprop, it[iprop], true, channel_link);
 
               if (s.length > 0)
-                ttl_items += ` ;\n    ${s}`;
+                ttl += ` ;\n        ${s}`;
             }
             
-            ttl_items += ' .\n\n';
+            ttl += ' ]';
 
             if (it.categories && it.categories.length > 0)
               ttl_add += self.categories_2_ttl(it.categories, channel_link)
           }
-
-          ttl += '\n]';
 
         }
 

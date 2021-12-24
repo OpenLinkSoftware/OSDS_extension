@@ -1074,18 +1074,4 @@
     });
 
 
-/**
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-
-    async function showSnackbar(text1, text2) {
-        const tm = 15000;
-        var x = DOM.iSel("super_links_snackbar");
-        DOM.qSel("#super_links_snackbar #msg1").innerText = text1;
-        DOM.qSel("#super_links_snackbar #msg2").innerText = text2 || '';
-        x.className = "show";
-        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
-        await delay(tm);
-    }
-**/
-
 })();
