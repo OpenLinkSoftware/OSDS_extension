@@ -310,6 +310,7 @@ async function start_parse_data(data_text, data_type, data_url, ext)
   var test_rss = /^\s*<rdf:rss/gi;
   var test_rss1 = /^\s*<\?xml[\s\S]*>\s*<rdf:rss/gi;
   var test_rss2 = /^\s*<rss/gi;
+  var test_rss3 = /^\s*<\?xml[\s\S]*>\s*<rss/gi;
 
   if (data_type === "rdf") {
     if (test_xml.exec(data_text)===null && test_rdf.exec(data_text)===null)
@@ -318,7 +319,8 @@ async function start_parse_data(data_text, data_type, data_url, ext)
   else if (data_type === "xml") {
     if (test_rdf.exec(data_text)!==null || test_rdf1.exec(data_text)!==null)
       data_type = "rdf";
-    else if (test_rss.exec(data_text)!==null || test_rss1.exec(data_text)!==null || test_rss2.exec(data_text)!==null)
+    else if (test_rss.exec(data_text)!==null || test_rss1.exec(data_text)!==null || 
+             test_rss2.exec(data_text)!==null || test_rss3.exec(data_text)!==null)
       data_type = "rss";
   }
 
