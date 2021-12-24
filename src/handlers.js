@@ -1251,8 +1251,6 @@ class Handle_RSS {
       ttl = `media:content <${v.a.url}> `;
     else if (prop === 'docs' && v.v)
       ttl = `dc:documentation <${v.v}> `;
-    else if (prop === 'image' && v.v)
-      ttl = `schema:image <${v.v}> `;
     else if (prop === 'ttl' && v.v)
       ttl = `dct:temporal ${this.fix_text(v.v)} `;
     else if (prop === 'description' && v.v)
@@ -1280,6 +1278,10 @@ class Handle_RSS {
       if (v.a.length)
         ttl += `; schema:contentSize ${this.fix_text(v.a.length)} `;
       ttl += `] `;
+    }
+    else if (prop === 'image') {
+      if (v.v.url && v.v.url.length > 0)
+      ttl = `schema:image <${v.v.url[0]}> `;
     }
     else if (v.v && v.v.length > 0) {
       if (prop.indexOf(':') == -1)
