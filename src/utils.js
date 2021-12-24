@@ -193,7 +193,6 @@ class Rest_Cons {
       return;
     }
 
-//??--    this.doc_url = "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top";
     DOM.iSel("rest_url").value = this.doc_url;
 
     var url = new URL(this.doc_url);

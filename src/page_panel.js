@@ -122,6 +122,10 @@ $(document).ready(function()
       selectTab('#csv');
       return false;
   });
+  $('#tabs a[href="#rss"]').click(function(){
+      selectTab('#rss');
+      return false;
+  });
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
@@ -239,7 +243,9 @@ function load_data_from_url(loc)
 
     var hdr_accept = "";
 
-    if (type==="turtle")
+    if (type==="rss")
+      hdr_accept = 'application/rss+xml, application/rdf+xml;q=0.8, application/atom+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4';
+    else if (type==="turtle")
       hdr_accept = 'text/turtle,text/n3;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="jsonld")
       hdr_accept = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
@@ -295,12 +301,15 @@ function load_data_from_url(loc)
 }
 
 
-
 async function start_parse_data(data_text, data_type, data_url, ext)
 {
   var test_xml = /^\s*<\?xml/gi;
   var test_rdf = /^\s*<rdf:RDF/gi;
   var test_rdf1 = /^\s*<\?xml[\s\S]*>\s*<rdf:RDF/gi;
+
+  var test_rss = /^\s*<rdf:rss/gi;
+  var test_rss1 = /^\s*<\?xml[\s\S]*>\s*<rdf:rss/gi;
+  var test_rss2 = /^\s*<rss/gi;
 
   if (data_type === "rdf") {
     if (test_xml.exec(data_text)===null && test_rdf.exec(data_text)===null)
@@ -309,6 +318,8 @@ async function start_parse_data(data_text, data_type, data_url, ext)
   else if (data_type === "xml") {
     if (test_rdf.exec(data_text)!==null || test_rdf1.exec(data_text)!==null)
       data_type = "rdf";
+    else if (test_rss.exec(data_text)!==null || test_rss1.exec(data_text)!==null || test_rss2.exec(data_text)!==null)
+      data_type = "rss";
   }
 
 
@@ -361,6 +372,13 @@ async function start_parse_data(data_text, data_type, data_url, ext)
       gData.ttl_data = ret.ttl_data;
       show_Data(ret.errors, ret.data);
     }
+  else if (data_type==="rss")
+    {
+      var handler = new Handle_RSS();
+      var ret = await handler.parse([data_text], baseURL);
+      gData.ttl_data = ret.ttl_data;
+      show_Data(ret.errors, ret.data);
+    }
   else
     {
 //    location.href = data_url+"#osds";  // we don't close original tab, so just close OSDS viewer
@@ -399,6 +417,7 @@ function selectTab(tab)
   updateTab('#posh', selectedTab);
   updateTab('#json', selectedTab);
   updateTab('#csv', selectedTab);
+  updateTab('#rss', selectedTab);
   $('#tabs a[href="#src"]').hide();
   $('#tabs a[href="#cons"]').hide();
 }
@@ -458,6 +477,7 @@ function show_Data(data_error, html_data)
   $('#tabs a[href="#posh"]').hide();
   $('#tabs a[href="#json"]').hide();
   $('#tabs a[href="#csv"]').hide();
+  $('#tabs a[href="#rss"]').hide();
 
 
   if (gData.type === "turtle")
@@ -470,6 +490,8 @@ function show_Data(data_error, html_data)
     show_item('json', 'JSON');
   else if (gData.type === "csv")
     show_item('csv', 'CSV');
+  else if (gData.type === "rss")
+    show_item('rss', 'RSS');
 
   gData_showed = true;
 }
@@ -684,6 +706,10 @@ async function Download_exec()
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
+  else if (gData.type == "rss" && gData.ttl_data) {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
 
   var oidc_url = document.getElementById('oidc-url');
   oidc_url.value = gOidc.storage + (filename || '');
@@ -869,6 +895,10 @@ async function save_data(action, fname, fmt, callback)
       data = data.concat(gData.text);
     }
     else if (gData.type==="csv" && gData.ttl_data!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.ttl_data);
+    }
+    else if (gData.type==="rss" && gData.ttl_data!==null) {
       src_fmt = "ttl";
       data = data.concat(gData.ttl_data);
     }

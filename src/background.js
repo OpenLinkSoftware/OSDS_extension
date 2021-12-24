@@ -218,6 +218,12 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         headerContent.value = "text/plain";
         could_handle = true;
       }
+      else if (headerContent.value.match(/\/(rss\+xml)/) || headerContent.value.match(/\/(atom\+xml)/)) {
+        handle = true;
+        v_cancel = true;
+        type = "rss";
+        could_handle = true;
+      }
       else if (headerContent.value.match(/\/(csv)/)) {
         handle = handle_csv;
         type = "csv";
@@ -284,6 +290,12 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
           handle = true;
           type = "jsonld";
           ext = "jsonld";
+          could_handle = true;
+        }
+        else if (url_path.endsWith(".xml")) {
+          handle = handle_xml;
+          type = "xml";
+          v_cancel = true;
           could_handle = true;
         }
     }

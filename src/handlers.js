@@ -1143,3 +1143,214 @@ class Handle_CSV {
 
 }
 
+
+class Handle_RSS {
+  constructor(start_id) 
+  {
+    this._output_ttl = [];
+    this.start_id = 0;
+    if (start_id!==undefined)
+      this.start_id = start_id;
+    this.skip_error = true;
+    this.skipped_error = [];
+  }
+
+
+  fix_text(val)
+  {
+    var qv = '"';
+
+    if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
+      qv = "'''";
+      val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
+    } else {
+      val = val.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+    }
+
+    return qv+val+qv;
+  }
+
+  categories_2_ttl(val, link)
+  {
+    return `<${link}#${encodeURI(val)}> a core:Concept; core:prefLabel "${val}" .\n`
+  }
+
+
+  prop2str(prop, val, isItem, channel_link)
+  {
+    var ttl = '';
+    var pref = isItem?'dc':'rss';
+
+    if (prop === 'pubDate' || prop === 'isoDate' || prop === 'lastBuildDate') 
+      ttl = `terms:issued "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
+    else if (prop === 'date') 
+      ttl = `dc:date "${(new Date(val)).toISOString()}"^^xsd:dateTime`;
+    else if (prop === 'language')
+      ttl = `dc:language "${val}"`;
+    else if (prop === 'copyright')
+      ttl = `dc:rights "${val}"`;
+    else if (prop === 'managingEditor' || prop === 'author' || prop === 'creator')
+      ttl = `dc:creator "${val}"`;
+    else if (prop === 'contentSnippet' && val.length > 0)
+      ttl = `${pref}:description ${this.fix_text(val)}`;
+    else if (prop === 'content' && val.length > 0)
+      ttl = `content:encoded ${this.fix_text(val)}`;
+    else if (prop === 'title')
+      ttl = `rss:title ${this.fix_text(val)}`;
+    else if (prop === 'feedUrl')
+      ttl = `dc:source <${val}> `;
+    else if (prop === 'link')
+      ttl = `${pref}:link <${val}> `;
+    else if (prop === 'categories')
+      ttl = `sioc:topic <${channel_link}#${encodeURI(val)}> `;
+    else if (val.length > 0) 
+      ttl = `${pref}:${prop} "${val}"`;
+
+
+    return ttl;
+  }
+
+
+  async parse(textData, baseURL, bnode_types) 
+  {
+    var self = this;
+    var output = '';
+
+    this.baseURL = baseURL;
+
+    for(var x=0; x < textData.length; x++)
+    {
+      try {
+        var text = textData[x];
+        if (text.trim().length <= 0) {
+          continue;
+        }
+         
+        var ttl_add = '\n';
+        var ttl_items = '\n';
+        var ttl = '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n'
+                 +'@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . \n'
+                 +'@prefix dc:  <http://purl.org/dc/elements/1.1/> . \n'
+                 +'@prefix media: <http://search.yahoo.com/mrss/> . \n' 
+                 +'@prefix atom: <http://www.w3.org/2005/Atom/> . \n'
+                 +'@prefix rss:  <http://purl.org/rss/1.0/> . \n'
+                 +'@prefix terms: <http://purl.org/dc/terms/> . \n'
+                 +'@prefix sioc: <http://rdfs.org/sioc/ns#> . \n'
+                 +'@prefix core: <http://www.w3.org/2004/02/skos/core#> . \n'
+                 +'@prefix content: <http://purl.org/rss/1.0/modules/content/> . \n'
+                 +'@prefix : <#> . \n\n';
+
+        var parser = new RSSParser();
+/**
+        var parser = new RSSParser({
+              customFields: {
+                  feed: [],
+                  item: ['description'],
+              }
+        });
+**/
+        var feed = await parser.parseString(text);
+
+        var channel_link = feed.link ? feed.link : feed.guid;
+        if (!channel_link)
+          channel_link = baseURL;
+
+        ttl +=  `<${channel_link}> a rss:channel`;
+
+        for (var prop in feed) {
+          if (prop === 'items') 
+            continue;
+
+          var s = self.prop2str(prop, feed[prop], false, channel_link);
+
+          if (s.length > 0)
+            ttl += ` ;\n    ${s}`;
+        }
+        if (feed.categories && feed.categories.length > 0)
+          ttl_add += self.categories_2_ttl(feed.categories, channel_link)
+
+
+        var items = feed.items;
+        if (items && items.length > 0) {
+          ttl += ' ;\n\n';
+          ttl += 'rss:items [ a rdf:Seq ';
+
+          var ID = 0;
+          for(var it of items) {
+
+            ID++;
+
+            var item_link = it.link ? it.link : it.guid;
+            if (!item_link) {
+              var u = new URL(baseURL);
+              u.hash = '#_'+ID;
+              item_link = u.toString();
+            }
+
+            if (item_link === channel_link) {
+              var u = new URL(item_link);
+              u.hash = '#_'+ID;
+              item_link = u.toString();
+            }
+
+            
+            ttl += ' ;\n';
+            ttl += `  rdf:_${ID} <${item_link}>\n`;
+
+            ttl_items += `<${item_link}> a rss:item`;
+            for (var iprop in it) {
+              if (iprop === 'items' || 
+                  iprop.indexOf(':')!=-1 || 
+                  iprop === 'guid' ||
+                  iprop === 'paginationLinks') 
+                continue;
+
+              var s = self.prop2str(iprop, it[iprop], true, channel_link);
+
+              if (s.length > 0)
+                ttl_items += ` ;\n    ${s}`;
+            }
+            
+            ttl_items += ' .\n\n';
+
+            if (it.categories && it.categories.length > 0)
+              ttl_add += self.categories_2_ttl(it.categories, channel_link)
+          }
+
+          ttl += '\n]';
+
+        }
+
+        ttl += ' .\n\n';
+
+        ttl += ttl_items;
+        ttl += ttl_add;
+
+
+        self._output_ttl.push(ttl);
+
+        var handler = new Handle_Turtle(0, false, false, bnode_types);
+        handler.skip_error = false;
+        var ret = await handler.parse([ttl], baseURL);
+        if (ret.errors.length > 0) {
+          self.skipped_error = self.skipped_error.concat(ret.errors);
+        } else {
+          output += ret.data;
+          output += "\n\n";
+
+          self.start_id += handler.start_id;
+        }
+
+      } catch (ex) {
+        if (self.skip_error)
+          self.skipped_error.push(""+ex.toString());
+        else 
+          throw ex;
+      }
+    
+    }
+    return {data:output, ttl_data:self._output_ttl ,errors: this.skipped_error};
+  }
+
+}
+
