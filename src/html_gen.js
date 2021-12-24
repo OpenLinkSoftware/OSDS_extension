@@ -161,7 +161,7 @@
               </thead> 
               <tbody> 
                 <tr class='major'>
-                  <td><a name='sc${item_num}'>Statement Collection #${item_num}</a></td>
+                  <td><a name='sc${item_num}'>Fact Collection #${item_num}</a></td>
                   <td></td>
                 </tr> 
                 `;
@@ -221,7 +221,7 @@
               str += `<tr class='data_row'>
                          <td> ${key_str} </td>
                          <td class='major'>
-                           <a href='#sc${entity_id}'><i>See Statement Collection #${entity_id}</i></a>
+                           <a href='#sc${entity_id}'><i>See Fact Collection #${entity_id}</i></a>
                          </td>
                       </tr>`;
             }
