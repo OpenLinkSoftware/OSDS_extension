@@ -197,11 +197,11 @@ var Parser = function () {
           var feed = null;
           if (result.feed) {
             feed = _this.buildAtomFeed(result);
-          } else if (result.rss && result.rss.$ && result.rss.$.version && result.rss.$.version.match(/^2/)) {
+          } else if (result.rss && result.rss.$ && result.rss.$.version && result.rss.$.version.value && result.rss.$.version.value.match(/^2/)) {
             feed = _this.buildRSS2(result);
           } else if (result['rdf:RDF']) {
             feed = _this.buildRSS1(result);
-          } else if (result.rss && result.rss.$ && result.rss.$.version && result.rss.$.version.match(/0\.9/)) {
+          } else if (result.rss && result.rss.$ && result.rss.$.version && result.rss.$.version.value && result.rss.$.version.value.match(/0\.9/)) {
             feed = _this.buildRSS0_9(result);
           } else if (result.rss && _this.options.defaultRSS) {
             switch (_this.options.defaultRSS) {
@@ -491,6 +491,7 @@ var Parser = function () {
     key: 'setISODate',
     value: function setISODate(item) {
       var date = item.pubDate || item.date;
+      date = date && date._ ? date._ : date;
       if (date) {
         try {
           item.isoDate = new Date(date.trim()).toISOString();
@@ -571,6 +572,8 @@ utils.getLink = function (links, rel, fallbackIdx) {
 utils.getContent = function (content) {
   if (typeof content._ === 'string') {
     return content._;
+  } else if (content.$ns) {
+    return '';
   } else if ((typeof content === 'undefined' ? 'undefined' : _typeof(content)) === 'object') {
     var builder = new xml2js.Builder({ headless: true, explicitRoot: true, rootName: 'div', renderOpts: { pretty: false } });
     return builder.buildObject(content);
@@ -579,7 +582,20 @@ utils.getContent = function (content) {
   }
 };
 
-utils.copyFromXML = function (xml, dest, fields) {
+utils.copyFromXML = function (xml, dest, fields_) {
+  var fields = [];
+  var prefixes = [];
+  for(var el of fields_) {
+    if (Array.isArray(el))
+      fields.push(el);
+    else {
+      if (el.endsWith(":*")) 
+        prefixes.push(el.substring(0, el.length-1));
+      else
+        fields.push(el);
+    }
+  }
+
   fields.forEach(function (f) {
     var from = f;
     var to = f;
@@ -606,6 +622,20 @@ utils.copyFromXML = function (xml, dest, fields) {
       dest[to + 'Snippet'] = utils.getSnippet(dest[to]);
     }
   });
+
+  for(const prop in xml) {
+    for(const prefix of prefixes) {
+      if (prop.startsWith(prefix)) {
+        if (!dest[prop]) {
+          dest[prop] = xml[prop][0];
+
+          if (dest[prop] && typeof dest[prop]._ === 'string')
+            dest[prop] = dest[prop]._;
+        }
+      }
+    }
+    
+  }
 };
 
 utils.maybePromisify = function (callback, promise) {
@@ -11376,11 +11406,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     return (typeof thing === 'undefined' ? 'undefined' : _typeof(thing)) === "object" && thing != null && Object.keys(thing).length === 0;
   };
 
-  processItem = function processItem(processors, item, key) {
+  processItem = function processItem(processors, item, key, uri, prefix) {
     var i, len, process;
     for (i = 0, len = processors.length; i < len; i++) {
       process = processors[i];
-      item = process(item, key);
+      item = process(item, key, uri, prefix);
     }
     return item;
   };
@@ -11512,7 +11542,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
               }
             }
           }
-          obj["#name"] = _this.options.tagNameProcessors ? processItem(_this.options.tagNameProcessors, node.name) : node.name;
+          obj["#name"] = _this.options.tagNameProcessors ? processItem(_this.options.tagNameProcessors, node.name, null, node.uri, node.prefix) : node.name;
           if (_this.options.xmlns) {
             obj[_this.options.xmlnskey] = {
               uri: node.uri,

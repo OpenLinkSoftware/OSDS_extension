@@ -103,7 +103,8 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     if (chk_all && chk_all!=="1") 
     {
       if (could_handle) {
-        pages[d.tabId] = {content:headerContent.value, 
+//        pages[d.tabId] = {content:headerContent.value, 
+        pages[d.tabId] = {content:"", 
                           url:d.url,
                           type,
                           ext

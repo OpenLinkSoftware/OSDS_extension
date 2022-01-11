@@ -25,6 +25,7 @@ var POSH = (function () {
   function POSH(uriStr) {
     this.terms = {};
     this.terms["description"] = "schema:description";
+    this.terms["title"] = "schema:title";
     this.terms["describedby"] = "wdrs:describedby";
     this.facebook_vision = "Image may contain: ";
 
@@ -321,8 +322,11 @@ var POSH = (function () {
       }
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
-      $("head link,meta[name]").each(function(i, el){
-         if (el.localName==="link") {
+      $("head link,meta[name],title").each(function(i, el){
+         if (el.localName==="title") {
+           addTriple("#this", "title", el.textContent, true);
+         }
+         else if (el.localName==="link") {
            var rev = el.getAttribute("rev");
            var rel = el.getAttribute("rel");
            var href = el.getAttribute("href");

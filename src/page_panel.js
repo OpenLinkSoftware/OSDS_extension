@@ -216,7 +216,7 @@ $(document).on('click', 'a', function(e) {
   if (hashPos!=-1 && hashPos!=href.length-1)
     hashName = href.substring(hashPos+1);
 
-  var url = new URL(document.baseURI);
+  var url = new URL(gData.baseURL);
   url.hash = '';
   url = url.toString();
 
@@ -412,7 +412,7 @@ async function start_parse_data(data_text, data_type, data_url, ext)
     }
   else if (data_type==="rss" || data_type==="atom")
     {
-      var handler = new Handle_RSS();
+      var handler = new Handle_RSS(0, data_type==="atom");
       var ret = await handler.parse([data_text], gData.baseURL);
       gData.ttl_data = ret.ttl_data;
       show_Data(ret.errors, ret.data);

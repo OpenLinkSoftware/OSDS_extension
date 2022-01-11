@@ -226,7 +226,7 @@
                       </tr>`;
             }
             else {
-              var sval = self.iri2html(obj.iri);
+              var sval = self.iri2html(obj.iri, null, null, true);
               var td_class = obj.typeid!==undefined || key===self.ns.RDF_TYPE ?" class='typeid'":"";
               str += `<tr class='data_row'>
                         <td ${td_class}> ${key_str} </td>
@@ -313,13 +313,13 @@
          // for scroll between entities on page
          var uri = String(value);
          var anc = "";
-         if (this.docURI && uri.match(/^http(s)?:\/\//) && this.check_URI(uri)) {
+         if (this.docURI && this.check_URI(uri)) {
            var hashPos = uri.lastIndexOf("#");
            if (hashPos!=-1 && hashPos!=uri.length-1) {
              anc = '<a name="'+uri.substr(hashPos+1)+'"/>';           
            }
          }
-         var sval = this.iri2html(uri, null, 'ent');
+         var sval = this.iri2html(uri, null, 'ent', true);
          return `<tr class='major data_row'>
                    <td> ${anc} ${this.SubjName} </td>
                    <td> ${sval} </td>
@@ -327,9 +327,9 @@
        }
     },
 
-    iri2html : function (uri, is_key, myid)
+    iri2html : function (uri, is_key, myid, is_iri)
     {
-      var v = this.check_subst(uri);
+      var v = this.check_subst(uri, myid);
 
       if (v.rc==true) {
          return v.val;
@@ -337,11 +337,11 @@
       else { 
         var pref = this.ns.has_known_ns(uri);
         var sid = myid ? ` ${myid} ` : '';
-        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(uri, is_key, sid);
+        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(uri, is_key, sid, is_iri);
       }
     },
     
-    check_link : function (val, is_key, sid) 
+    check_link : function (val, is_key, sid, is_iri) 
     {
       var s_val = String(val);
       var t_val = val;
@@ -364,6 +364,10 @@
           return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
       }
       else if ( s_val.match(/^mailto:/) ) 
+      {
+        return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
+      }
+      else if (is_iri)
       {
         return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
       }
@@ -399,11 +403,11 @@
         return uri.startsWith(this.docURI+'#');
     },
 
-    check_subst : function(uri) {
+    check_subst : function(uri, myid) {
       if (uri.startsWith(this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
-          var v = '<a href="' + uri + '" title="' + uri + '">' +this.decodeURI(s)+ '</a>';
+          var v = '<a '+ (myid?myid:'')+' href="' + uri + '" title="' + uri + '">' +this.decodeURI(s)+ '</a>';
           return {rc:true, val:v};
         }
         else
