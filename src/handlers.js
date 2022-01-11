@@ -1163,7 +1163,7 @@ class Handle_RSS {
     if (typeof val === "string")
       ret = val;
     else if (val.$ && val.$[attr])
-      ret = val.$[attr]
+      ret = val.$[attr].value
     else if (val.value && val.name === attr)
       ret = val.value;
     else if (val._)
