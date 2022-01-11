@@ -39,6 +39,8 @@
         <script type="text/javascript" src="lib/yasqe.js"></script>
         <script type="text/javascript" src="lib/oidc-web.min.js"></script>
         <script type="text/javascript" src="lib/papaparse.js"></script>
+        <script type="text/javascript" src="lib/rss-parser.js"></script>
+        <script type="text/javascript" src="lib/tidy.js"></script>
 
 
 
@@ -154,6 +156,8 @@
            <div id="posh-save">   <input id="posh-chk" type="checkbox">POSH</div>
            <div id="json-save">   <input id="json-chk" type="checkbox">JSON</div>
            <div id="csv-save">    <input id="csv-chk" type="checkbox">CSV</div>
+           <div id="rss-save">    <input id="rss-chk" type="checkbox">RSS</div>
+           <div id="atom-save">    <input id="atom-chk" type="checkbox">Atom</div>
          </div>
         </div>
 
@@ -222,6 +226,8 @@
           <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
           <li><a href="#json" title="Metadata encoded using JSON Notation">JSON</a></li>
           <li><a href="#csv" title="Metadata encoded using CSV Notation">CSV</a></li>
+          <li><a href="#rss" title="Metadata encoded using RSS Notation">RSS</a></li>
+          <li><a href="#atom" title="Metadata encoded using Atom Notation">Atom</a></li>
         </ul>
       </div>
 
@@ -360,6 +366,32 @@
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
                 <td>Processing data...</td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="rss_items">
+            <table class="loader">
+              <tr>
+                <td>
+                    <br>&nbsp;&nbsp;
+                    <button id="load_rss" >Load RSS data</button> &nbsp; 
+                    <img id="throbber" src="images/throbber.gif" width="16" style="display:none"/>
+                </td>
+                <td></td>
+              </tr>
+            </table>
+        </div>
+
+        <div id="atom_items">
+            <table class="loader">
+              <tr>
+                <td>
+                    <br>&nbsp;&nbsp;
+                    <button id="load_atom" >Load Atom data</button> &nbsp; 
+                    <img id="throbber" src="images/throbber.gif" width="16" style="display:none"/>
+                </td>
+                <td></td>
               </tr>
             </table>
         </div>

@@ -1471,7 +1471,30 @@ class Handle_RSS {
     for(var x=0; x < textData.length; x++)
     {
       try {
-        var text = textData[x];
+        var text0 = textData[x];
+
+        var opts = {
+           "indent":"auto",
+           "indent-spaces":2,
+           "markup":true,
+           "numeric-entities":true,
+           "quote-marks":true,
+           "quote-nbsp":false,
+           "show-body-only":false,
+           "quote-ampersand":false,
+           "break-before-br":true,
+           "uppercase-tags":false,
+           "uppercase-attributes":false,
+           "drop-font-tags":true,
+           "tidy-mark":false,
+           "fix-uri":true,
+           "wrap": 0,
+           "input-xml":true,
+           "output-xml":true
+          };
+        
+        var text = tidy_html5(text0, opts);
+
         if (text.trim().length <= 0) {
           continue;
         }
@@ -1707,7 +1730,7 @@ class Handle_RSS {
       }
     
     }
-    return {data:output, ttl_data:self._output_ttl ,errors: this.skipped_error};
+    return {data:output, ttl_data:self._output_ttl, errors: this.skipped_error};
   }
 
 }

@@ -112,6 +112,7 @@ var POSH = (function () {
   POSH.prototype = {
     getData: function (baseURI) 
     {
+      var links = {};
       var triples = "";
       var self = this;
       var twittercard = false;
@@ -330,11 +331,15 @@ var POSH = (function () {
            var rev = el.getAttribute("rev");
            var rel = el.getAttribute("rel");
            var href = el.getAttribute("href");
+           var type = el.getAttribute("type");
+
+           if (href && rel && type && rel === "alternate") {
+               links[href] = type;
+           }
 
            if (rel && href) {
              href = encodeURI(fix_href(href));
              var title = el.getAttribute("title");
-             var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
              addTriple(url_hash(href,"#this"), "rdf:type", "schema:CreativeWork");
              if (title)
@@ -382,7 +387,8 @@ var POSH = (function () {
         return true;
       });
 
-      return (triples.length > 0)?s+triples: triples;
+      return {triples: (triples.length > 0)?s+triples: triples, 
+              links };
     }
   }
 

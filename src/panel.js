@@ -42,6 +42,8 @@ var gData = {
         json_nano :{ json_text:null },
         csv_nano :{ ttl_text:null, text:null },
         posh:{ ttl_text:null },
+        rss: { ttl_text:null },
+        atom: { ttl_text:null },
         tab_index: null,
         tabs:[],
         baseURL: null
@@ -173,6 +175,22 @@ function showPopup(tabId)
     selectTab('#csv');
     return false;
   });
+
+  $('#tabs a[href="#rss"]').click(function(){
+    selectTab('#rss');
+    return false;
+  });
+
+  $('#tabs a[href="#atom"]').click(function(){
+    selectTab('#atom');
+    return false;
+  });
+
+  $('#load_rss').click(Load_RSS);
+  $('#load_atom').click(Load_Atom);
+
+  $('#tabs a[href="#rss"]').hide();
+  $('#tabs a[href="#atom"]').hide();
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
@@ -307,6 +325,99 @@ $(document).on('click', 'a', function(e) {
 });
 
 
+async function Fetch_Data(hdr, url)
+{
+  try {
+    var options = {
+          headers: {
+            'Accept': hdr,
+            'Cache-control': 'no-cache'
+          },
+        };
+
+    var rc = await fetchWithTimeout(url, options, 30000)
+    if (rc.ok) {
+      var data = await rc.text();
+      return {data, error: null};
+    } else {
+      return {data:null, error: "Could not load data from: "+url+"\nError: "+rc.statusText};
+    }
+  } catch(e) {
+    return {data: null, error: "Could not load data from: "+url+"\nError: "+e};
+  }
+}
+
+
+async function Load_Data(hdr, links, is_atom)
+{
+  var textData = [];
+  var ttl = [];
+  var html_data = '';
+  var errors = [];
+  var bnode_types = {};
+
+  for(var url of links) {
+    var rc = await Fetch_Data(hdr, url);
+    if (rc.error) {
+      showInfo(rc.error);
+      return null;
+    } else {
+      textData.push(rc.data);
+    }
+  }
+
+  try {
+    var handler = new Handle_RSS(0, is_atom);
+    var ret = await handler.parse(textData, gData.baseURL, bnode_types);
+
+    html_data = ret.data;
+    ttl = ret.ttl_data;
+    errors = ret.errors;
+
+  } catch(ex) {
+    errors.push(ex.toString());
+  }
+
+  return {expanded:html_data, ttl, errors};
+}
+
+
+async function Load_RSS()
+{
+  var hdr = 'application/rss+xml, application/rdf+xml;q=0.8, application/atom+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4';
+
+  $('#rss_items #load_rss').attr('disabled','disabled');
+  $('#rss_items #throbber').show();
+
+  var rc = await Load_Data(hdr, gData.rss.links, false);
+  if (rc) {
+    update_tab('rss', 'RSS', rc);
+    $('#rss_items table.loader').hide();
+    gData.rss.ttl_text = rc.ttl;
+  } else {
+    $('#rss_items #load_rss').removeAttr('disabled');
+    $('#rss_items #throbber').hide();
+  }
+}
+
+
+async function Load_Atom(url)
+{
+  var hdr = 'application/atom+xml, application/rdf+xml;q=0.8, application/rss+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4'
+
+  $('#atom_items #load_atom').attr('disabled','disabled');
+  $('#atom_items #throbber').show();
+
+  var rc = await Load_Data(hdr, gData.atom.links, true);
+  if (rc) {
+    update_tab('atom', 'Atom', rc);
+    $('#atom_items table.loader').hide();
+    gData.atom.ttl_text = rc.ttl;
+  } else {
+    $('#atom_items #load_rss').removeAttr('disabled');
+    $('#atom_items #throbber').hide();
+  }
+}
 
 
 function selectTab(tab)
@@ -338,6 +449,8 @@ function selectTab(tab)
   updateTab('#posh', selectedTab);
   updateTab('#json', selectedTab);
   updateTab('#csv', selectedTab);
+  updateTab('#rss', selectedTab);
+  updateTab('#atom', selectedTab);
   $('#tabs a[href="#src"]').hide();
   $('#tabs a[href="#cons"]').hide();
 }
@@ -353,27 +466,13 @@ function hideDataTabs()
   $('#tabs a[href="#posh"]').hide();
   $('#tabs a[href="#json"]').hide();
   $('#tabs a[href="#csv"]').hide();
+  $('#tabs a[href="#rss"]').hide();
+  $('#tabs a[href="#atom"]').hide();
 }
 
 
-function show_Data(dData)
+function update_tab(tabname, title, val, err_tabs)
 {
-  var cons = false;
-  var micro = false;
-  var jsonld = false;
-  var turtle = false;
-  var rdfa = false;
-  var rdf = false;
-  var posh = false;
-  var json = false;
-  var csv = false;
-  var html = "";
-  var err_tabs = [];
-
-  gData.tabs = [];
-  wait_data = $('table.wait').hide();
-
-
   function create_err_msg(fmt_name, errors)
   {
     var err_html = "";
@@ -395,38 +494,80 @@ function show_Data(dData)
     return (err_html.length>0)?err_html:null;
   }
 
-  function add_item(tabname, title, val)
-  {
-    $(`#${tabname}_items #docdata_view`).remove();
-    $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
-    var html = "";
-    if (val.expanded!==null && val.expanded.trim().length > 0) {
-        html += val.expanded;
-        gData.tabs.push(`#${tabname}`);
-    }
-    if (val.error) {
-        var err_msg = create_err_msg(title, val.error);
-        if (err_msg) {
-          html += err_msg;
+
+  var html = "";
+
+  $(`#${tabname}_items #docdata_view`).remove();
+  $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
+
+  if (val.expanded!==null && val.expanded.trim().length > 0) {
+      html += val.expanded;
+      gData.tabs.push(`#${tabname}`);
+  }
+  if (val.error) {
+      var err_msg = create_err_msg(title, val.error);
+      if (err_msg) {
+        html += err_msg;
+        if (err_tabs)
           err_tabs.push(`#${tabname}`);
-        }
-    }
-    if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-        $(`#${tabname}_items #docdata_view`).append(html);
-        return true;
+      }
+  }
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
+      $(`#${tabname}_items #docdata_view`).append(html);
+      return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+
+
+function show_Data(dData)
+{
+  var cons = false;
+  var micro = false;
+  var jsonld = false;
+  var turtle = false;
+  var rdfa = false;
+  var rdf = false;
+  var posh = false;
+  var json = false;
+  var csv = false;
+  var rss = false;
+  var atom = false;
+  var html = "";
+  var err_tabs = [];
+
+  gData.tabs = [];
+  wait_data = $('table.wait').hide();
+  $('#rss-save').hide();
+  $('#atom-save').hide();
+
+
+  function add_loader(tabname, links)
+  {
+    if (links.length > 0) {
+      $(`#${tabname}_items #docdata_view`).show();
+      gData.tabs.push(`#${tabname}`);
+      return true;
     } else {
       return false;
     }
   }
 
-  micro = add_item('micro', 'Microdata', dData.micro);
-  jsonld = add_item('jsonld', 'JSON-LD', dData.jsonld);
-  turtle = add_item('turtle', 'Turtle', dData.turtle);
-  rdfa = add_item('rdfa', 'RDFa', dData.rdfa);
-  rdf = add_item('rdf', 'RDF/XML', dData.rdf);
-  posh = add_item('posh', 'POSH', dData.posh);
-  json = add_item('json', 'JSON', dData.json);
-  csv = add_item('csv', 'CSV', dData.csv_nano);
+  micro  = update_tab('micro', 'Microdata', dData.micro, err_tabs);
+  jsonld = update_tab('jsonld', 'JSON-LD', dData.jsonld, err_tabs);
+  turtle = update_tab('turtle', 'Turtle', dData.turtle, err_tabs);
+  rdfa = update_tab('rdfa', 'RDFa', dData.rdfa, err_tabs);
+  rdf  = update_tab('rdf', 'RDF/XML', dData.rdf, err_tabs);
+  posh = update_tab('posh', 'POSH', dData.posh, err_tabs);
+  json = update_tab('json', 'JSON', dData.json, err_tabs);
+  csv  = update_tab('csv', 'CSV', dData.csv_nano, err_tabs);
+
+  rss = add_loader('rss', gData.rss.links);
+  atom = add_loader('atom', gData.atom.links);
 
 
   if (gData.tabs.length > 0)
@@ -466,6 +607,14 @@ function show_Data(dData)
   if (!csv) {
     $('#tabs a[href="#csv"]').hide();
     $('#csv-save').hide();
+  }
+  if (rss) {
+    $('#tabs a[href="#rss"]').show();
+    $('#rss-save').show();
+  } 
+  if (atom) {
+    $('#tabs a[href="#atom"]').show();
+    $('#atom-save').show();
   }
 
   gData_showed = true;
@@ -728,6 +877,17 @@ async function check_Turtle_Curly_Nano(val)
 
 async function check_POSH(val)
 {
+  gData.posh.links = val.d.posh.links;
+  if (val.d.posh.links) {
+    for(var href in val.d.posh.links) {
+      var type = val.d.posh.links[href];
+      if (type === 'application/atom+xml')
+        gData.atom.links.push(href);
+      else if (type === 'application/rss+xml')
+        gData.rss.links.push(href);
+    }
+  }
+
   if (val.d.posh.text!==null && val.d.posh.text.length > 0)
   {
     try {
@@ -911,6 +1071,17 @@ async function parse_Data(dData)
   dData.rdf.error = [];
   dData.rdf_nano.expanded = null;
   dData.rdf_nano.error = null;
+  dData.rss = {};
+  dData.rss.expanded = null;
+  dData.rss.error = null;
+  dData.atom = {};
+  dData.atom.expanded = null;
+  dData.atom.error = null;
+
+  gData.atom.links = [];
+  gData.rss.links = [];
+
+
   doc_URL = dData.doc_URL;
 
   var url = new URL(doc_URL);
@@ -1132,10 +1303,10 @@ function Download_exec_update_state()
     filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
   else if (fmt == "json")
     filename = "json_data.txt";
-  else if (fmt == "ttl") 
-    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
-  else
+  else if (fmt == "rdf") 
     filename = "rdf_data.rdf";
+  else 
+    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
 
   if (cmd ==="sparqlupload") {
     $('#save-filename').hide();    
@@ -1228,7 +1399,14 @@ async function Download_exec()
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-
+  else if (selectedTab==="#rss" && (gData.rss.ttl_text!==null)) {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
+  else if (selectedTab==="#atom" && (gData.atom.ttl_text!==null)) {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
 
 
   if (filename!==null) {
@@ -1462,6 +1640,14 @@ async function prepare_data(for_query, curTab, fmt)
     else if (curTab==="#csv" && gData.csv_nano.ttl_text!==null) {
       src_fmt = "ttl";
       data = data.concat(gData.csv_nano.ttl_text);
+    }
+    else if (curTab==="#rss" && gData.rss.ttl_text!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.rss.ttl_text);
+    }
+    else if (curTab==="#atom" && gData.atom.ttl_text!==null) {
+      src_fmt = "ttl";
+      data = data.concat(gData.atom.ttl_text);
     }
     else
       return null;

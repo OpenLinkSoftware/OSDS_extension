@@ -28,7 +28,7 @@
     var micro_items = 0;
     var json_ld_Text = null;
     var turtle_Text = null;
-    var posh_Text = null;
+    var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
     var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null};
@@ -363,12 +363,12 @@
 
             if (!data_found) {
                 try {
-                    posh_Text = new POSH().getData(document.location.href);
+                    posh_Data = new POSH().getData(document.location.href);
                 } catch (e) {
                     console.log("OSDS:" + e);
                 }
 
-                if (posh_Text && posh_Text.length > 0)
+                if (posh_Data && posh_Data.triples && posh_Data.triples.length > 0)
                     data_found = true;
             }
 
@@ -417,9 +417,9 @@
         try {
             micro_items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
 
-            if (posh_Text === null) {
+            if (posh_Data === null) {
                 try {
-                    posh_Text = new POSH().getData(document.location.href);
+                    posh_Data = new POSH().getData(document.location.href);
                 } catch (e) {
                     console.log("OSDS:" + e);
                 }
@@ -983,7 +983,8 @@
                 docData.rdf.text = rdf_Text;
                 docData.rdfa.data = rdfa.data;
                 docData.rdfa.ttl = rdfa.ttl;
-                docData.posh.text = posh_Text;
+                docData.posh.text = posh_Data.triples;
+                docData.posh.links = posh_Data.links;
 
                 docData.ttl_nano.text = nano.ttl;
                 docData.ttl_curly_nano.text = nano.ttl_curly;
@@ -1003,7 +1004,7 @@
                     || (nano.json    && nano.json.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
-                    || (posh_Text    && posh_Text.length > 0)
+                    || (posh_Data    && posh_Data.triples.length > 0)
                    )
                   data_exists = true;
 
