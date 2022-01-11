@@ -322,7 +322,12 @@ class Handle_JSONLD {
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var jsonld_data = JSON.parse(textData[i]);
+        var text = textData[i];
+        var p = text.lastIndexOf('}');
+        if (p != -1)
+          text = text.substring(0, p+1);
+
+        var jsonld_data = JSON.parse(text);
         if (jsonld_data != null) {
           try {
             var txt = JSON.stringify(jsonld_data, null, 2);
@@ -1188,6 +1193,15 @@ class Handle_RSS {
       return {v: '', a: attr}
   }
 
+  normalize_space(v) 
+  {
+    return v.trim().replace(/\s\s+/g, ' ')
+  }
+
+  fix_uri(v) 
+  {
+    return encodeURI(v.trim())
+  }
 
   fix_text(val)
   {
@@ -1209,14 +1223,24 @@ class Handle_RSS {
     return qv+val+qv;
   }
 
+  fix_text2(val)
+  {
+    return this.fix_text(this.normalize_space(val));
+  }
+  
   removeTags(val)
   {
     return this.fix_text(val.replace(/<\/?[^>]+(>|$)/g, ""));
   }
 
-  categories_2_ttl(val, link)
+  categories_2_ttl(vals, link)
   {
-    return `<${link}#${encodeURI(val)}> a skos:Concept; skos:prefLabel "${val}" .\n`
+    var ttl = '';
+    for(const it of vals) {
+      const v = this.normalize_space(it._);
+      ttl += `<${link}#${encodeURI(v)}> a skos:Concept; skos:prefLabel "${v}" .\n`
+    }
+    return ttl;
   }
 
   contains(s, lst)
@@ -1250,7 +1274,7 @@ class Handle_RSS {
         return `dcterms:issued "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
       else if (prop === 'a_link' || prop === 'link') {
         if (v.a.rel && v.a.rel.value === 'alternate') {
-          return v.v ? `schema:mainEntity <${v.v}> ` : '';
+          return v.v ? `schema:mainEntity <${this.fix_uri(v.v)}> ` : '';
         }
         else if (v.a.rel && v.a.rel.value === 'related' && v.a.href) {
           ttl = `schema:seeAlso [ a schema:Thing `;
@@ -1304,13 +1328,13 @@ class Handle_RSS {
     else  // === RSS ===
     {
       if (prop === 'a_link') 
-        return v.a.href ? `dc:source <${v.a.href.value}> ` : ''
+        return v.a.href ? `dc:source <${this.fix_uri(v.a.href.value)}> ` : ''
       else if (prop === 'link') {
         val = this.getVal_or_Attr(val,'href');
-        ttl = `schema:relatedLink <${val}> `;
+        ttl = `schema:relatedLink <${this.fix_uri(val)}> `;
         var p	 = val.indexOf('#');
         if (p != -1) {
-          ttl+= `;\n    schema:seeAlso <${val.substring(0,p)}>`
+          ttl+= `;\n    schema:seeAlso <${this.fix_uri(val.substring(0,p))}>`
         }
         return ttl;
       }
@@ -1328,28 +1352,28 @@ class Handle_RSS {
     else if (prop === 'date' || prop === 'dc:date') 
       ttl = `schema:date "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
     else if (prop === 'language' || prop === 'dc:language')
-      ttl = `schema:inLanguage ${this.fix_text(v.v)} `;
+      ttl = `schema:inLanguage ${this.fix_text2(v.v)} `;
     else if (prop === 'guid') {
       if (v.a.isPermalink && v.a.isPermalink.value !== 'false')
-        ttl = `schema:url <${v.v}> `;
+        ttl = `schema:url <${this.fix_uri(v.v)}> `;
     }
     else if (prop === 'id')
-        ttl = `schema:url <${v.v}> `;
+        ttl = `schema:url <${this.fix_uri(v.v)}> `;
     else if (prop === 'copyright')
       ttl = `schema:copyrightHolder ${this.fix_text(v.v)} `;
     else if (prop === 'managingEditor' || prop === 'a_author')
-      ttl = `dc:creator ${this.fix_text(v.v)} `;
+      ttl = `dc:creator ${this.fix_text2(v.v)} `;
     else if (prop === 'title') 
-      ttl = `schema:title ${this.fix_text(v.v)} ;\n`
-          + `    rdfs:label ${this.fix_text(v.v)} `;
+      ttl = `schema:title ${this.fix_text2(v.v)} ;\n`
+          + `    rdfs:label ${this.fix_text2(v.v)} `;
     else if (prop === 'feedUrl' && v.v)
-      ttl = `dc:source <${v.v}> `;
+      ttl = `dc:source <${this.fix_uri(v.v)}> `;
     else if (prop === 'source' && v.a.url)
-      ttl = `dc:source <${v.a.url.value}> `;
+      ttl = `dc:source <${this.fix_uri(v.a.url.value)}> `;
     else if (prop === 'media_content' && v.a.url)
-      ttl = `media:content <${v.a.url.value}> `;
+      ttl = `media:content <${this.fix_uri(v.a.url.value)}> `;
     else if (prop === 'docs' && v.v)
-      ttl = `dc:documentation <${v.v}> `;
+      ttl = `dc:documentation <${this.fix_uri(v.v)}> `;
     else if (prop === 'ttl' && v.v)
       ttl = `dcterms:temporal ${this.fix_text(v.v)} `;
     else if (prop === 'description' && v.v) {
@@ -1376,30 +1400,30 @@ class Handle_RSS {
          ttl += `${v_lat && v_lat.length > 0 ? '; ':''}geo:long ${v_long[0]._} `;
     }
     else if (prop === 'rating' && v.v)
-      ttl = `schema:contentRating [ a schema:Rating ; schema:ratingValue ${this.fix_text(v.v)}] `;
+      ttl = `schema:contentRating [ a schema:Rating ; schema:ratingValue ${this.fix_text2(v.v)}] `;
     else if (prop === 'webMaster' && v.v)
-      ttl = `schema:contactPoint [ a schema:ContactPoint ; schema:email ${this.fix_text(v.v)}] `;
+      ttl = `schema:contactPoint [ a schema:ContactPoint ; schema:email ${this.fix_text2(v.v)}] `;
     else if (prop === 'categories')
-      ttl = `sioc:topic <${channel_link}#${encodeURI(v.v)}> `;
+      ttl = `sioc:topic <${channel_link}#${this.fix_uri(v.v)}> `;
     else if (prop === 'a_enclosure') {
       ttl = `schema:associatedMedia [ a schema:MediaObject `;
       if (v.a.url)
-        ttl += `; schema:url <${v.a.url.value}> `;
+        ttl += `; schema:url <${this.fix_uri(v.a.url.value)}> `;
       if (v.a.type)
-        ttl += `; schema:encodingFormat ${this.fix_text(v.a.type.value)} `;
+        ttl += `; schema:encodingFormat ${this.fix_text2(v.a.type.value)} `;
       if (v.a.length)
-        ttl += `; schema:contentSize ${this.fix_text(v.a.length.value)} `;
+        ttl += `; schema:contentSize ${this.fix_text2(v.a.length.value)} `;
       ttl += `] `;
     }
     else if (prop === 'image') {
       if (v.v.url && v.v.url.length > 0)
-      ttl = `schema:image <${v.v.url[0]._}> `;
+      ttl = `schema:image <${this.fix_uri(v.v.url[0]._)}> `;
     }
     else if (v.v && v.v.length > 0) {
       if (prop.indexOf(':') == -1)
-        ttl = `schema:${prop} ${this.fix_text(v.v)} `;
+        ttl = `schema:${prop} ${this.fix_text2(v.v)} `;
       else
-        ttl = `${prop} ${this.fix_text(v.v)} `;
+        ttl = `${prop} ${this.fix_text2(v.v)} `;
     }
 
 
@@ -1608,6 +1632,7 @@ class Handle_RSS {
         var feed = await parser.parseString(text);
 
         var channel_link = feed.link ? this.getVal_or_Attr(feed.link, 'href') : baseURL;
+        channel_link = this.fix_uri(channel_link);
 
         ttl +=  `:this schema:mainEntity <${channel_link}> .\n\n`
                +`<${channel_link}> a schema:DataFeed`;

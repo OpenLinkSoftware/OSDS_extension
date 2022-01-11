@@ -201,7 +201,7 @@ var Parser = function () {
             feed = _this.buildRSS2(result);
           } else if (result['rdf:RDF']) {
             feed = _this.buildRSS1(result);
-          } else if (result.rss && result.rss.$ && result.rss.$.version && result.rss.$.version.value && result.rss.$.version.value.match(/0\.9/)) {
+          } else if (result.rss && result.rss.$ && result.rss.$.version && result.rss.$.version.value && (result.rss.$.version.value.match(/0\.9/) || result.rss.$.version.value.match(/1\.0/))) {
             feed = _this.buildRSS0_9(result);
           } else if (result.rss && _this.options.defaultRSS) {
             switch (_this.options.defaultRSS) {

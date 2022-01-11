@@ -413,7 +413,30 @@ async function start_parse_data(data_text, data_type, data_url, ext)
   else if (data_type==="rss" || data_type==="atom")
     {
       var handler = new Handle_RSS(0, data_type==="atom");
-      var ret = await handler.parse([data_text], gData.baseURL);
+      var opts = {
+//  "fix-uri":true,
+  "indent":"auto",
+  "indent-spaces":2,
+//  "wrap":80,
+  "markup":true,
+  "numeric-entities":true,
+  "quote-marks":true,
+  "quote-nbsp":false,
+  "show-body-only":false,
+  "quote-ampersand":false,
+  "break-before-br":true,
+  "uppercase-tags":false,
+  "uppercase-attributes":false,
+  "drop-font-tags":true,
+  "tidy-mark":false,
+           "fix-uri":true,
+           "wrap": 0,
+           "input-xml":true,
+           "output-xml":true
+          };
+      var fixed_text = tidy_html5(data_text, opts);
+      var ret = await handler.parse([fixed_text], gData.baseURL);
+//      var ret = await handler.parse([data_text], gData.baseURL);
       gData.ttl_data = ret.ttl_data;
       show_Data(ret.errors, ret.data);
     }
