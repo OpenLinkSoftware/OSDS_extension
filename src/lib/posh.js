@@ -330,8 +330,8 @@ var POSH = (function () {
          else if (el.localName==="link") {
            var rev = el.getAttribute("rev");
            var rel = el.getAttribute("rel");
-           var href = el.getAttribute("href");
-           var type = el.getAttribute("type");
+           var href = el.href;
+           var type = el.type;
 
            if (href && rel && type && rel === "alternate") {
                links[href] = type;
