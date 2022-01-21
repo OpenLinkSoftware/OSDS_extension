@@ -277,15 +277,11 @@
       val = String(val);
 
       if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
-        if (val.indexOf("'''")!=-1) {
-          qv = "\"\"\"";
-          val = this.pre3(val);
-          val = val.replace(/\"\"\"/g,"'''");
-        } else {
-          qv = "'''";
-          val = this.pre3(val);
-       }
-      } else {
+        qv = '"""'
+        val = this.pre3(val);
+        val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\""); 
+      } 
+      else {
         val = this.pre(val);
       }
 

@@ -317,17 +317,11 @@ class Handle_JSONLD {
   async parse(textData, docURL, bnode_types)
   {
     var output = '';
-    var self = this;
 
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var text = textData[i];
-        var p = text.lastIndexOf('}');
-        if (p != -1)
-          text = text.substring(0, p+1);
-
-        var jsonld_data = JSON.parse(text);
+        var jsonld_data = JSON.parse( textData[i].trim() );
         if (jsonld_data != null) {
           try {
             var txt = JSON.stringify(jsonld_data, null, 2);
@@ -338,22 +332,22 @@ class Handle_JSONLD {
           var expanded = await jsonld.expand(jsonld_data, {base:docURL});
           var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
 
-          var handler = new Handle_Turtle(self.start_id, self._make_ttl, false, bnode_types);
+          var handler = new Handle_Turtle(this.start_id, this._make_ttl, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([nquads], docURL);
           if (ret.errors.length > 0) {
-            self.skipped_error = self.skipped_error.concat(ret.errors);
+            this.skipped_error = this.skipped_error.concat(ret.errors);
           } else {
             output += ret.data;
             output += "\n\n";
 
-            self.start_id += handler.start_id;
+            this.start_id += handler.start_id;
           }
         }
       } catch (ex) {
         if (textData[i].replace(/\s/g, '').length > 1) {
-          if (self.skip_error)
-            self.skipped_error.push(""+ex.toString());
+          if (this.skip_error)
+            this.skipped_error.push(""+ex.toString());
           else 
             throw ex;
         }

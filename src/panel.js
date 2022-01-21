@@ -616,14 +616,14 @@ async function parse_Data(dData)
       for(var href in val.d.posh.links) {
         var type = val.d.posh.links[href];
         if (type === 'application/atom+xml')
-          atom_links.push(href);
+           atom_links.push(href);
         else if (type === 'application/rss+xml')
           rss_links.push(href);
-        else if (type === 'application/json+ld')
+        else if (type === 'application/json+ld' || type === 'application/ld+json')
           jsonld_links.push(href);
         else if (type === 'application/rdf+xml')
           rdf_links.push(href);
-        else if (type === 'text/turtle')
+        else if (type === 'text/turtle' || type === 'text/n3')
           ttl_links.push(href);
       }
 

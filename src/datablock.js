@@ -553,7 +553,7 @@ class JSON_Block extends DataBlock_Prepare {
 
   async _prepare_ttl()
   {
-    var conv = new Convert_JSON_1();
+    var conv = new Convert_JSON();
     var rc = conv.to_ttl(this.text, this.baseURL);
     this.text = rc.json_text;
     return {ttl:rc.ttl, error: rc.error};

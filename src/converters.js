@@ -372,13 +372,8 @@ class Convert_RSS {
 
     val = typeof val === 'string' ? val: val.toString();
     if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
-      if (val.indexOf("'''")!=-1) {
-         qv = "\"\"\"";
-         val = val.replace(/\\/g,'\\\\').replace(/\"\"\"/g,"'''");
-      } else {
-         qv = "'''";
-         val = val.replace(/\\/g,'\\\\');
-      }
+      qv = '"""';
+      val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
     } else {
       val = val.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
     }
@@ -1042,8 +1037,8 @@ class Convert_CSV {
             var qv = '"';
 
             if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
-              qv = "'''";
-              val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
+              qv = '"""';
+              val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\""); 
             } else {
               val = val.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
             }
@@ -1065,7 +1060,7 @@ class Convert_CSV {
 }
 
 
-class Convert_JSON_1 {
+class Convert_JSON {
   constructor() 
   {
     this.s_id = ':this';
@@ -1097,7 +1092,7 @@ class Convert_JSON_1 {
     var qv = '"';
 
     if (s.indexOf("\n")!=-1 || s.indexOf("\r")!=-1) {
-      qv = "'''";
+      qv = '"""';
       s = s.replace(/\\/g,'\\\\').replace(/\"/g,"\\\"");
     } else {
       s = s.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
