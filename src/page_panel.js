@@ -34,8 +34,8 @@ var gData = {
         type: null,
         url: null,
         ext: null,
-        ttl_data: null,
-        baseURL: null
+        baseURL: null,
+        block: null
       };
 
 var src_view = null;
@@ -377,52 +377,44 @@ async function start_parse_data(data_text, data_type, data_url, ext)
 
   if (data_type==="turtle")
     {
-      var handler = new Handle_Turtle();
-      var ns = new Namespace();
-      handler.ns_pref = ns.get_ns_desc();
-      handler.ns_pref_size = ns.get_ns_size();
-      var ret = await handler.parse([data_text], gData.baseURL);
-      show_Data(ret.errors, ret.data);
+      gData.block = new DataBlock(gData.baseURL, [data_text], true);
     }
   else if (data_type==="jsonld")
     {
-      var handler = new Handle_JSONLD();
-      var ret = await handler.parse([data_text], gData.baseURL);
-      show_Data(ret.errors, ret.data);
+      gData.block = new JSONLD_Block(gData.baseURL, [data_text]);
     }
   else if (data_type==="rdf")
     {
-      var handler = new Handle_RDF_XML();
-      var ret = await handler.parse([data_text], gData.baseURL);
-      show_Data(ret.errors, ret.data);
+      gData.block = new RDF_Block(gData.baseURL, [data_text]);
     }
   else if (data_type==="json")
     {
-      var handler = new Handle_JSON();
-      var ret = await handler.parse([data_text], gData.baseURL);
-      gData.text = ret.text;
-      show_Data(ret.errors, ret.data);
+      gData.block = new JSON_Block(gData.baseURL, [data_text]);
     }
   else if (data_type==="csv")
     {
-      var handler = new Handle_CSV();
-      var ret = await handler.parse([data_text], gData.baseURL);
-      gData.ttl_data = ret.ttl_data;
-      show_Data(ret.errors, ret.data);
+      gData.block = new CSV_Block(gData.baseURL, [data_text]);
     }
   else if (data_type==="rss" || data_type==="atom")
     {
-      var handler = new Handle_RSS(0, data_type==="atom");
-
-      var ret = await handler.parse([data_text], gData.baseURL);
-      gData.ttl_data = ret.ttl_data;
-      show_Data(ret.errors, ret.data);
+      gData.block = new RSS_Block(gData.baseURL, [data_text], data_type==="atom");
     }
   else
     {
 //    location.href = data_url+"#osds";  // we don't close original tab, so just close OSDS viewer
       window.close();
     }
+
+  if (gData.block) 
+    {
+      var rc = await gData.block.to_html({}, 0)
+      show_Data(rc.error, rc.html);
+    }
+  else
+    {
+      window.close();
+    }
+
 
 }
 
@@ -728,32 +720,32 @@ async function Download_exec()
 
   $('#save-fmt #json').prop('disabled', true);
 
-  if (gData.type == "jsonld" && gData.text) {
+  if (gData.type == "jsonld") {
     filename = "jsonld_data.txt";
     fmt = "jsonld";
   }
-  else if (gData.type == "turtle" && gData.text) {
+  else if (gData.type == "turtle") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (gData.type == "rdf" && gData.text) {
+  else if (gData.type == "rdf") {
     filename = "rdf_data.rdf";
     fmt = "rdf";
   }
-  else if (gData.type == "json" && gData.text) {
+  else if (gData.type == "json") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
   }
-  else if (gData.type == "csv" && gData.ttl_data) {
+  else if (gData.type == "csv") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (gData.type == "rss" && gData.ttl_data) {
+  else if (gData.type == "rss") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (gData.type == "atom" && gData.ttl_data) {
+  else if (gData.type == "atom") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
@@ -900,141 +892,27 @@ async function save_data(action, fname, fmt, callback)
 }
 
 
-
 async function prepare_data(for_query, curTab, fmt)
 {
-  function out_from(for_query, data, error)
-  {
-    var retdata = {txt:"", error:""};
-    var outdata = [];
-    var errors = [];
-
-    if (data) {
-      if ($.isArray(data))
-        outdata = outdata.concat(data);
-      else
-        outdata.push(data);
-    }
-
-    if (error) {
-      if ($.isArray(error))
-        errors = errors.concat(error);
-      else
-        errors.push("\n"+error);
-    }
-
-    if (for_query) {
-      retdata.txt = outdata;
-    } else {
-      for(var i=0; i < outdata.length; i++)
-        retdata.txt += outdata[i]+"\n\n";
-    }
-
-    retdata.error = errors.join("\n\n");
-
-    return retdata;
-  }
-
-
   try{
-    var data = [];
-    var blob = null;
-    var src_fmt = null;
+    var block = gData.block;
 
-    if (gData.type==="jsonld" && gData.text!==null) {
-      src_fmt = "jsonld";
-      data = data.concat(gData.text);
-    }
-    else if (gData.type==="json" && gData.text!==null) {
-      src_fmt = "json";
-      data = data.concat(gData.text);
-    }
-    else if (gData.type==="turtle" && gData.text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.text);
-    }
-    else if (gData.type==="rdf" && gData.text!==null) {
-      src_fmt = "rdf";
-      data = data.concat(gData.text);
-    }
-    else if (gData.type==="csv" && gData.ttl_data!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.ttl_data);
-    }
-    else if (gData.type==="rss" && gData.ttl_data!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.ttl_data);
-    }
-    else if (gData.type==="atom" && gData.ttl_data!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.ttl_data);
-    }
-    else
+    if (block == null)
       return null;
 
-    if (data.length==0)
-      return null;
+    if (fmt === "ttl")
+      return await block.to_ttl(for_query);
+    else if (fmt === "jsonld")
+      return await block.to_jsonld();
+    else if (fmt === "rdf")
+      return await block.to_rdf();
+    else if (fmt === "json")
+      return await block.to_json();
 
-
-    if (src_fmt!==fmt)
-    {
-      if (src_fmt==="ttl") {
-        var handler = new Convert_Turtle();
-        if (fmt==="jsonld") {
-          var text_data = await handler.to_jsonld(data, null, gData.baseURL);
-          return out_from(for_query, text_data, handler.skipped_error);
-        } else {
-          var text_data = await handler.to_rdf(data, null, gData.baseURL);
-          return out_from(for_query, text_data, handler.skipped_error);
-        }
-      }
-      else if (src_fmt==="jsonld") {
-        var handler = new Convert_JSONLD();
-        if (fmt==="ttl") {
-          var text_data = await handler.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, handler.skipped_error);
-        } else {
-          var text_data = await handler.to_rdf(data, gData.baseURL);
-          return out_from(for_query, text_data, handler.skipped_error);
-        }
-      }
-      else if (src_fmt==="json"){
-        var conv = new Convert_JSON();
-        if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="rdf") {
-        if (fmt==="ttl") {
-          var conv = new Convert_RDF_XML();
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="jsonld") {
-          var conv = new Convert_RDF_XML();
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else {
-        showInfo("Format "+src_fmt+" isn't supported else.");
-      }
-    } 
-    else 
-    {
-      return out_from(for_query, data, null);
-    }
 
   } catch(ex) {
-    return out_from(for_query, null, ex.toString());
+    return {txt: "", error: ex.toString()};
   }
-
 }
 
 

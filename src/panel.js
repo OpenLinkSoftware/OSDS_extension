@@ -28,26 +28,24 @@ var doc_URL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
 var gData = {
-        micro:{ json_text:null },
-        jsonld:{ json_text:null },
-        rdfa:{ ttl_text:null },
-        turtle:{ ttl_text:null },
-        rdf:{ text:null },
-        json:{ json_text:null },
-
-        ttl_nano :{ ttl_text:null},
-        ttl_curly_nano :{ ttl_text:null},
-        jsonld_nano :{ json_text:null },
-        rdf_nano :{ rdf_text:null },
-        json_nano :{ json_text:null },
-        csv_nano :{ ttl_text:null, text:null },
-        posh:{ ttl_text:null },
-        rss: { ttl_text:null },
-        atom: { ttl_text:null },
+        baseURL: null,
         tab_index: null,
-        tabs:[],
-        baseURL: null
+        tabs: [],
+
+        micro: null,
+        jsonld: null,
+        rdfa: null,
+        turtle: null,
+        rdf: null,
+        rdfa: null,
+        json: null,
+        csv: null,
+        rss: null,
+        atom: null,
+
+        links: {}
       };
+
 var src_view = null;
 var g_RestCons = new Rest_Cons();
 var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
@@ -186,8 +184,16 @@ function showPopup(tabId)
     return false;
   });
 
-  $('#load_rss').click(Load_RSS);
-  $('#load_atom').click(Load_Atom);
+  $('#load_rss').click(function() {
+        if (gData.links.rss)
+          gData.links.rss.loadData({}, 0);
+  });
+
+  $('#load_atom').click(function() {
+        if (gData.links.atom)
+          gData.links.atom.loadData({}, 0);
+  });
+
 
   $('#tabs a[href="#rss"]').hide();
   $('#tabs a[href="#atom"]').hide();
@@ -325,109 +331,6 @@ $(document).on('click', 'a', function(e) {
 });
 
 
-async function Fetch_Data(hdr, url)
-{
-  try {
-    var options = {
-          headers: {
-            'Accept': hdr,
-            'Cache-control': 'no-cache'
-          },
-        };
-
-    var rc = await fetchWithTimeout(url, options, 30000)
-    if (rc.ok) {
-      var data = await rc.text();
-      return {data, error: null};
-    } else {
-      return {data:null, error: "Could not load data from: "+url+"\nError: "+rc.statusText};
-    }
-  } catch(e) {
-    return {data: null, error: "Could not load data from: "+url+"\nError: "+e};
-  }
-}
-
-
-async function Load_Data(hdr, links, is_atom)
-{
-  var textData = [];
-  var ttl = [];
-  var html_data = '';
-  var errors = [];
-  var bnode_types = {};
-
-  for(var url of links) {
-    var rc = await Fetch_Data(hdr, url);
-    if (rc.error) {
-      showInfo(rc.error);
-      return null;
-    } else {
-      textData.push(rc.data);
-    }
-  }
-
-  try {
-    var handler = new Handle_RSS(0, is_atom);
-    var ret = await handler.parse(textData, gData.baseURL, bnode_types);
-
-    html_data = ret.data;
-    ttl = ret.ttl_data;
-    errors = ret.errors;
-
-  } catch(ex) {
-    errors.push(ex.toString());
-  }
-
-  return {expanded:html_data, ttl, errors};
-}
-
-
-async function Load_RSS()
-{
-  var hdr = 'application/rss+xml, application/rdf+xml;q=0.8, application/atom+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4';
-
-  $('#rss_items #load_rss').attr('disabled','disabled');
-  $('#rss_items #throbber').show();
-
-  var rc = await Load_Data(hdr, gData.rss.links, false);
-  if (rc) {
-    update_tab('rss', 'RSS', rc);
-    $('#rss_items table.loader').hide();
-    gData.rss.ttl_text = rc.ttl;
-
-    $('#tabs a[href="#rss"]').show();
-    $('#rss-save').show();
-  } 
-  else {
-    $('#rss_items #load_rss').removeAttr('disabled');
-    $('#rss_items #throbber').hide();
-  }
-}
-
-
-async function Load_Atom(url)
-{
-  var hdr = 'application/atom+xml, application/rdf+xml;q=0.8, application/rss+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4'
-
-  $('#atom_items #load_atom').attr('disabled','disabled');
-  $('#atom_items #throbber').show();
-
-  var rc = await Load_Data(hdr, gData.atom.links, true);
-  if (rc) {
-    update_tab('atom', 'Atom', rc);
-    $('#atom_items table.loader').hide();
-    gData.atom.ttl_text = rc.ttl;
-
-    $('#tabs a[href="#atom"]').show();
-    $('#atom-save').show();
-  } 
-  else {
-    $('#atom_items #load_rss').removeAttr('disabled');
-    $('#atom_items #throbber').hide();
-  }
-}
-
-
 function selectTab(tab)
 {
   prevSelectedTab = selectedTab;
@@ -508,8 +411,8 @@ function update_tab(tabname, title, val, err_tabs)
   $(`#${tabname}_items #docdata_view`).remove();
   $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
 
-  if (val.expanded!==null && val.expanded.trim().length > 0) {
-      html += val.expanded;
+  if (val.html && val.html.trim().length > 0) {
+      html += val.html;
       gData.tabs.push(`#${tabname}`);
   }
   if (val.error) {
@@ -529,10 +432,15 @@ function update_tab(tabname, title, val, err_tabs)
 }
 
 
+async function update_tab_exec(tabname, title, block, err_tabs)
+{
+  var bnode_types = {};
+  var val = await block.to_html(bnode_types, 0);
 
+  return update_tab(tabname, title, val, err_tabs);
+}
 
-
-function show_Data(dData)
+async function show_Data()
 {
   var cons = false;
   var micro = false;
@@ -547,27 +455,41 @@ function show_Data(dData)
   var atom = false;
   var html = "";
   var err_tabs = [];
+  var bnode_types = {};
 
   gData.tabs = [];
   wait_data = $('table.wait').hide();
   $('#rss-save').hide();
   $('#atom-save').hide();
 
+  if (gData.micro)
+    micro = await update_tab_exec('micro', 'Microdata', gData.micro, err_tabs);
 
-  micro  = update_tab('micro', 'Microdata', dData.micro, err_tabs);
-  jsonld = update_tab('jsonld', 'JSON-LD', dData.jsonld, err_tabs);
-  turtle = update_tab('turtle', 'Turtle', dData.turtle, err_tabs);
-  rdfa = update_tab('rdfa', 'RDFa', dData.rdfa, err_tabs);
-  rdf  = update_tab('rdf', 'RDF/XML', dData.rdf, err_tabs);
-  posh = update_tab('posh', 'POSH', dData.posh, err_tabs);
-  json = update_tab('json', 'JSON', dData.json, err_tabs);
-  csv  = update_tab('csv', 'CSV', dData.csv_nano, err_tabs);
+  if (gData.jsonld)
+    jsonld = await update_tab_exec('jsonld', 'JSON-LD', gData.jsonld, err_tabs);
 
-  if (gData.rss.links.length > 0)
+  if (gData.turtle)
+    turtle = await update_tab_exec('turtle', 'Turtle', gData.turtle, err_tabs);
+
+  if (gData.rdfa)
+    rdfa = await update_tab_exec('rdfa', 'RDFa', gData.rdfa, err_tabs);
+
+  if (gData.rdf)
+    rdf = await update_tab_exec('rdf', 'RDF/XML', gData.rdf, err_tabs);
+  
+  if (gData.posh)
+    posh = await update_tab_exec('posh', 'POSH', gData.posh, err_tabs);
+
+  if (gData.json)
+    json = await update_tab_exec('json', 'JSON', gData.json, err_tabs);
+
+  if (gData.csv)
+    csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
+
+  if (gData.links.rss)
     rss = true;
-  if (gData.atom.links.length > 0)
+  if (gData.links.atom)
     atom = true;
-
 
   if (gData.tabs.length > 0)
     selectTab(gData.tabs[0]);
@@ -609,495 +531,42 @@ function show_Data(dData)
   }
   if (rss) {
     $('#tabs a[href="#rss"]').show();
-    $('#rss-save').show();
   } 
   if (atom) {
     $('#tabs a[href="#atom"]').show();
-    $('#atom-save').show();
   }
 
   gData_showed = true;
 }
 
 
-
-async function check_Microdata(val)
+function links_cb_start(tab)
 {
-    if (val.d.micro.data)
-    {
-      try {
-        var handler = new Handle_Microdata();
-        gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
-        var ret = handler.parse(val.d.micro.data, gData.baseURL, val.bnode_types);
-
-        if (ret.errors.length > 0)
-          val.d.micro.error = val.d.micro.error.concat(ret.errors);
-
-        if (ret.data)
-          val.d.micro.expanded = ret.data;
-
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-      } catch(ex) {
-        val.d.micro.error.push(ex.toString());
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      }
-    }
-    else
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
+  $(`#${tab}_items #load_${tab}`).attr('disabled','disabled');
+  $(`#${tab}_items #throbber`).show();
 }
 
-
-
-
-async function check_JSON_LD(val)
+function links_cb_error(tab)
 {
-  if (val.d.jsonld.text!==null && val.d.jsonld.text.length > 0)
-  {
-    try {
-      var handler = new Handle_JSONLD();
-      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL, val.bnode_types);
-
-      gData.jsonld.json_text = val.d.jsonld.text;
-
-      if (ret.errors.length > 0)
-        val.d.jsonld.error = val.d.jsonld.error.concat(ret.errors);
-
-      if (ret.data) {
-        if (val.d.jsonld.expanded) 
-          val.d.jsonld.expanded += ret.data;
-        else
-          val.d.jsonld.expanded = ret.data;
-      }
-      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
-
-    } catch(ex) {
-      val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
+  $(`#${tab}_items #load_${tab}`).removeAttr('disabled');
+  $(`#${tab}_items #throbber`).hide();
 }
 
-
-async function check_JsonLD_Nano(val)
+function links_cb_success(tab, tabName, rc)
 {
-  if (val.d.jsonld_nano.text!==null && val.d.jsonld_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_JSONLD();
-      handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL, val.bnode_types);
+  if (rc) {
+    update_tab(tab, tabName, rc);
+    $(`#${tab}_items table.loader`).hide();
 
-      gData.jsonld_nano.json_text = val.d.jsonld_nano.text;
-
-      if (ret.errors.length > 0)
-        val.d.jsonld.error = val.d.jsonld.error.concat(ret.errors);
-
-      if (ret.data) {
-        if (val.d.jsonld.expanded) 
-          val.d.jsonld.expanded += ret.data;
-        else
-          val.d.jsonld.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      
-    } catch(ex) {
-      val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_Json_Nano(val)
-{
-  if (val.d.json_nano.text!==null && val.d.json_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_JSON();
-      handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL, val.bnode_types);
-
-      gData.json_nano.json_text = ret.text;
-
-      if (ret.errors.length > 0)
-        val.d.json.error = val.d.json.error.concat(ret.errors);
-
-      if (ret.data)
-        val.d.json.expanded = ret.data;
-
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch(ex) {
-      val.d.json.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_Turtle(val)
-{
-  if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
-  {
-    try {
-      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-      var ret = await handler.parse(val.d.turtle.text, gData.baseURL);
-
-      gData.turtle.ttl_text = val.d.turtle.text;
-
-      if (ret.errors.length>0)
-        val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
-
-      if (ret.data) {
-        if (val.d.turtle.expanded)
-          val.d.turtle.expanded += ret.data;
-        else
-          val.d.turtle.expanded = ret.data;
-      }
-      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.turtle.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_Turtle_Nano(val)
-{
-  if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0)
-  {
-    var fix = new Fix_Nano();
-    var output = await fix.parse(val.d.ttl_nano.text);
-    
-    val.d.ttl_nano.text = output;
-
-    if (output!==null && output.length > 0) {
-      try {
-        var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-        var ret = await handler.parse_nano(output, gData.baseURL, true);
-
-        val.d.ttl_nano.text = ret.text;
-        gData.ttl_nano.ttl_text = ret.text;
-
-        if (ret.errors.length>0)
-          val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
-                
-        if (ret.data) {
-          if (val.d.turtle.expanded)
-            val.d.turtle.expanded += ret.data;
-          else
-            val.d.turtle.expanded = ret.data;
-        }
-
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-      } catch (ex) {
-        val.d.turtle.error.push(ex.toString());
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      }
-    }
-    else
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_Turtle_Curly_Nano(val)
-{
-  if (val.d.ttl_curly_nano.text!==null && val.d.ttl_curly_nano.text.length > 0)
-  {
-    var fix = new Fix_Nano();
-    var output = await fix.parse(val.d.ttl_curly_nano.text);
-    
-    val.d.ttl_curly_nano.text = output;
-
-    if (val.d.ttl_curly_nano.text!==null && val.d.ttl_curly_nano.text.length > 0) {
-      try {
-        var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-        var ret = await handler.parse_nano(val.d.ttl_curly_nano.text, gData.baseURL, false);
-
-        if (gData.ttl_nano.ttl_text) {
-          gData.ttl_nano.ttl_text = gData.ttl_nano.ttl_text.concat(ret.text);
-        } else {
-          gData.ttl_nano.ttl_text = ret.text
-        }
-
-        if (ret.errors.length>0)
-          val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
-                
-        if (ret.data) {
-          if (val.d.turtle.expanded)
-            val.d.turtle.expanded += ret.data;
-          else
-            val.d.turtle.expanded = ret.data;
-        }
-
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-      } catch (ex) {
-        val.d.turtle.error.push(ex.toString());
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      }
-    }
-    else
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_POSH(val)
-{
-  gData.posh.links = val.d.posh.links;
-  if (val.d.posh.links) {
-    var setting = new Settings();
-    var chk_discovery = setting.getValue("ext.osds.auto_discovery");
-
-    for(var href in val.d.posh.links) {
-      var type = val.d.posh.links[href];
-      if (type === 'application/atom+xml')
-        gData.atom.links.push(href);
-      else if (type === 'application/rss+xml')
-        gData.rss.links.push(href);
-    }
-
-    if (chk_discovery === "1") {
-      $('#atom_items #load_atom').hide();
-      $('#atom_items #throbber').show();
-      $('#rss_items #load_rss').hide();
-      $('#rss_items #throbber').show();
-
-      if (gData.rss.links.length > 0) 
-        Load_RSS(gData.rss.links);
-      if (gData.atom.links.length > 0) 
-        Load_Atom(gData.atom.links);
-    }
-
-  
-  }
-
-  if (val.d.posh.text!==null && val.d.posh.text.length > 0)
-  {
-    try {
-      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-      var ret = await handler.parse([val.d.posh.text], gData.baseURL);
-
-      gData.posh.ttl_text = val.d.posh.text;
-
-      if (ret.errors.length>0)
-        val.d.posh.error = val.d.posh.error.concat(ret.errors);
-                
-      if (ret.data) {
-        val.d.posh.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.posh.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_RDFa(val)
-{
-  if (val.d.rdfa.data)
-  {
-    try {
-      var handler = new Handle_RDFa();
-      var ret = handler.parse(val.d.rdfa.data, gData.baseURL, val.bnode_types);
-
-      if (ret.errors.length>0)
-        val.d.rdfa.error = val.d.rdfa.error.concat(ret.errors);
-                
-      if (ret.data) {
-        val.d.rdfa.expanded = ret.data;
-        gData.rdfa.ttl_text = [val.d.rdfa.ttl];
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.rdfa.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_RDF_XML(val)
-{
-  if (val.d.rdf.text && val.d.rdf.text.length > 0)
-  {
-    try {
-      var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf.text, gData.baseURL, val.bnode_types);
-
-      gData.rdf.text = val.d.rdf.text;
-
-      if (ret.errors.length>0)
-        val.d.rdf.error = val.d.rdf.error.concat(ret.errors);
-                
-      if (ret.data) {
-        if (val.d.rdf.expanded)
-          val.d.rdf.expanded += ret.data;
-        else
-          val.d.rdf.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_RDF_XML_Nano(val)
-{
-  if (val.d.rdf_nano.text!==null && val.d.rdf_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL, val.bnode_types);
-
-      gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
-
-      if (ret.errors.length>0)
-        val.d.rdf.error = val.d.rdf.error.concat(ret.errors);
-                
-      if (ret.data) {
-        if (val.d.rdf.expanded)
-          val.d.rdf.expanded += ret.data;
-        else
-          val.d.rdf.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_CSV_Nano(val)
-{
-  if (val.d.csv_nano.text!==null && val.d.csv_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_CSV();
-      handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.csv_nano.text, gData.baseURL);
-
-      gData.csv_nano.ttl_text = ret.ttl_data;
-
-      if (ret.errors.length>0)
-        val.d.csv_nano.error = val.d.csv_nano.error.concat(ret.errors);
-                
-      if (ret.data) {
-        val.d.csv_nano.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.csv_nano.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
+    $(`#tabs a[href="#${tab}"]`).show();
+    $(`#${tab}-save`).show();
+  } 
 }
 
 
 
 async function parse_Data(dData)
 {
-  dData.micro.expanded = null;
-  dData.micro.error = [];
-  dData.jsonld.expanded = null;
-  dData.jsonld.error = [];
-  dData.json.expanded = null;
-  dData.json.error = [];
-  dData.turtle.expanded = null;
-  dData.turtle.error = [];
-  dData.rdfa.expanded = null;
-  dData.rdfa.error = [];
-  dData.ttl_nano.expanded = null;
-  dData.ttl_nano.error = null;
-  dData.jsonld_nano.expanded = null;
-  dData.jsonld_nano.error = null;
-  dData.json_nano.expanded = null;
-  dData.json_nano.error = null;
-  dData.csv_nano.expanded = null;
-  dData.csv_nano.error = [];
-  dData.posh.expanded = null;
-  dData.posh.error = [];
-  dData.rdf.expanded = null;
-  dData.rdf.error = [];
-  dData.rdf_nano.expanded = null;
-  dData.rdf_nano.error = null;
-  dData.rss = {};
-  dData.rss.expanded = null;
-  dData.rss.error = null;
-  dData.atom = {};
-  dData.atom.expanded = null;
-  dData.atom.error = null;
-
-  gData.atom.links = [];
-  gData.rss.links = [];
-
-
   doc_URL = dData.doc_URL;
 
   var url = new URL(doc_URL);
@@ -1105,21 +574,102 @@ async function parse_Data(dData)
   gData.baseURL = url.toString();
 
   var val = {d:dData, start_id:0, bnode_types:{}};
+  var bnode_types = {};
 
   try {
-    val = await check_Microdata(val);
-    val = await check_JSON_LD(val);
-    val = await check_JsonLD_Nano(val);
-    val = await check_Json_Nano(val);
-    val = await check_Turtle(val);
-    val = await check_Turtle_Nano(val);
-    val = await check_Turtle_Curly_Nano(val);
-    val = await check_POSH(val);
-    val = await check_RDFa(val);
-    val = await check_RDF_XML(val);
-    val = await check_RDF_XML_Nano(val);
-    val = await check_CSV_Nano(val);
-    return val.d;
+    gData.links.atom = null;
+    gData.links.rss = null;
+    gData.links.jsonld = null;
+    gData.links.rdf = null;
+    gData.links.ttl = null;
+    
+    gData.micro = new Microdata_Block(gData.baseURL, [JSON.stringify(dData.micro.data, undefined, 2)], dData.micro.data);
+
+    gData.jsonld = new JSONLD_Block(gData.baseURL, dData.jsonld.text);
+    gData.jsonld.add_nano(dData.jsonld_nano.text);
+
+    gData.json = new JSON_Block(gData.baseURL, dData.json_nano.text);
+
+    gData.turtle = new TTL_Block(gData.baseURL, dData.turtle.text);
+    await gData.turtle.add_nano(dData.ttl_nano.text);
+    await gData.turtle.add_nano(dData.ttl_curly_nano.text);
+
+    gData.posh = new TTL_Block(gData.baseURL, [dData.posh.text]);
+
+    gData.rdfa = new RDFa_Block(gData.baseURL, dData.rdfa.ttl, dData.rdfa.data);
+    
+    gData.rdf = new RDF_Block(gData.baseURL, dData.rdf.text);
+    gData.rdf.add_nano(dData.rdf_nano.text);
+
+    gData.csv = new CSV_Block(gData.baseURL, dData.csv_nano.text);
+
+    if (dData.posh.links) 
+    {
+      var setting = new Settings();
+      var chk_discovery = setting.getValue("ext.osds.auto_discovery");
+      var atom_links = [];
+      var rss_links = [];
+      var jsonld_links = []
+      var rdf_links = []
+      var ttl_links = []
+
+      for(var href in val.d.posh.links) {
+        var type = val.d.posh.links[href];
+        if (type === 'application/atom+xml')
+          atom_links.push(href);
+        else if (type === 'application/rss+xml')
+          rss_links.push(href);
+        else if (type === 'application/json+ld')
+          jsonld_links.push(href);
+        else if (type === 'application/rdf+xml')
+          rdf_links.push(href);
+        else if (type === 'text/turtle')
+          ttl_links.push(href);
+      }
+
+      if (rss_links.length > 0) 
+        gData.links.rss = new RSS_Links("rss", "RSS", gData.baseURL, rss_links, links_cb_start, links_cb_error, links_cb_success);
+
+      if (atom_links.length > 0)
+        gData.links.atom = new Atom_Links("atom", "Atom", gData.baseURL, atom_links, links_cb_start, links_cb_error, links_cb_success);
+
+      if (chk_discovery === "1") {
+        $('#atom_items #load_atom').hide();
+        $('#atom_items #throbber').show();
+        $('#rss_items #load_rss').hide();
+        $('#rss_items #throbber').show();
+
+        if (gData.links.rss)
+          gData.links.rss.loadData({}, 0);
+
+        if (gData.links.atom)
+          gData.links.atom.loadData({}, 0);
+      }
+
+      if (jsonld_links.length > 0) {
+        $('#jsonld_items #throbber').show();
+        $('#jsonld_items #load_jsonld').hide();
+        $(`#jsonld_items table.loader`).show();
+        gData.links.jsonld = new JSONLD_Links("jsonld", "JSON-LD", gData.baseURL, jsonld_links, gData.jsonld, links_cb_start, links_cb_error, links_cb_success);
+        gData.links.jsonld.loadData({}, 0); 
+      }
+
+      if (rdf_links.length > 0) {
+        $('#rdf_items #throbber').show();
+        $('#rdf_items #load_jsonld').hide();
+        $(`#rdf_items table.loader`).show();
+        gData.links.rdf = new RDF_Links("rdf", "RDF/XML", gData.baseURL, rdf_links, gData.rdf, links_cb_start, links_cb_error, links_cb_success);
+        gData.links.rdf.loadData({}, 0); 
+      }
+
+      if (ttl_links.length > 0) {
+        $('#ttl_items #throbber').show();
+        $('#ttl_items #load_jsonld').hide();
+        $(`#ttl_items table.loader`).show();
+        gData.links.ttl = new TTL_Links("turtle", "Turtle", gData.baseURL, ttl_links, gData.turtle, links_cb_start, links_cb_error, links_cb_success);
+        gData.links.ttl.loadData({}, 0); 
+      }
+    }
   } catch (e) {
     console.log(e);
   }
@@ -1144,8 +694,8 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       if (request.is_data_exists)
       {
         try {
-          dData = await parse_Data(dData);
-          show_Data(dData);
+          await parse_Data(dData);
+          await show_Data();
         } catch(ex) {
           console.log("OSDS: Error="+ex);
           hideDataTabs();
@@ -1382,44 +932,44 @@ async function Download_exec()
   DOM.qSel(`${selectedTab}-chk`).checked = true;
 
 
-  if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
+  if (selectedTab==="#jsonld") {
     filename = "jsonld_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.ttl_nano.ttl_text!==null)) {
+  else if (selectedTab==="#turtle") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
+  else if (selectedTab==="#micro") {
     filename = "microdata_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
+  else if (selectedTab==="#rdfa") {
     filename = "rdfa_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#rdf" && (gData.rdf.text!==null || gData.rdf_nano.rdf_text!==null)) {
+  else if (selectedTab==="#rdf") {
     filename = "rdf_xml_data.txt";
     fmt = "rdf";
   }
-  else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
+  else if (selectedTab==="#posh") {
     filename = "posh_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#json" && (gData.json.json_text!==null || gData.json_nano.json_text!==null)) {
+  else if (selectedTab==="#json") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
   }
-  else if (selectedTab==="#csv" && (gData.csv_nano.ttl_text!==null)) {
+  else if (selectedTab==="#csv") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#rss" && (gData.rss.ttl_text!==null)) {
+  else if (selectedTab==="#rss") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#atom" && (gData.atom.ttl_text!==null)) {
+  else if (selectedTab==="#atom") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
@@ -1567,224 +1117,45 @@ async function save_data(action, fname, fmt, callback)
 
 async function prepare_data(for_query, curTab, fmt)
 {
-  function out_from(for_query, data, error)
-  {
-    var retdata = {txt:"", error:""};
-    var outdata = [];
-    var errors = [];
-
-    if (data) {
-      if ($.isArray(data))
-        outdata = outdata.concat(data);
-      else
-        outdata.push(data);
-    }
-
-    if (error) {
-      if ($.isArray(error))
-        errors = errors.concat(error);
-      else
-        errors.push("\n"+error);
-    }
-
-    if (for_query) {
-      retdata.txt = outdata;
-    } else {
-      for(var i=0; i < outdata.length; i++)
-        retdata.txt += outdata[i]+"\n\n";
-    }
-
-    retdata.error = errors.join("\n\n");
-
-    return retdata;
-  }
-
-
   try{
-    var data = [];
-    var quad_data = [];
-    var blob = null;
-    var src_fmt = null;
+    var block = null;
 
-    
-    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
-      src_fmt = "jsonld";
-
-      if (gData.jsonld.json_text!==null)
-        data = data.concat(gData.jsonld.json_text);
-
-      if (gData.jsonld_nano.json_text!==null)
-        data = data.concat(gData.jsonld_nano.json_text);
-    }
-    else if (curTab==="#json" && (gData.json.json_text!==null || gData.json_nano.json_text!==null)) {
-      src_fmt = "json";
-
-      if (gData.json.json_text!==null)
-        data = data.concat(gData.json.json_text);
-
-      if (gData.json_nano.json_text!==null)
-        data = data.concat(gData.json_nano.json_text);
-    }
-    else if (curTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.ttl_nano.ttl_text!==null)) {
-      src_fmt = "ttl";
-      if (gData.turtle.ttl_text!==null)
-        data = data.concat(gData.turtle.ttl_text);
-
-      if (gData.ttl_nano.ttl_text!==null)
-        quad_data = quad_data.concat(gData.ttl_nano.ttl_text);
-    }
-    else if (curTab==="#micro" && gData.micro.json_text!==null) {
-      src_fmt = "jsonld";
-      data = data.concat(gData.micro.json_text);
-    }
-    else if (curTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.rdfa.ttl_text);
-    }
-    else if (curTab==="#rdf" && (gData.rdf.text!==null || gData.rdf_nano.rdf_text!==null)) {
-      src_fmt = "rdf";
-      if (gData.rdf.text!==null)
-        data = data.concat(gData.rdf.text);
-
-      if (gData.rdf_nano.rdf_text!==null)
-        data = data.concat(gData.rdf_nano.rdf_text);
-    }
-    else if (curTab==="#posh" && gData.posh.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.posh.ttl_text);
-    }
-    else if (curTab==="#csv" && gData.csv_nano.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.csv_nano.ttl_text);
-    }
-    else if (curTab==="#rss" && gData.rss.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.rss.ttl_text);
-    }
-    else if (curTab==="#atom" && gData.atom.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.atom.ttl_text);
-    }
+    if (curTab==="#jsonld")
+      block = gData.jsonld;
+    else if (curTab==="#json")
+      block = gData.json;
+    else if (curTab==="#turtle")
+      block = gData.turtle;
+    else if (curTab==="#micro")
+      block = gData.micro;
+    else if (curTab==="#rdfa")
+      block = gData.rdfa;
+    else if (curTab==="#rdf")
+      block = gData.rdf;
+    else if (curTab==="#posh")
+      block = gData.posh;
+    else if (curTab==="#csv")
+      block = gData.csv;
+    else if (curTab==="#rss" && gData.links.rss && gData.links.rss.loaded())
+      block = gData.links.rss.block;
+    else if (curTab==="#atom" && gData.links.atom && gData.links.atom.loaded())
+      block = gData.links.atom.block;
     else
       return null;
 
-    if (data.length==0 && quad_data.length==0)
-      return null;
 
+    if (fmt === "ttl")
+      return await block.to_ttl(for_query);
+    else if (fmt === "jsonld")
+      return await block.to_jsonld();
+    else if (fmt === "rdf")
+      return await block.to_rdf();
+    else if (fmt === "json")
+      return await block.to_json();
 
-    if (curTab==="#micro" && data.length > 0)
-    {
-      var handler = new Handle_Microdata(true);
-      var ret = handler.parse(JSON.parse(data[0]), gData.baseURL);
-      if (ret.errors.length > 0) {
-        return out_from(for_query, null, ret.errors);
-      }
-      if (ret.data==null)
-        return null;
-
-      var ttl_data = ret.data;
-
-      if (fmt==="ttl") {
-        return out_from(for_query, ttl_data, null);
-      }
-      else if (fmt==="jsonld") { // json
-        var conv = new Convert_Turtle();
-        var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
-        return out_from(for_query, text_data, conv.skipped_error); 
-      }
-      else {
-        var conv = new Convert_Turtle();
-        var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
-        return out_from(for_query, text_data, conv.skipped_error); 
-      }
-    }
-    else if (curTab==="#rdfa" && data.length > 0)
-    {
-      var handler = new Convert_Turtle();
-      var ttl_data = await handler.fix_ttl(data, gData.baseURL);
-      if (handler.skipped_error.length > 0) {
-        return out_from(for_query, null, handler.skipped_error);
-      } 
-      else if (ttl_data && ttl_data.length > 0) 
-      {
-          if (fmt==="ttl") {
-            return out_from(for_query, ttl_data, null);
-          }
-          else if (fmt==="jsonld") { // json
-            var conv = new Convert_Turtle();
-            var text_data = await conv.to_jsonld(ttl_data, null, gData.baseURL);
-            return out_from(for_query, text_data, conv.skipped_error);
-          }
-          else {
-            var conv = new Convert_Turtle();
-            var text_data = await conv.to_rdf(ttl_data, null, gData.baseURL);
-            return out_from(for_query, text_data, conv.skipped_error);
-          }
-      }
-    }
-    else if (src_fmt!==fmt)
-    {
-      if (src_fmt==="ttl") {
-        var conv = new Convert_Turtle();
-        if (fmt==="jsonld") {
-          var text_data = await conv.to_jsonld(data, quad_data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf") {
-          var text_data = await conv.to_rdf(data, quad_data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="jsonld"){
-        var conv = new Convert_JSONLD();
-        if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="json"){
-        var conv = new Convert_JSON();
-        if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="rdf"){
-        var conv = new Convert_RDF_XML();
-        if (fmt==="ttl") {
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-
-        } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-    } else {
-      var errors = null;
-
-      if (for_query && src_fmt==="ttl") {
-        var handler = new Handle_Turtle(0, true, false);
-        var ret = await handler.parse_nano(quad_data, gData.baseURL, true);
-        if (ret.errors.length>0)
-          errors = ret.errors;
-
-        quad_data = ret.data;
-      }
-      data = data.concat(quad_data);
-      return out_from(for_query, data, errors);
-    }
 
   } catch(ex) {
-    return out_from(for_query, null, ex.toString());
+    return {txt: "", error: ex.toString()};
   }
 
 }
