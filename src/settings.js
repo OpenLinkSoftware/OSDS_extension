@@ -118,8 +118,6 @@ class Settings {
 
   getValue(id)
   {
-    
-    
     var val = null;
 
     try {
@@ -145,6 +143,9 @@ class Settings {
           break;
       case "ext.osds.pref.show_action":
           val = "1";
+          break;
+      case "ext.osds.auto_discovery":
+          val = "0";
           break;
       case "ext.osds.handle_xml":
           val = "1";

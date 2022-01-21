@@ -394,7 +394,11 @@ async function Load_RSS()
     update_tab('rss', 'RSS', rc);
     $('#rss_items table.loader').hide();
     gData.rss.ttl_text = rc.ttl;
-  } else {
+
+    $('#tabs a[href="#rss"]').show();
+    $('#rss-save').show();
+  } 
+  else {
     $('#rss_items #load_rss').removeAttr('disabled');
     $('#rss_items #throbber').hide();
   }
@@ -413,7 +417,11 @@ async function Load_Atom(url)
     update_tab('atom', 'Atom', rc);
     $('#atom_items table.loader').hide();
     gData.atom.ttl_text = rc.ttl;
-  } else {
+
+    $('#tabs a[href="#atom"]').show();
+    $('#atom-save').show();
+  } 
+  else {
     $('#atom_items #load_rss').removeAttr('disabled');
     $('#atom_items #throbber').hide();
   }
@@ -879,6 +887,9 @@ async function check_POSH(val)
 {
   gData.posh.links = val.d.posh.links;
   if (val.d.posh.links) {
+    var setting = new Settings();
+    var chk_discovery = setting.getValue("ext.osds.auto_discovery");
+
     for(var href in val.d.posh.links) {
       var type = val.d.posh.links[href];
       if (type === 'application/atom+xml')
@@ -886,6 +897,19 @@ async function check_POSH(val)
       else if (type === 'application/rss+xml')
         gData.rss.links.push(href);
     }
+
+    if (chk_discovery === "1") {
+      if (gData.rss.links.length > 0) {
+        Load_RSS(gData.rss.links);
+        gData.rss.links = [];
+      }
+      if (gData.atom.links.length > 0) {
+        Load_Atom(gData.atom.links);
+        gData.atom.links = [];
+      }
+    }
+
+  
   }
 
   if (val.d.posh.text!==null && val.d.posh.text.length > 0)
