@@ -20,7 +20,7 @@ SRC_DIR=$EXT_SRC
 DST_DIR=$EXT_DIRNAME
 
 #copy common files
-for I_DIR in background.html background.js content.css converters.js frame.js; do
+for I_DIR in background.html background.js content.css converters.js frame.js datablock.js; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
