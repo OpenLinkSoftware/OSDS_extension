@@ -554,17 +554,6 @@ function show_Data(dData)
   $('#atom-save').hide();
 
 
-  function add_loader(tabname, links)
-  {
-    if (links.length > 0) {
-      $(`#${tabname}_items #docdata_view`).show();
-      gData.tabs.push(`#${tabname}`);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   micro  = update_tab('micro', 'Microdata', dData.micro, err_tabs);
   jsonld = update_tab('jsonld', 'JSON-LD', dData.jsonld, err_tabs);
   turtle = update_tab('turtle', 'Turtle', dData.turtle, err_tabs);
@@ -574,8 +563,10 @@ function show_Data(dData)
   json = update_tab('json', 'JSON', dData.json, err_tabs);
   csv  = update_tab('csv', 'CSV', dData.csv_nano, err_tabs);
 
-  rss = add_loader('rss', gData.rss.links);
-  atom = add_loader('atom', gData.atom.links);
+  if (gData.rss.links.length > 0)
+    rss = true;
+  if (gData.atom.links.length > 0)
+    atom = true;
 
 
   if (gData.tabs.length > 0)
@@ -899,14 +890,15 @@ async function check_POSH(val)
     }
 
     if (chk_discovery === "1") {
-      if (gData.rss.links.length > 0) {
+      $('#atom_items #load_atom').hide();
+      $('#atom_items #throbber').show();
+      $('#rss_items #load_rss').hide();
+      $('#rss_items #throbber').show();
+
+      if (gData.rss.links.length > 0) 
         Load_RSS(gData.rss.links);
-        gData.rss.links = [];
-      }
-      if (gData.atom.links.length > 0) {
+      if (gData.atom.links.length > 0) 
         Load_Atom(gData.atom.links);
-        gData.atom.links = [];
-      }
     }
 
   
