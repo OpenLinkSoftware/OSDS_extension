@@ -229,7 +229,7 @@ var POSH = (function () {
           if (content==="player")
             cardType = "PlayerCard";
           else if (content==="photo")
-            o = "PhotoCard";
+            cardType = "PhotoCard";
         }
 
         addTriple("#this", "rdf:about", "#TwitterCard");
@@ -239,12 +239,13 @@ var POSH = (function () {
 
 
         $("head meta[name^='twitter:'],meta[name^='og:'],meta[property^='og:']").each(function(i, el){
+         try {
            var name = el.getAttribute("name");
            var content = el.getAttribute("content");
            var property = el.getAttribute("property");
 
            var val = null;
-           var add_dog = content.startsWith("@")?"@":"";
+           var add_dog = (content && content.startsWith("@"))?"@":"";
 
            if (name) {
              if (add_dog.length>0)
@@ -280,6 +281,9 @@ var POSH = (function () {
                } 
              }
            }
+         } catch(e) {
+           console.log(e);
+         }
 
         });
 
@@ -324,6 +328,7 @@ var POSH = (function () {
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
       $("head link,meta[name],title").each(function(i, el){
+        try{
          if (el.localName==="title") {
            addTriple("#this", "title", el.textContent, true);
          }
@@ -359,7 +364,7 @@ var POSH = (function () {
            if (name && name.startsWith("twitter:")) {
              if (!twittercard) {
                twittercard = true;
-               handleTwitterCard();
+               handleTwitterCard(name, content);
              }
            }
            else if (name && content) {
@@ -367,6 +372,9 @@ var POSH = (function () {
            }
 
          }
+       } catch(e) {
+         console.log(e);
+       }
       });
 
       $("img[alt^='"+this.facebook_vision+"']").each(function(i, el){
