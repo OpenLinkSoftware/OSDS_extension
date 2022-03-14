@@ -430,7 +430,7 @@ class Convert_RSS {
       else if (prop === 'published' || prop === 'issued')
         return `schema:dateCreated "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
       else if (prop === 'modified')
-        return `dcterms:issued "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
+        return `schema:dateModified "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
       else if (prop === 'a_link' || prop === 'link') {
         if (v.a.rel && v.a.rel.value === 'alternate') {
           return v.v ? `schema:mainEntity <${this.fix_uri(v.v)}> ` : '';
@@ -459,7 +459,7 @@ class Convert_RSS {
          for(var i=0; i < val.length; i++) {
            var v = this.getValAttr(val[i]);
            if (v.a.term) {
-             ttl += `${scolon?';\n    ':''}sioc:topic [ a skos:Concept ; skos:prefLabel ${this.fix_text(v.a.term.value)} ] `;
+             ttl += `${scolon?';\n    ':''}schema:about [ a skos:Concept ; skos:prefLabel ${this.fix_text(v.a.term.value)} ] `;
              scolon = true;
            }
            
@@ -505,7 +505,7 @@ class Convert_RSS {
 
 
     if (prop === 'pubdate' || prop === 'isoDate' || prop === 'lastBuildDate') 
-      ttl = `terms:issued "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
+      ttl = `schema:dateCreated "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
     else if (prop === 'pubDate') 
       ttl = `schema:datePublished "${(new Date(v.v)).toISOString()}"^^xsd:dateTime `;
     else if (prop === 'date' || prop === 'dc:date') 
@@ -521,7 +521,7 @@ class Convert_RSS {
     else if (prop === 'copyright')
       ttl = `schema:copyrightHolder ${this.fix_text(v.v)} `;
     else if (prop === 'managingEditor' || prop === 'a_author')
-      ttl = `dc:creator ${this.fix_text2(v.v)} `;
+      ttl = `schema:creator ${this.fix_text2(v.v)} `;
     else if (prop === 'title') 
       ttl = `schema:title ${this.fix_text2(v.v)} ;\n`
           + `    rdfs:label ${this.fix_text2(v.v)} `;
@@ -563,7 +563,7 @@ class Convert_RSS {
     else if (prop === 'webMaster' && v.v)
       ttl = `schema:contactPoint [ a schema:ContactPoint ; schema:email ${this.fix_text2(v.v)}] `;
     else if (prop === 'categories')
-      ttl = `sioc:topic <${channel_link}#${this.fix_uri(v.v)}> `;
+      ttl = `schema:about <${channel_link}#${this.fix_uri(v.v)}> `;
     else if (prop === 'a_enclosure') {
       ttl = `schema:associatedMedia [ a schema:MediaObject `;
       if (v.a.url)
@@ -693,6 +693,7 @@ class Convert_RSS {
         }
 
         var prefixMatch = new RegExp(/(?!xmlns)^.*:/);
+        
         function fixPrefix(name, key, uri, prefix) 
         {
           if (prefix) {
@@ -734,7 +735,7 @@ class Convert_RSS {
         var parser;
         if (this.is_atom)
           parser = new RSSParser({
-              xml2js: {ignoreAttrs: false, xmlns: true, tagNameProcessors: [fixPrefix]},
+              xml2js: {ignoreAttrs: false, xmlns: true, tagNameProcessors: [fixPrefix], strictError: false},
               customFields: {
                   feed: ["subtitle", "summary",
                          ['link', 'a_link', {keepAttrs:true}],
@@ -784,7 +785,7 @@ class Convert_RSS {
           });
         else
           parser = new RSSParser({
-              xml2js: {ignoreAttrs: false, xmlns: true, tagNameProcessors: [fixPrefix]},
+              xml2js: {ignoreAttrs: false, xmlns: true, tagNameProcessors: [fixPrefix], strictError: false},
               customFields: {
                   feed: ['language',
                          'dc:language',

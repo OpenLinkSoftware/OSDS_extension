@@ -164,8 +164,11 @@ module.exports = class ContextResolver {
 
     const allResolved = [];
 
-    for (const ctx of context) {
+    for (let ctx of context) {
       if (_isString(ctx)) {
+        if (ctx === 'schema.org')
+          ctx = 'https://schema.org';
+
         // see if `ctx` has been resolved before...
         let _resolved = this._get(ctx);
 

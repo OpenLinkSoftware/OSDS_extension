@@ -7248,6 +7248,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     parser.noscript = !!(strict || parser.opt.noscript);
     parser.state = S.BEGIN;
     parser.strictEntities = parser.opt.strictEntities;
+    parser.strictError = parser.opt.strictError || false;
     parser.ENTITIES = parser.strictEntities ? Object.create(sax.XML_ENTITIES) : Object.create(sax.ENTITIES);
     parser.attribList = [];
 
@@ -7863,7 +7864,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     if ((typeof parser === 'undefined' ? 'undefined' : _typeof(parser)) !== 'object' || !(parser instanceof SAXParser)) {
       throw new Error('bad call to strictFail');
     }
-    if (parser.strict) {
+    if (parser.strict && parser.strictError) {
       error(parser, message);
     }
   }

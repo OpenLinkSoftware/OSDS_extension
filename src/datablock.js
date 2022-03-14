@@ -411,9 +411,6 @@ class TTL_Block extends DataBlock {
       }
     }
 
-    if (this.text_nano)
-      s = s.concat(this.text_nano);
-
     return this.out_from(for_query, s, error);
   }
 
