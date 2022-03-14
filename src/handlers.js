@@ -278,7 +278,7 @@ class Handle_Turtle {
               }
               else
               {
-                var html_str =  new HTML_Gen(docURL).load(triples, self.start_id, self.bnode_types);
+                var html_str =  new HTML_Gen(docURL, self.bnode_types).load(triples, self.start_id);
                 output = html_str==null?'':html_str;
               }
 
@@ -341,7 +341,7 @@ class Handle_JSONLD {
             output += ret.data;
             output += "\n\n";
 
-            this.start_id += handler.start_id;
+            this.start_id = handler.start_id;
           }
         }
       } catch (ex) {
@@ -726,7 +726,7 @@ class Handle_RDF_XML {
           output += ret.data;
           output += "\n\n";
 
-          self.start_id += handler.start_id;
+          self.start_id = handler.start_id;
         }
 
       } catch (ex) {
