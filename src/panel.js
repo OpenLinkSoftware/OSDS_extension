@@ -408,6 +408,7 @@ function update_tab(tabname, title, val, err_tabs)
 
   var html = "";
 
+  $(`#${tabname}_items table.wait`).hide();
   $(`#${tabname}_items #docdata_view`).remove();
   $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
 
@@ -427,6 +428,8 @@ function update_tab(tabname, title, val, err_tabs)
       $(`#${tabname}_items #docdata_view`).append(html);
       return true;
   } else {
+    $(`#tabs a[href="#${tabname}"]`).hide();
+    $(`#${tabname}-save`).hide();
     return false;
   }
 }
@@ -458,7 +461,7 @@ async function show_Data()
   var bnode_types = {};
 
   gData.tabs = [];
-  wait_data = $('table.wait').hide();
+//  $('table.wait').hide();
   $('#rss-save').hide();
   $('#atom-save').hide();
 
@@ -1052,7 +1055,7 @@ async function save_data(action, fname, fmt, callback)
 
     if (retdata && retdata.error.length > 0) {
       showInfo(retdata.error);
-      return;
+//??--      return;
     }
     
     if (action==="export-rww") {

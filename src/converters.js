@@ -261,12 +261,13 @@ class Convert_JSONLD {
   async to_ttl(textData, baseURL) 
   {
     var output = [];
+    var bnode_types = {};
 
     for(var i=0; i < textData.length; i++)
     {
       try {
         var handler = new Handle_JSONLD(true);
-        var ret = await handler.parse([textData[i]], baseURL);
+        var ret = await handler.parse([textData[i]], baseURL, bnode_types);
 
         if (ret.errors.length > 0) 
           this.skipped_error = this.skipped_error.concat(ret.errors);
