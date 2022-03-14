@@ -217,9 +217,9 @@ class SuperLinks {
     var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
     
     var setting = new Settings();
-    var sponge_type = setting.getValue('ext.osds.super-links-sponge');
-    var sponge_mode = setting.getValue('ext.osds.super-links-sponge-mode');
-    var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+    var sponge_type = await setting.getValue('ext.osds.super-links-sponge');
+    var sponge_mode = await setting.getValue('ext.osds.super-links-sponge-mode');
+    var links_timeout = parseInt(await setting.getValue("ext.osds.super_links.timeout"), 10);
     var url_sponge;
   
     if (sponge_type) {
@@ -288,8 +288,8 @@ class SuperLinks {
     var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
 
     var setting = new Settings();
-    var links_query = setting.getValue("ext.osds.super_links.query");
-    var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+    var links_query = await setting.getValue("ext.osds.super_links.query");
+    var links_timeout = parseInt(await setting.getValue("ext.osds.super_links.timeout"), 10);
 
     
     var url = new URL(this.doc_url);
@@ -306,7 +306,7 @@ class SuperLinks {
       br_lang = 'en';
     }
   
-    var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
+    var links_sparql_query = await setting.createSuperLinksQuery(links_query, iri, br_lang);
   
     this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links&nbsp;"+iter);
   
@@ -412,8 +412,8 @@ class SuperLinks {
   async mexec()
   {
     var setting = new Settings();
-    var retries = setting.getValue("ext.osds.super_links.retries");
-    var rtimeout = setting.getValue("ext.osds.super_links.retries_timeout");
+    var retries = await setting.getValue("ext.osds.super_links.retries");
+    var rtimeout = await setting.getValue("ext.osds.super_links.retries_timeout");
 
     if (retries < 3)
       retries = 3;
@@ -453,8 +453,8 @@ class SuperLinks {
   async mexec_query()
   {
     var setting = new Settings();
-    var retries = setting.getValue("ext.osds.super_links.retries");
-    var rtimeout = setting.getValue("ext.osds.super_links.retries_timeout");
+    var retries = await setting.getValue("ext.osds.super_links.retries");
+    var rtimeout = await setting.getValue("ext.osds.super_links.retries_timeout");
 
     if (retries < 3)
       retries = 3;

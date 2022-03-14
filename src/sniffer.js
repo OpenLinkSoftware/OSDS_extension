@@ -993,6 +993,14 @@
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
 
+                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
+
+                docData.posh.dlinks = {rss:[]};
+
+                for(var v of list)
+                  docData.posh.dlinks.rss.push(v.href);
+
+
                 if ((microdata.items && microdata.items.length > 0)
                     || (json_ld_Text && json_ld_Text.length > 0)
                     || (turtle_Text  && turtle_Text.length > 0)
@@ -1005,6 +1013,7 @@
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
                     || (posh_Data    && posh_Data.triples.length > 0)
+                    || (posh_Data    && posh_Data.links.length > 0)
                    )
                   data_exists = true;
 

@@ -22,7 +22,12 @@ var gPref = null;
 var yasqe_slinks = null;
 var yasqe_srv = null;
 
-$(function(){
+$(function() {
+  init();
+});
+
+async function init()
+{
   // Tabs
   document.getElementById("c_year").innerText = new Date().getFullYear();
 
@@ -76,7 +81,7 @@ $(function(){
   }
 
   try {
-    loadPref();
+    await loadPref();
   } catch(e) {
     console.log(e);
   }
@@ -106,11 +111,11 @@ $(function(){
 
   $('#call_edit_users').click(call_edit_users);
 
-  enableCtrls();
+  await enableCtrls();
 
   $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
-});
+};
 
 function changeHandleAll()
 {
@@ -122,7 +127,7 @@ function changeHandleAll()
 
 function closeOptions()
 {
-    if (Browser.isFirefoxWebExt) {
+    if (Browser.is_ff) {
       Browser.api.tabs.getCurrent()
         .then((tab) => {
           Browser.api.tabs.remove(tab.id);
@@ -226,15 +231,13 @@ function setSuperLinksDefaults()
     });
 };
 
-function load_pref_user()
+async function load_pref_user()
 {
-    var pref_user = gPref.getValue("ext.osds.pref.user");
-//    if (pref_user)
-//        $('#pref_user').val(pref_user);
+    var pref_user = await gPref.getValue("ext.osds.pref.user");
 
     var list = [];
     try {
-      var v = gPref.getValue('ext.osds.pref.user.list');
+      var v = await gPref.getValue('ext.osds.pref.user.list');
       if (v)
         list = JSON.parse(v);
     } catch(e){}
@@ -255,157 +258,157 @@ function load_pref_user()
     });
 
    pref_user = $('#pref_user option:selected').text();
-   gPref.setValue("ext.osds.pref.user", pref_user);
+   await gPref.setValue("ext.osds.pref.user", pref_user);
 }
 
 
-function loadPref()
+async function loadPref()
 {
-    var uiterm_mode = gPref.getValue("ext.osds.uiterm.mode");
+    var uiterm_mode = await gPref.getValue("ext.osds.uiterm.mode");
     DOM.qSel('#uiterm-mode #'+uiterm_mode).selected=true;
 
-    var chk_user = gPref.getValue("ext.osds.pref.user.chk");
+    var chk_user = await gPref.getValue("ext.osds.pref.user.chk");
     DOM.iSel("chk_pref_user").checked = (chk_user==="1");
 
     load_pref_user();
 
-    var chk_action = gPref.getValue("ext.osds.pref.show_action");
+    var chk_action = await gPref.getValue("ext.osds.pref.show_action");
     DOM.iSel("chk_show_action_for_url_with_params").checked = (chk_action==="1");
 
-    var chk_a_discovery = gPref.getValue("ext.osds.auto_discovery");
+    var chk_a_discovery = await gPref.getValue("ext.osds.auto_discovery");
     DOM.iSel("chk_auto_discovery").checked = (chk_a_discovery==="1");
 
-    var chk_xml = gPref.getValue("ext.osds.handle_xml");
+    var chk_xml = await gPref.getValue("ext.osds.handle_xml");
     DOM.iSel("chk_try_handle_xml").checked = (chk_xml==="1");
 
-    var chk_csv = gPref.getValue("ext.osds.handle_csv");
+    var chk_csv = await gPref.getValue("ext.osds.handle_csv");
     DOM.iSel("chk_try_handle_csv").checked = (chk_csv==="1");
 
-    var chk_json = gPref.getValue("ext.osds.handle_json");
+    var chk_json = await gPref.getValue("ext.osds.handle_json");
     DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
 
-    var chk_all = gPref.getValue("ext.osds.handle_all");
+    var chk_all = await gPref.getValue("ext.osds.handle_all");
     DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
 
     changeHandleAll();
 
-    var import_url = gPref.getValue("ext.osds.import.url");
-    var import_srv = gPref.getValue("ext.osds.import.srv");
+    var import_url = await gPref.getValue("ext.osds.import.url");
+    var import_srv = await gPref.getValue("ext.osds.import.srv");
 
     DOM.qSel('#import-srv #'+import_srv).selected=true;
     DOM.iSel('import-url').value = import_url;
 
 
-    var rww_edit_url = gPref.getValue("ext.osds.rww.edit.url");
+    var rww_edit_url = await gPref.getValue("ext.osds.rww.edit.url");
     if (rww_edit_url)
         DOM.iSel('rww-edit-url').value = rww_edit_url;
 
-    var rww_store_url = gPref.getValue("ext.osds.rww.store.url");
+    var rww_store_url = await gPref.getValue("ext.osds.rww.store.url");
     if (rww_store_url)
         DOM.iSel('rww-store-url').value = rww_store_url;
 
 
-    var sparql_url = gPref.getValue("ext.osds.sparql.url");
+    var sparql_url = await gPref.getValue("ext.osds.sparql.url");
     DOM.iSel('sparql-url').value = sparql_url;
 
-    var sparql_cmd = gPref.getValue("ext.osds.sparql.cmd");
+    var sparql_cmd = await gPref.getValue("ext.osds.sparql.cmd");
     DOM.qSel('#sparql-cmd #'+sparql_cmd).selected=true;
 
 
-    yasqe_srv.setValue(gPref.getValue("ext.osds.sparql.query")+"\n");
-    yasqe_slinks.setValue(gPref.getValue("ext.osds.super_links.query")+"\n");
+    yasqe_srv.setValue(await gPref.getValue("ext.osds.sparql.query")+"\n");
+    yasqe_slinks.setValue(await gPref.getValue("ext.osds.super_links.query")+"\n");
 
-    DOM.iSel('super-links-timeout').value = gPref.getValue("ext.osds.super_links.timeout");
+    DOM.iSel('super-links-timeout').value = await gPref.getValue("ext.osds.super_links.timeout");
 
-    var sponge = gPref.getValue("ext.osds.super-links-sponge");
+    var sponge = await gPref.getValue("ext.osds.super-links-sponge");
     if (sponge)
       DOM.qSel('#super-links-sponge #'+sponge).selected = true;
 
-    var sponge_mode = gPref.getValue("ext.osds.super-links-sponge-mode");
+    var sponge_mode = await gPref.getValue("ext.osds.super-links-sponge-mode");
     if (sponge_mode)
       DOM.qSel('#super-links-sponge-mode #'+sponge_mode).selected = true;
 
-    var viewer = gPref.getValue("ext.osds.super-links-viewer");
+    var viewer = await gPref.getValue("ext.osds.super-links-viewer");
     if (viewer)
       DOM.qSel('#super-links-viewer #'+viewer).selected = true;
 
-    var mode = gPref.getValue("ext.osds.super-links-highlight");
+    var mode = await gPref.getValue("ext.osds.super-links-highlight");
     if (mode)
       DOM.qSel('#super-links-highlight #'+mode).selected = true;
 
-    DOM.iSel('super-links-retries').value = gPref.getValue("ext.osds.super_links.retries");
-    DOM.iSel('super-links-retries-timeout').value = gPref.getValue("ext.osds.super_links.retries_timeout");
+    DOM.iSel('super-links-retries').value = await gPref.getValue("ext.osds.super_links.retries");
+    DOM.iSel('super-links-retries-timeout').value = await gPref.getValue("ext.osds.super_links.retries_timeout");
 }
 
 
 
-function savePref()
+async function savePref()
 {
    var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
-   gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
+   await gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
-   gPref.setValue("ext.osds.pref.user.chk", DOM.iSel('chk_pref_user').checked?"1":"0");
+   await gPref.setValue("ext.osds.pref.user.chk", DOM.iSel('chk_pref_user').checked?"1":"0");
 
-   gPref.setValue("ext.osds.pref.show_action", DOM.iSel('chk_show_action_for_url_with_params').checked?"1":"0");
-   gPref.setValue("ext.osds.auto_discovery", DOM.iSel('chk_auto_discovery').checked?"1":"0");
+   await gPref.setValue("ext.osds.pref.show_action", DOM.iSel('chk_show_action_for_url_with_params').checked?"1":"0");
+   await gPref.setValue("ext.osds.auto_discovery", DOM.iSel('chk_auto_discovery').checked?"1":"0");
 
-   gPref.setValue("ext.osds.handle_xml", DOM.iSel('chk_try_handle_xml').checked?"1":"0");
-   gPref.setValue("ext.osds.handle_csv", DOM.iSel('chk_try_handle_csv').checked?"1":"0");
-   gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
-   gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
+   await gPref.setValue("ext.osds.handle_xml", DOM.iSel('chk_try_handle_xml').checked?"1":"0");
+   await gPref.setValue("ext.osds.handle_csv", DOM.iSel('chk_try_handle_csv').checked?"1":"0");
+   await gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
+   await gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
    var pref_user = $('#pref_user option:selected').text();
-   gPref.setValue("ext.osds.pref.user", pref_user);
+   await gPref.setValue("ext.osds.pref.user", pref_user);
 
 
    var import_srv = DOM.qSel('#import-srv option:checked').id;
-   gPref.setValue("ext.osds.import.srv", import_srv);
-   gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
+   await gPref.setValue("ext.osds.import.srv", import_srv);
+   await gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
 
 
-   gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());
-   gPref.setValue("ext.osds.rww.store.url", DOM.iSel('rww-store-url').value.trim());
+   await gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());
+   await gPref.setValue("ext.osds.rww.store.url", DOM.iSel('rww-store-url').value.trim());
 
 
    var sparql_cmd = DOM.qSel('#sparql-cmd option:checked').id;
-   gPref.setValue("ext.osds.sparql.cmd", sparql_cmd);
-   gPref.setValue("ext.osds.sparql.url", DOM.iSel('sparql-url').value.trim());
+   await gPref.setValue("ext.osds.sparql.cmd", sparql_cmd);
+   await gPref.setValue("ext.osds.sparql.url", DOM.iSel('sparql-url').value.trim());
 
-   gPref.setValue("ext.osds.sparql.query", yasqe_srv.getValue());
+   await gPref.setValue("ext.osds.sparql.query", yasqe_srv.getValue());
 
-   gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
+   await gPref.setValue("ext.osds.super_links.query", yasqe_slinks.getValue());
 
    var timeout = DOM.iSel('super-links-timeout').value.trim();
-   gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
+   await gPref.setValue("ext.osds.super_links.timeout", parseInt(timeout, 10));
 
    var v; 
    v = DOM.qSel('#super-links-sponge option:checked').id;
-   gPref.setValue("ext.osds.super-links-sponge", v);
+   await gPref.setValue("ext.osds.super-links-sponge", v);
 
    v = DOM.qSel('#super-links-sponge-mode option:checked').id;
-   gPref.setValue("ext.osds.super-links-sponge-mode", v);
+   await gPref.setValue("ext.osds.super-links-sponge-mode", v);
 
    v = DOM.qSel('#super-links-viewer option:checked').id;
-   gPref.setValue("ext.osds.super-links-viewer", v);
+   await gPref.setValue("ext.osds.super-links-viewer", v);
 
    v = DOM.qSel('#super-links-highlight option:checked').id;
-   gPref.setValue("ext.osds.super-links-highlight", v);
+   await gPref.setValue("ext.osds.super-links-highlight", v);
 
    v = DOM.iSel('super-links-retries').value.trim();
-   gPref.setValue("ext.osds.super_links.retries", parseInt(v, 10));
+   await gPref.setValue("ext.osds.super_links.retries", parseInt(v, 10));
 
    v = DOM.iSel('super-links-retries-timeout').value.trim();
-   gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
+   await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
    closeOptions();
 }
 
 
 
-function enableCtrls()
+async function enableCtrls()
 {
     var srv = DOM.qSel('#import-srv option:checked').id;
-    var h_url = (new Settings).createDefaultImportCmdFor(srv, DOM.iSel('import-url').value.trim());
+    var h_url = gPref.createDefaultImportCmdFor(srv, DOM.iSel('import-url').value.trim());
 
     $('#import-url-bcast').show();
     DOM.iSel('import-url').value = h_url;
@@ -413,14 +416,14 @@ function enableCtrls()
 
 
 
-function createSparqlQuery(cmd)
+async function createSparqlQuery(cmd)
 {
     var query = "";
     var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
 
     switch (cmd) {
       case 'select':
-        query = gPref.getSparqlQueryDefault(uiterm_mode);;
+        query = await gPref.getSparqlQueryDefault(uiterm_mode);;
         break;
       case 'describe':
         query = "DESCRIBE <{url}> LIMIT 100";
@@ -436,11 +439,11 @@ function createSparqlQuery(cmd)
 
 
 // ========== Users List ===========
-function call_edit_users()
+async function call_edit_users()
 {
     var list = [];
     try {
-      var v = gPref.getValue('ext.osds.pref.user.list');
+      var v = await gPref.getValue('ext.osds.pref.user.list');
       if (v)
         list = JSON.parse(v);
     } catch(e){}

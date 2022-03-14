@@ -28,7 +28,7 @@ class DataLinks {
         var data = await rc.text();
         return {data, error: null};
       } else {
-        return {data:null, error: "Could not load data from: "+url+"\nError: "+rc.statusText};
+        return {data:null, error: "Could not load data from: "+url+"\nError: "+rc.status+" "+rc.statusText};
       }
     } catch(e) {
       return {data: null, error: "Could not load data from: "+url+"\nError: "+e};
@@ -45,6 +45,8 @@ class DataLinks {
   {
     var textData = [];
     var rc;
+    var errors = [];
+    var err_msg = "";
 
     if (this.cb_start)
       this.cb_start(this.tab);
@@ -55,25 +57,33 @@ class DataLinks {
         if (!rc.error)
           break;
       }
-      if (rc.error) {
-        showInfo(rc.error);
-        if (this.cb_error)
-          this.cb_error(this.tab, rc.error);
-        return false;
-      } else {
+
+      if (rc.error)
+        errors.push(rc.error);
+      else
         textData.push(rc.data);
-      }
     }
 
     if (textData.length > 0)
       this.block.add_data(textData);
 
+    if (errors.length > 0) {
+      err_msg = "#L#"+errors.join("\n\n");
+      showInfo(err_msg);
+      if (this.cb_error)
+        this.cb_error(this.tab, err_msg);
+    }
+
     var rc = await this.block.to_html({}, start_id)
 
     this._loaded = true;
 
-    if (this.cb_success)
+    if (this.cb_success) {
+      if (err_msg.length > 0)
+        rc.error.push(err_msg);
+
       this.cb_success(this.tab, this.tabName, rc);
+    }
 
     return true;
   }

@@ -43,10 +43,39 @@ class Fix_Nano {
   }
 
 
+  _fix_quoted_string(str)
+  {
+    var j = 0;
+    var quote = 0;
+    var out = [];
+
+    while (j < str.length) {
+        var ch = str[j++];
+        if (quote == 0) {
+          out.push(ch);
+          if (ch === '"') 
+            quote++;
+        }
+        else {  // in quote
+          if (ch === '"') {
+            quote--;
+            out.push(ch);
+          } else if (ch !== '\n' && ch !== '\r') {
+            out.push(ch);
+          }
+        }
+    }
+
+    return out.join('');
+  }
+
+
   async _parse_1(textData) 
   {
     var self = this;
     var _output = '';
+
+    textData = this._fix_quoted_string(textData);
 
     return new Promise(function (resolve, reject) {
       try {

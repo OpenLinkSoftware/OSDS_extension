@@ -66,7 +66,7 @@ OidcWeb.prototype = {
      const _url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
                          : this.login_url;
 
-     if (Browser.isFirefoxWebExt) {
+     if (Browser.is_ff) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
@@ -94,7 +94,7 @@ OidcWeb.prototype = {
 //     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
      const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
 
-     if (Browser.isFirefoxWebExt) {
+     if (Browser.is_ff) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
@@ -182,7 +182,7 @@ OidcWeb.prototype = {
   {
     var rec = {};
     rec[key]=val;
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.set(rec, () => resolve());
       })
@@ -193,7 +193,7 @@ OidcWeb.prototype = {
 
   localStore_get: async function(key) 
   {
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.get(key, (rec) => {
           resolve(rec)
@@ -206,7 +206,7 @@ OidcWeb.prototype = {
 
   localStore_remove: async function(key) 
   {
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.remove(key, (rec) => {
           resolve(rec)

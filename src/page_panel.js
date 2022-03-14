@@ -465,24 +465,37 @@ function show_Data(data_error, html_data)
   function create_err_msg(fmt_name, errors)
   {
     var err_html = "";
+    var err_load = "";
+    var msg = "";
+
     if (errors) {
 
       if ($.isArray(errors)) {
-        for(var i=0; i<errors.length; i++)
-          err_html += "<tr><td>"+errors[i]+"</tr></td>";
+        for(var i=0; i<errors.length; i++) {
+          if (errors[i].startsWith("#L#"))
+            err_load += "<tr><td>"+errors[i].substring(3)+"</tr></td>";
+          else
+            err_html += "<tr><td>"+errors[i]+"</tr></td>";
+        }
       }
       else if (errors.length > 0) {
           err_html += "<tr><td>"+errors+"</tr></td>";
       }
 
       if (err_html.length > 0)
-        err_html = "<table class='docdata table'><tr><td>"+fmt_name
-                  +" discovered, but fails syntax checking by parser:</td></tr>"
-                  +err_html+"</table>";
+        msg += "<table class='docdata table'><tr><td>"+fmt_name
+              +" discovered, but fails syntax checking by parser:</td></tr>"
+              +err_html+"</table>";
+
+      if (err_load.length > 0)
+        msg += "<table class='docdata table'>"
+              +err_load+"</table>";
+
     }
-    return err_html;
+    return (msg.length>0)?msg:null;
   }
 
+  
   function show_item(tabname, title)
   {
       $(`#${tabname}_items #docdata_view`).remove();
@@ -539,10 +552,11 @@ function show_Data(data_error, html_data)
 
 //////////////////////////////////////////////////////////////////////////////
 
-function Import_doc()
+async function Import_doc()
 {
   if (doc_URL!==null) {
-     var _url = (new Settings()).createImportUrl(doc_URL);
+     var settings = new Settings();
+     var _url = await settings.createImportUrl(doc_URL);
      Browser.api.tabs.create({url:_url});
   }
 
@@ -550,16 +564,18 @@ function Import_doc()
 }
 
 
-function Rww_exec()
+async function Rww_exec()
 {
-  function openRww(data)
+  var settings = new Settings();
+
+  async function openRww(data)
   {
-     var _url = (new Settings()).createRwwUrl(doc_URL, data);
+     var _url = await settings.createRwwUrl(doc_URL, data);
      Browser.openTab(_url, gData.tab_index);
   }
 
   if (doc_URL!==null) {
-     var edit_url = (new Settings()).getValue('ext.osds.rww.edit.url');
+     var edit_url = await settings.getValue('ext.osds.rww.edit.url');
 
      if (edit_url.indexOf("{data}")!=-1) {
         save_data("export-rww", "data.txt", "ttl", openRww);
@@ -572,14 +588,15 @@ function Rww_exec()
 }
 
 
-function Sparql_exec()
+async function Sparql_exec()
 {
   if (doc_URL!==null) {
       var u = new URL(doc_URL);
       u.hash = '';
       u.search = '';
-     var _url = (new Settings()).createSparqlUrl(u.toString());
-     Browser.api.tabs.create({url:_url});
+      var settings = new Settings();
+      var _url = await settings.createSparqlUrl(u.toString());
+      Browser.api.tabs.create({url:_url});
   }
 
   return false;
@@ -815,7 +832,8 @@ async function save_data(action, fname, fmt, callback)
       exec_cmd.data.push(dt);
 
     if (document.querySelector('#save-sparql-check-res').checked) {
-      exec_cmd.sparql_check = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
+      var settings = new Settings();
+      exec_cmd.sparql_check = await settings.createSparqlUrl(sparql_graph, sparqlendpoint);
     }
 
     Browser.api.runtime.sendMessage(exec_cmd);

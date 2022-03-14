@@ -58,7 +58,7 @@ function showPopup(tabId)
 {
   //Request the data from the client (foreground) tab.
   try {
-    if (Browser.isFirefoxWebExt) {
+    if (Browser.is_ff) {
       Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data' })
         .then(response => {
           if (!response || !response.ping) {
@@ -260,7 +260,7 @@ async function loadPopup()
   }
   
   var setting = new Settings();
-  var chk_all = setting.getValue("ext.osds.handle_all");
+  var chk_all = await setting.getValue("ext.osds.handle_all");
   if (chk_all && chk_all!=="1") {
     Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
        function(resp) {
@@ -387,22 +387,34 @@ function update_tab(tabname, title, val, err_tabs)
   function create_err_msg(fmt_name, errors)
   {
     var err_html = "";
+    var err_load = "";
+    var msg = "";
+
     if (errors) {
 
       if ($.isArray(errors)) {
-        for(var i=0; i<errors.length; i++)
-          err_html += "<tr><td>"+errors[i]+"</tr></td>";
+        for(var i=0; i<errors.length; i++) {
+          if (errors[i].startsWith("#L#"))
+            err_load += "<tr><td>"+errors[i].substring(3)+"</tr></td>";
+          else
+            err_html += "<tr><td>"+errors[i]+"</tr></td>";
+        }
       }
       else if (errors.length > 0) {
           err_html += "<tr><td>"+errors+"</tr></td>";
       }
 
       if (err_html.length > 0)
-        err_html = "<table class='docdata table'><tr><td>"+fmt_name
-                  +" discovered, but fails syntax checking by parser:</td></tr>"
-                  +err_html+"</table>";
+        msg += "<table class='docdata table'><tr><td>"+fmt_name
+              +" discovered, but fails syntax checking by parser:</td></tr>"
+              +err_html+"</table>";
+
+      if (err_load.length > 0)
+        msg += "<table class='docdata table'>"
+              +err_load+"</table>";
+
     }
-    return (err_html.length>0)?err_html:null;
+    return (msg.length>0)?msg:null;
   }
 
 
@@ -609,7 +621,7 @@ async function parse_Data(dData)
     if (dData.posh.links) 
     {
       var setting = new Settings();
-      var chk_discovery = setting.getValue("ext.osds.auto_discovery");
+      var chk_discovery = await setting.getValue("ext.osds.auto_discovery");
       var atom_links = [];
       var rss_links = [];
       var jsonld_links = []
@@ -629,6 +641,24 @@ async function parse_Data(dData)
         else if (type === 'text/turtle' || type === 'text/n3')
           ttl_links.push(href);
       }
+
+
+      if (dData.posh.dlinks.rss.length > 0) {
+        var list = dData.posh.dlinks.rss;
+        var dlinks = []
+
+        for(var v of list) {
+          var found = false;
+  
+          for(var rss of rss_links)
+            found = (rss === v);
+
+          if (!found)
+            dlinks.push(v);
+        }
+        rss_links = rss_links.concat(dlinks);
+      }
+
 
       if (rss_links.length > 0) 
         gData.links.rss = new RSS_Links("rss", "RSS", gData.baseURL, rss_links, links_cb_start, links_cb_error, links_cb_success);
@@ -736,10 +766,11 @@ async function SuperLinks_exec()
 
 
 
-function Import_doc()
+async function Import_doc()
 {
   if (doc_URL!==null) {
-     var _url = (new Settings()).createImportUrl(doc_URL);
+     var settings = new Settings();
+     var _url = await settings.createImportUrl(doc_URL);
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -747,17 +778,19 @@ function Import_doc()
 }
 
 
-function Rww_exec()
+async function Rww_exec()
 {
-  function openRww(data)
+  var settings = new Settings();
+
+  async function openRww(data)
   {
-     var _url = (new Settings()).createRwwUrl(doc_URL, data);
+     var _url = await settings.createRwwUrl(doc_URL, data);
      Browser.openTab(_url, gData.tab_index);
   }
 
 
   if (doc_URL!==null) {
-     var edit_url = (new Settings()).getValue('ext.osds.rww.edit.url');
+     var edit_url = await settings.getValue('ext.osds.rww.edit.url');
 
      if (edit_url.indexOf("{data}")!=-1) {
         save_data("export-rww", "data.txt", "ttl", openRww);
@@ -770,11 +803,12 @@ function Rww_exec()
 }
 
 
-function Sparql_exec()
+async function Sparql_exec()
 {
   if (doc_URL!==null) {
      var u = new URL(doc_URL);
-     var _url = (new Settings()).createSparqlUrl(u.toString());
+     var settings = new Settings();
+     var _url = await settings.createSparqlUrl(u.toString());
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -1041,7 +1075,8 @@ async function save_data(action, fname, fmt, callback)
     }
 
     if (document.querySelector('#save-sparql-check-res').checked) {
-      exec_cmd.sparql_check = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
+      var settings = new Settings();
+      exec_cmd.sparql_check = await settings.createSparqlUrl(sparql_graph, sparqlendpoint);
     }
 
     Browser.api.runtime.sendMessage(exec_cmd);

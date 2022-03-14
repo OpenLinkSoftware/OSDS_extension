@@ -105,10 +105,10 @@ class Settings {
     this._data = (data!== undefined && data!==null) ? data:null;
   }
 
-  getSparqlQueryDefault(mode)
+  async getSparqlQueryDefault(mode)
   {
     if (mode===null)
-      mode = this.getValue("ext.osds.uiterm.mode");
+      mode = await this.getValue("ext.osds.uiterm.mode");
 
     if (mode === "ui-eav")
       return this.def_sparql_qry_eav;
@@ -116,17 +116,66 @@ class Settings {
       return this.def_sparql_qry_spo;
   }
 
-  getValue(id)
+
+  async _syncAll()
+  {
+    for(var i=0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      var val = localStorage.getItem(key);
+      if (key.startsWith('ext.'))
+        await this._setItem(key, val);
+    }
+  }
+
+
+  async _getItem0(id)
+  {
+    if (Browser.is_ff) {
+      return Browser.api.storage.local.get(id);
+    }
+    else 
+      return new Promise((resolve, reject) => {
+         Browser.api.storage.local.get(id, (rec) => {
+           resolve(rec);
+         });
+        
+      })
+  }
+
+  async _getItem(id)
+  {
+    var rec = await this._getItem0('data_moved');
+    if (!rec['data_moved']) {
+      await this._syncAll();
+      await this._setItem('data_moved','1');
+    }
+
+    var rec = await this._getItem0(id);
+    return rec[id];
+  }
+
+  async _setItem(id, val)
+  {
+    var rec = {};
+    rec[id] = val;
+    if (Browser.is_ff)
+      return Browser.api.storage.local.set(rec);
+    else 
+      return new Promise((resolve, reject) => {
+         Browser.api.storage.local.set(rec, () => {
+           resolve();
+         });
+        
+      })
+  }
+
+
+  async getValue(id)
   {
     var val = null;
 
     try {
-/**
-      if (Browser.isFirefox)
-        val = this._data[id];
-      else
-**/
-      val = localStorage.getItem(id);
+      val = await this._getItem(id);
 
       if (val===undefined)
         val = null;
@@ -208,26 +257,19 @@ class Settings {
     return val;
   }
 
-  setValue(id, val)
+  async setValue(id, val)
   {
     try {
-/**
-      if (Browser.isFirefox) {
-        this._data[id] = val;
-      } else {
-**/
-        localStorage.removeItem(id);
-        localStorage.setItem(id, val);
-//      }
+      await this._setItem(id, val);
     } catch(e) {
       console.log(e);
     }
   }
 
-  createRwwUrl(curUrl, data)
+  async createRwwUrl(curUrl, data)
   {
-    var edit_url = this.getValue('ext.osds.rww.edit.url');
-    var store_url = this.getValue('ext.osds.rww.store.url');
+    var edit_url = await this.getValue('ext.osds.rww.edit.url');
+    var store_url = await this.getValue('ext.osds.rww.store.url');
     var docURL = encodeURIComponent(curUrl);
 
     if (store_url!==null && store_url.length>0) {
@@ -247,12 +289,12 @@ class Settings {
   }
 
 
-  createSparqlUrl(curUrl, endpoint)
+  async createSparqlUrl(curUrl, endpoint)
   {
     function ltrim(str) { return str.replace(/^\s+/,""); }
 
-    var sparql_url = this.getValue('ext.osds.sparql.url');
-    var query = this.getValue('ext.osds.sparql.query');
+    var sparql_url = await this.getValue('ext.osds.sparql.url');
+    var query = await this.getValue('ext.osds.sparql.query');
 
 
     if (endpoint) {
@@ -288,10 +330,10 @@ class Settings {
   }
 
 
-  createImportUrl(curUrl)
+  async createImportUrl(curUrl)
   {
-    var handle_url = this.getValue('ext.osds.import.url');
-    var srv = this.getValue('ext.osds.import.srv');
+    var handle_url = await this.getValue('ext.osds.import.url');
+    var srv = await this.getValue('ext.osds.import.srv');
     return this._createImportUrl_1(curUrl, handle_url, srv)
   }
 
@@ -472,7 +514,7 @@ class SettingsProxy {
 
   async getValue(key) 
   {
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key},
           function(resp) {

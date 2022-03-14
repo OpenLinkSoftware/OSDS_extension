@@ -30,15 +30,15 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         {types: ["main_frame"], urls: ["file:///*"]}, 
         ["blocking"]);
 
-  function onBeforeRequestLocal(d)
+  async function onBeforeRequestLocal(d)
   {
-    var chk_all = setting.getValue("ext.osds.handle_all");
+    var chk_all = await setting.getValue("ext.osds.handle_all");
 
-    var chk_csv = setting.getValue("ext.osds.handle_csv");
+    var chk_csv = await setting.getValue("ext.osds.handle_csv");
     var handle_csv = (chk_csv && chk_csv==="1");
-    var chk_json = setting.getValue("ext.osds.handle_json");
+    var chk_json = await setting.getValue("ext.osds.handle_json");
     var handle_json = (chk_json && chk_json==="1");
-    var chk_xml = setting.getValue("ext.osds.handle_xml");
+    var chk_xml = await setting.getValue("ext.osds.handle_xml");
     var handle_xml = (chk_xml && chk_xml==="1");
 
     var handle = false;
@@ -122,10 +122,10 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
 
 
   Browser.api.webRequest.onBeforeSendHeaders.addListener(
-        function(details) {
-          var chk = setting.getValue('ext.osds.pref.user.chk');
+        async function(details) {
+          var chk = await setting.getValue('ext.osds.pref.user.chk');
           if (chk && chk==="1") {
-            var pref_user = setting.getValue('ext.osds.pref.user');
+            var pref_user = await setting.getValue('ext.osds.pref.user');
             if (pref_user && pref_user.length> 0) {
               details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
 /***
@@ -159,7 +159,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
   	  ["responseHeaders", "blocking"]);
 
 
-  function onHeadersReceived(d)
+  async function onHeadersReceived(d)
   {
     //console.log(d);
     if (d.method && d.method!=="GET")
@@ -174,11 +174,11 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
       }
     }
 
-    var chk_all = setting.getValue("ext.osds.handle_all");
+    var chk_all = await setting.getValue("ext.osds.handle_all");
 
-    var chk_xml = setting.getValue("ext.osds.handle_xml");
-    var chk_csv = setting.getValue("ext.osds.handle_csv");
-    var chk_json = setting.getValue("ext.osds.handle_csv");
+    var chk_xml = await setting.getValue("ext.osds.handle_xml");
+    var chk_csv = await setting.getValue("ext.osds.handle_csv");
+    var chk_json = await setting.getValue("ext.osds.handle_csv");
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
     var handle_json = (chk_json && chk_json==="1");
@@ -348,7 +348,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     else  if (handle)  {
         var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
         if (type === "json" || type === "xml" || type === "csv") {
-          if (Browser.isFirefoxWebExt) {
+          if (Browser.is_ff) {
             Browser.api.tabs.create({url:_url});
             return { cancel: false };
           }
@@ -361,7 +361,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
           if (Browser.isEdgeWebExt) {
             return { redirectUrl: _url };
           }
-          else if (Browser.isFirefoxWebExt) {
+          else if (Browser.is_ff) {
             Browser.api.tabs.update(d.tabId, { url: _url });
 //don't show save dialog      
             return { cancel: true };
@@ -407,7 +407,7 @@ function setPageAction(tabId, show)
 {
   storeBrowserAction(tabId, show);
 
-  if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
+  if (Browser.is_ff || Browser.is_chrome) {
     if (show)
       Browser.api.browserAction.enable(tabId);
     else
@@ -422,7 +422,7 @@ function setPageAction(tabId, show)
 }
 
 
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
     if (request.property === "status")
@@ -433,9 +433,9 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       var sparql_pattern = /\/sparql\/?$/gmi;
       var url = new URL(doc_URL);
       var setting = new Settings();
-      var action_for_params =  setting.getValue("ext.osds.pref.show_action");
+      var action_for_params =  await setting.getValue("ext.osds.pref.show_action");
       var settings = new Settings();
-      var chk_all = setting.getValue("ext.osds.handle_all");
+      var chk_all = await setting.getValue("ext.osds.handle_all");
 
       if (doc_URL && url.search.length>0
           && (sparql_pattern.test(doc_URL) || action_for_params) )
@@ -456,7 +456,7 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       var val = '';
       var settings = new Settings();
       if (request.key)
-        val = settings.getValue(request.key)
+        val = await settings.getValue(request.key)
       sendResponse({'cmd': request.cmd, 'key':request.key, 'val':val});
     }
     else if (request.cmd === "openIfHandled")
@@ -514,7 +514,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 ////////// Context Menu
 
-if (Browser.isFirefoxWebExt || Browser.isChromeWebExt) {
+if (Browser.is_ff || Browser.is_chrome) {
   try {
 //??    Browser.api.browserAction.disable();
     Browser.api.contextMenus.create(
