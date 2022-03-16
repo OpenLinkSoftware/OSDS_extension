@@ -890,6 +890,33 @@
 
         try {
 
+            if ($(".osds_popup").length == 0) {
+               $('body').append(
+                 `<div class="osds_popup">
+                    <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
+                    <div class="osds_popup-content">
+                      <p id="osds_popup_msg">  </p>
+                      <div class="osds_popup_btns">
+                        <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
+                        <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
+                      <div>
+                    </div>
+                  </div>`
+               );
+
+               DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+                   DOM.qSel('.osds_popup').style.display = 'none';
+                   Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+                   return false;
+               };
+               DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+                   DOM.qSel('.osds_popup').style.display = 'none';
+                   Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+                   return false;
+               };
+            }
+            
+            
             is_data_exist();
             if (!data_found) {
                 window.setTimeout(is_data_exist, 3000);
@@ -1062,16 +1089,25 @@
                 else if (request.property == "super_links_msg_show") {
                     if (request.message) {
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
-                      $(".super_links_msg").css("display","flex");
+                      DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
                 else if (request.property == "super_links_msg_hide") {
-                    $(".super_links_msg").css("display","none");
+                    DOM.qSel('.super_links_msg').style.display = 'none';
                 }
                 else if (request.property == "super_links_snackbar") {
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
+                }
+                else if (request.property == "osds_msg_show") {
+                    if (request.message) {
+                      DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
+                      DOM.qSel('.osds_popup').style.display = 'block';
+                    }
+                }
+                else if (request.property == "osds_msg_hide") {
+                    DOM.qSel('.osds_popup').style.display = 'none';
                 }
 
                 sendResponse({});  // stop

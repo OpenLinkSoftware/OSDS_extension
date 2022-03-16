@@ -332,6 +332,125 @@ class Handle_Turtle {
 
 
 
+class Handle_Quads {
+  constructor(start_id, make_ttl, for_query, bnode_types, skip_docpref) 
+  {
+    this.baseURI = null;
+    this.start_id = 0;
+    if (start_id!==undefined)
+      this.start_id = start_id;
+    this.skip_error = true;
+    this.skipped_error = [];
+    this._pattern = /([0-9]*).$/gm;
+    this._make_ttl = false;
+    if (make_ttl)
+      this._make_ttl = make_ttl;
+    this.for_query = for_query;
+    this.bnode_types = bnode_types || {};
+    this.skip_docpref = skip_docpref;
+  }
+
+  async parse(textData, docURL) 
+  {
+    this.baseURI = docURL;
+    var output = this._make_ttl ? [] : '';
+
+    for(var i=0; i < textData.length; i++)
+    {
+      var data = await this._parse_1(textData[i], docURL);
+      if (this._make_ttl)
+        output = output.concat(data);
+      else
+        output += data;
+    }
+    return {data:output, errors: this.skipped_error};
+  }
+
+  async _parse_1(textData, docURL) 
+  {
+    this.baseURI = docURL;
+    var self = this;
+
+    return new Promise(function (resolve, reject) {
+      try {
+        var stores = {};
+        var parser = N3.Parser({baseIRI:self.baseURI, format:'N-Quads'});
+        var ttl_data = textData;
+
+        parser.parse(ttl_data,
+          function (error, tr, prefixes) {
+            if (error) {
+              error = ""+error;
+              error = sanitize_str(error);
+
+              if (self.skip_error) {
+                self.skipped_error.push(error);
+
+                resolve('');
+              }
+              else
+              {
+                self.error = error;
+                reject(self.error);
+              }
+
+            }
+            else if (tr) {
+              var id = tr.graph.id;
+              if (!id)
+                id = '#def#';
+
+              var s = stores[id];
+              if (!s) {
+                s = new N3DataConverter();
+                stores[id] = s;
+              }
+
+              s.addTriple(tr.subject,
+                          tr.predicate,
+                          tr.object);
+            }
+            else {
+
+              var output = (self._make_ttl) ? [] : '';
+
+              for(var id in stores) {
+                var store = stores[id];
+                var triples = store.output;
+
+                if (self._make_ttl) {
+                  var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
+                  if (ttl_data)
+                    output.push(ttl_data);
+                }
+                else {
+                  var html_str =  new HTML_Gen(docURL, self.bnode_types).load(triples, self.start_id);
+                  if (html_str)
+                    output += html_str;
+                }
+
+                if (triples!==null && triples.length!==undefined)
+                  self.start_id+= triples.length;
+              }
+
+              resolve(output);
+            }
+          });
+      } catch (ex) {
+        if (self.skip_error)  {
+          self.skipped_error.push(""+ex.toString());
+          resolve('');
+        }
+        else 
+          reject(ex.toString());
+      }
+    });
+  }
+
+}
+
+
+
 class Handle_JSONLD {
   constructor(make_ttl) 
   {
@@ -361,7 +480,7 @@ class Handle_JSONLD {
           var expanded = await jsonld.expand(jsonld_data, {base:docURL});
           var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
 
-          var handler = new Handle_Turtle(this.start_id, this._make_ttl, false, bnode_types);
+          var handler = new Handle_Quads(this.start_id, this._make_ttl, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([nquads], docURL);
           if (ret.errors.length > 0) {

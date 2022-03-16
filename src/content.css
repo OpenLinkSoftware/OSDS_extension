@@ -1,3 +1,56 @@
+.osds_popup {
+        all: initial;
+	position: absolute !important;
+	display: none;
+	border: 2px solid #000 !important;
+	border-radius: 4px !important; 
+	width: 510px;
+	top:100px !important;
+	left: 20px !important;
+	background: #fff !important;
+	color: black !important;
+ 	z-index: 2147483647 !important;
+        marging: 2px !important;
+        marging-bottom: 10px !important;
+	font-family: Arial, Helvetica, sans-serif !important;
+	line-height: normal !important;
+}
+.osds_popup-title {
+	width: 100% !important;
+	height: 18px !important;
+	background-color: #0000a0 !important;
+	color: white !important;
+	border-bottom: 1px solid #000 !important;
+	position: relative !important;
+	cursor: move !important;
+        font-size: 14px !important;
+        text-align: center;
+}
+
+.osds_popup-content {
+	height: calc(100% - 10px - 10px - 18px) !important;
+	overflow: auto !important;
+	padding: 10px 10px 10px 10px !important;
+	background: khaki !important;
+        display:flex !important; 
+        flex-direction: column !important;
+}
+
+.osds_popup_msg {
+	margin: 10px 0px !important;
+}
+
+.osds_popup_btn {
+        min-width:60px !important; 
+        margin-left: 10px !important;
+}
+
+.osds_popup_btns {
+        margin:auto !important;
+}
+
+
+
 .super_links_msg {
         all: initial;
 	display: none;

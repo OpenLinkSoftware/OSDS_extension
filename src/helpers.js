@@ -117,12 +117,13 @@ class SPARQL_Upload {
             if (!ret.rc) {
               if (ret.status === 401 || ret.status === 403) {
                  this.logout();
-                 this.check_login(true); // Browser.openTab(REDIR_URL);
+                 this.state = 'init';
+                 this.messages.msg_show(ret.error);
                  return false;
 
               } else {
-                 this.messages.snackbar_show('Unable to save:' +ret.error);
                  this.state = 'init';
+                 this.messages.msg_show(ret.error);
                  return false;
               }
             }

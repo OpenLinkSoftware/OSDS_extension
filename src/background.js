@@ -573,6 +573,12 @@ async function actionSPARQL_Upload(info, tab, request) {
          snackbar_show: function (msg1, msg2) {
             Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_snackbar', msg1, msg2 });
          },
+         msg_show: function(msg) {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'osds_msg_show', message: msg });
+         },
+         msg_hide: function() {
+            Browser.api.tabs.sendMessage(tab.id, { property: 'osds_msg_hide' });
+         }
        }
 
   var sparql = new SPARQL_Upload(tab, msg, request);
@@ -635,6 +641,25 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         }
       }
 
+    }
+    else if (request.cmd === "osds_popup_retry")
+    {
+      if (gSPARQL_Upload) {
+        var sparql = gSPARQL_Upload;
+        if (sparql && sparql.state === "init") {
+          var rc = await sparql.reexec();
+          if (rc)
+            gSPARQL_Upload = null;
+        } else {
+          gSPARQL_Upload = null;
+        }
+      }
+    }
+    else if (request.cmd === "osds_popup_cancel")
+    {
+      if (gSPARQL_Upload) {
+        gSPARQL_Upload = null;
+      }
     }
     
   } catch(e) {
