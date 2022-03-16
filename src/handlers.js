@@ -464,7 +464,7 @@ class Handle_JSONLD {
 
   async parse(textData, docURL, bnode_types)
   {
-    var output = '';
+    var output = this._make_ttl ? [] : '';
 
     for(var i=0; i < textData.length; i++)
     {
@@ -486,8 +486,12 @@ class Handle_JSONLD {
           if (ret.errors.length > 0) {
             this.skipped_error = this.skipped_error.concat(ret.errors);
           } else {
-            output += ret.data;
-            output += "\n\n";
+            if (this._make_ttl) {
+              output = output.concat(ret.data);
+            } else {
+              output += ret.data;
+              output += "\n\n";
+            }
 
             this.start_id = handler.start_id;
           }

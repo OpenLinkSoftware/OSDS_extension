@@ -272,8 +272,12 @@ class Convert_JSONLD {
         if (ret.errors.length > 0) 
           this.skipped_error = this.skipped_error.concat(ret.errors);
 
-        if (ret.data.length > 0)
-          output.push(ret.data);
+        if (ret.data.length > 0) {
+          if (Array.isArray(ret.data))
+            output = output.concat(ret.data);
+          else
+            output.push(ret.data);
+        }
 
       } catch (ex) {
         this.skipped_error.push(ex.toString());
