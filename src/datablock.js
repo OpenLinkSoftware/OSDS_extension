@@ -351,6 +351,7 @@ class TTL_Block extends DataBlock {
   {
     super(_baseURL, _text, add_namespaces);
     this.text_nano = [];
+    this.text_nano_curly = [];
   }
 
   async add_nano(_nano_data)
@@ -361,6 +362,17 @@ class TTL_Block extends DataBlock {
 
       if (output && output.length > 0)
         this.text_nano = this.text_nano.concat(output);
+    }
+  }
+
+  async add_nano_curly(_nano_data)
+  {
+    if (_nano_data && _nano_data.length > 0) {
+      var fix = new Fix_Nano();
+      var output = await fix.parse(_nano_data);
+
+      if (output && output.length > 0)
+        this.text_nano_curly = this.text_nano_curly.concat(output);
     }
   }
 
@@ -376,12 +388,27 @@ class TTL_Block extends DataBlock {
     try {
       if (this.text_nano && this.text_nano.length > 0) {
         var handler = new Handle_Turtle(start_id, false, false, bnode_types);
-        var ret = await handler.parse_nano(this.text_nano, this.baseURL, true);
+        var ret = await handler.parse_nano(this.text_nano, this.baseURL);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
 
         this.text_nano = ret.text;
+
+        if (html)
+          html += ret.data;
+        else
+          html = ret.data;
+
+        this.start_id = handler.start_id;
+      }
+
+      if (this.text_nano_curly && this.text_nano_curly.length > 0) {
+        var handler = new Handle_Turtle(start_id, false, false, bnode_types);
+        var ret = await handler.parse_nano_curly(this.text_nano, this.baseURL);
+
+        this.text_nano = ret.text;
+        this.text_nano_curly = [];
 
         if (html)
           html += ret.data;
@@ -410,7 +437,7 @@ class TTL_Block extends DataBlock {
     if (this.text_nano) {
       if (for_query) {
         var handler = new Handle_Turtle(0, true, false);
-        var ret = await handler.parse_nano(this.text_nano, this.baseURL, true);
+        var ret = await handler.parse_nano(this.text_nano, this.baseURL);
         if (ret.errors.length>0)
           error = ret.errors;
 
@@ -612,7 +639,7 @@ class RDFa_Block extends DataBlock_Prepare {
     try {
       if (this.n3data) {
         var handler = new Handle_RDFa();
-        var ret = handler.parse(this.n3data, this.baseURL, bnode_types);
+        var ret = await handler.parse(this.n3data, this.baseURL, bnode_types);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
@@ -643,7 +670,7 @@ class Microdata_Block extends DataBlock_Prepare {
   {
     var data = JSON.parse(this.text[0]);
     var handler = new Handle_Microdata(true);
-    var rc = handler.parse(data, this.baseURL);
+    var rc = await handler.parse(data, this.baseURL);
     return {ttl: [rc.data], error: rc.errors};
   }
 
@@ -656,7 +683,7 @@ class Microdata_Block extends DataBlock_Prepare {
     try {
       if (this.n3data) {
         var handler = new Handle_Microdata();
-        var ret = handler.parse(this.n3data, this.baseURL, bnode_types);
+        var ret = await handler.parse(this.n3data, this.baseURL, bnode_types);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);

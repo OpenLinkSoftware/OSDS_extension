@@ -43,7 +43,7 @@ done
 
 #copy Firefox related files
 cp -va $SRC_DIR/manifest.json.ff $DST_DIR/manifest.json
-cp -va $SRC_DIR/browser_ff_WebExt.js $DST_DIR/browser.js
+cp -va $SRC_DIR/browser_ff.js $DST_DIR/browser.js
 
 for I_DIR in images lib; do
   mkdir -pv $DST_DIR/$I_DIR

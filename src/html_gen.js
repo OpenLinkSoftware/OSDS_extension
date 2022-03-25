@@ -19,7 +19,7 @@
  */
   
 
-  HTML_Gen = function(_docURI, bnode_types) {
+  HTML_Gen = function(_docURI, bnode_types, uimode) {
     this.ns = new Namespace();
     this.uimode = "";
     this.SubjName = "Subject";
@@ -34,6 +34,17 @@
           "http://www.w3.org/2004/02/skos/core#altLabel": "AltLabel",
          "http://www.w3.org/2004/02/skos/core#prefLabel": "PrefLabel",
     };
+
+    this.uimode = uimode;
+    if (this.uimode===null)
+      this.uimode = "ui-eav";
+
+    if (this.uimode === "ui-eav") 
+    {
+      this.SubjName = "Entity";
+      this.PredName = "Attribute";
+      this.ObjName  = "Value";
+    }
   };
 
   HTML_Gen.prototype = {
@@ -45,18 +56,6 @@
    
       if (start_id===undefined)
         start_id = 0;
-
-      this.uimode = localStorage.getItem("ext.osds.uiterm.mode");
-      if (this.uimode===null)
-        this.uimode = "ui-eav";
-
-      if (this.uimode === "ui-eav") 
-      {
-        this.SubjName = "Entity";
-        this.PredName = "Attribute";
-        this.ObjName  = "Value";
-      }
-
 
       if (n_data!=null &&
           n_data.length!==undefined && 

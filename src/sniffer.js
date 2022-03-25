@@ -648,7 +648,8 @@
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 
       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
-      $(".super_links_msg").css("display","flex");
+      DOM.qSel('.super_links_msg').style.display = 'flex';
+
 
       setTimeout(() => {
         try {
@@ -689,7 +690,7 @@
         } catch(e) {
           console.log(e);
         } finally {
-          setTimeout(()=> $(".super_links_msg").css("display","none"), 2000);
+          setTimeout(()=> DOM.qSel('.super_links_msg').style.display = 'none', 2000);
         }
       }, 200);
     }
@@ -904,6 +905,8 @@
                   </div>`
                );
 
+               DOM.qSel('.osds_popup').style.display = 'none';
+
                DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
                    DOM.qSel('.osds_popup').style.display = 'none';
                    Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
@@ -1075,6 +1078,9 @@
                   </div>`
                );
             }
+            DOM.qSel('.super_links_popup').style.display = 'none';
+            DOM.qSel('.super_links_msg').style.display = 'none';
+
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if (request.property == "req_doc_data") {

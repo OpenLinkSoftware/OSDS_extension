@@ -607,7 +607,7 @@ async function parse_Data(dData)
 
     gData.turtle = new TTL_Block(gData.baseURL, dData.turtle.text);
     await gData.turtle.add_nano(dData.ttl_nano.text);
-    await gData.turtle.add_nano(dData.ttl_curly_nano.text);
+    await gData.turtle.add_nano_curly(dData.ttl_curly_nano.text);
 
     gData.posh = new TTL_Block(gData.baseURL, [dData.posh.text]);
 
@@ -1099,8 +1099,25 @@ async function save_data(action, fname, fmt, callback)
     }
     else if (action==="filesave") 
     {
-      blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+      var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);
+/***
+    var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+    var blobUrl = window.URL.createObjectURL(blob);
+
+    var link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fname; 
+
+
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(link);
+      }, 2000);
+
+***/
     }
     else if (action==="fileupload") 
     {

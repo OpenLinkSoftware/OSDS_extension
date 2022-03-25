@@ -164,10 +164,12 @@ class Handle_Microdata {
       this._make_ttl = make_ttl;
   }
 
-  parse(jsonData, docURL, bnode_types) 
+  async parse(jsonData, docURL, bnode_types) 
   {
     var self = this;
     var ret_data = null;
+    var setting = new Settings();
+    var uimode = await setting.getValue("ext.osds.uiterm.mode");
 
     try
     {
@@ -177,7 +179,7 @@ class Handle_Microdata {
       if (self._make_ttl)
         ret_data = new TTL_Gen(docURL, false, bnode_types).load(out_data);
       else
-        ret_data = new HTML_Gen(docURL, bnode_types).load(out_data);
+        ret_data = new HTML_Gen(docURL, bnode_types, uimode).load(out_data);
 
       return {data:ret_data, errors:[]};
     }
@@ -210,10 +212,10 @@ class Handle_Turtle {
     this.skip_docpref = skip_docpref;
   }
 
-  async parse_nano(textData, docURL, _skip_error) {
+  async parse_nano(textData, docURL) {
     this.ns_pref = this.ns.get_ns_desc();
     this.ns_pref_size = this.ns.get_ns_size();
-    this.skip_error = _skip_error;
+    this.skip_error = true;
 
     this.baseURI = docURL;
     var output = this._make_ttl ? [] : '';
@@ -233,6 +235,32 @@ class Handle_Turtle {
       }
     }
     return {data:output, errors: this.skipped_error, text:srcData};
+
+  }
+
+  async parse_nano_curly(textData, docURL) {
+    this.ns_pref = this.ns.get_ns_desc();
+    this.ns_pref_size = this.ns.get_ns_size();
+    this.skip_error = false;
+
+    this.baseURI = docURL;
+    var output = this._make_ttl ? [] : '';
+    var srcData = [];
+
+    for(var i=0; i < textData.length; i++)
+    {
+      try {
+        var data = await this._parse_1(textData[i], docURL);
+        if (this._make_ttl)
+          output.push(data);
+        else
+          output += data;
+        srcData.push(textData[i]);
+      } catch(e) {
+        console.log(e);
+      }
+    }
+    return {data:output, errors: [], text:srcData};
 
   }
 
@@ -256,6 +284,8 @@ class Handle_Turtle {
   {
     this.baseURI = docURL;
     var self = this;
+    var setting = new Settings();
+    var uimode = await setting.getValue("ext.osds.uiterm.mode");
 
     return new Promise(function (resolve, reject) {
       try {
@@ -307,7 +337,7 @@ class Handle_Turtle {
               }
               else
               {
-                var html_str =  new HTML_Gen(docURL, self.bnode_types).load(triples, self.start_id);
+                var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id);
                 output = html_str==null?'':html_str;
               }
 
@@ -370,6 +400,8 @@ class Handle_Quads {
   {
     this.baseURI = docURL;
     var self = this;
+    var setting = new Settings();
+    var uimode = await setting.getValue("ext.osds.uiterm.mode");
 
     return new Promise(function (resolve, reject) {
       try {
@@ -424,7 +456,7 @@ class Handle_Quads {
                     output.push(ttl_data);
                 }
                 else {
-                  var html_str =  new HTML_Gen(docURL, self.bnode_types).load(triples, self.start_id);
+                  var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id);
                   if (html_str)
                     output += html_str;
                 }
@@ -518,9 +550,12 @@ class Handle_RDFa {
   {
   }
 
-  parse(data, docURL, bnode_types) 
+  async parse(data, docURL, bnode_types) 
   {
-    var str = new HTML_Gen(docURL, bnode_types).load(data);
+    var setting = new Settings();
+    var uimode = await setting.getValue("ext.osds.uiterm.mode");
+
+    var str = new HTML_Gen(docURL, bnode_types, uimode).load(data);
     return {data:str, errors: []};
   }
 }

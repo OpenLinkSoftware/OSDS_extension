@@ -44,7 +44,7 @@ OidcWeb.prototype = {
         idp = this.session.issuer;
         var key = oidc_clients+idp;
         var rec = await this.localStore_get(key);
-        if (rec && rec[key])
+        if (rec && rec[key] && !Browser.is_safari)
           localStorage.setItem(oidc_clients+idp, rec[key]);
 
         await this.authClient.logout();
@@ -85,6 +85,8 @@ OidcWeb.prototype = {
        this.popupCenter({url: _url, title:"Login", w:width, h:height});
      }
 
+     if (Browser.is_safari)
+       window.close();
   },
 
   login2: function(idp_url) {
@@ -112,6 +114,9 @@ OidcWeb.prototype = {
      } else {
        this.popupCenter({url, title:"Login", w:width, h:height});
      }
+
+     if (Browser.is_safari)
+       window.close();
   },
 
   popupCenter: function({url, title, w, h})
@@ -128,7 +133,7 @@ OidcWeb.prototype = {
     var newWindow = window.open(url, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);  
     
     // Puts focus on the newWindow  
-    if (window.focus) {  
+    if (window.focus && newWindow) {  
         newWindow.focus();  
     }  
   },
@@ -149,11 +154,14 @@ OidcWeb.prototype = {
     try {
       var rec = await this.localStore_get(oidc_session);
 
-      if (rec && rec[oidc_session]) {
-        var session = rec[oidc_session];
-        localStorage.setItem(oidc_session, session);
-      } else
-        localStorage.removeItem(oidc_session);
+      if (!Browser.is_safari){
+        if (rec && rec[oidc_session]) {
+          var session = rec[oidc_session];
+          localStorage.setItem(oidc_session, session);
+        } 
+        else
+          localStorage.removeItem(oidc_session);
+      }
 
       var prev_webid = this.webid;
 

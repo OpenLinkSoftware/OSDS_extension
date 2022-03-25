@@ -144,10 +144,12 @@ class Settings {
 
   async _getItem(id)
   {
-    var rec = await this._getItem0('data_moved');
-    if (!rec['data_moved']) {
-      await this._syncAll();
-      await this._setItem('data_moved','1');
+    if (!Browser.is_safari) {
+      var rec = await this._getItem0('data_moved');
+      if (!rec['data_moved']) {
+        await this._syncAll();
+        await this._setItem('data_moved','1');
+      }
     }
 
     var rec = await this._getItem0(id);
