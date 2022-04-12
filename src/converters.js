@@ -926,6 +926,8 @@ class Convert_CSV {
         var found = 0;
 
         for (var i=0; i < col.length; i++){
+          if (!col[i])
+            col[i] = 'Unnamed'+i;
           var lst = col[i].split(':');
           if (lst.length > 1) {
             col[i] = lst.length > 2 ? lst[2] : lst[0];
