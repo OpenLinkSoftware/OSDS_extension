@@ -704,6 +704,9 @@ function Download_exec_update_state()
 
 async function Download_exec()
 {
+  var settings = new Settings();
+  await settings._syncAll();
+
   var _url = new URL(doc_URL);
   _url.hash = "osds";
   $('#save-sparql-graph').val(_url.toString());

@@ -644,7 +644,7 @@
       if (!data)
         return;
 
-      var settings = new SettingsProxy();
+      var settings = new Settings();
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 
       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
@@ -762,7 +762,7 @@
     {
       $('.super_links_popup-content').children().remove();
 
-      var settings = new SettingsProxy();
+      var settings = new Settings();
       var viewer_mode = await settings.getValue('ext.osds.super-links-viewer');
 
       async function create_href(url) {

@@ -19,8 +19,8 @@
  */
 
 var Browser = {
-    is_chrome: true,
-    is_ff: false,
+    is_chrome: false,
+    is_ff: true,
     isEdgeWebExt: false,
     is_safari: false,
 

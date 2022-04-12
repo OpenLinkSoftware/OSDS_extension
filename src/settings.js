@@ -119,11 +119,13 @@ class Settings {
 
   async _syncAll()
   {
-    for(var i=0; i < localStorage.length; i++) {
-      var key = localStorage.key(i);
-      var val = localStorage.getItem(key);
-      if (key.startsWith('ext.'))
-        await this._setItem(key, val);
+    if (!Browser.is_safari) {
+      for(var i=0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        var val = localStorage.getItem(key);
+        if (key.startsWith('ext.'))
+          await this._setItem(key, val);
+      }
     }
   }
 
@@ -505,52 +507,6 @@ class Settings {
        return h_url + docURL;
   }
 
-
-}
-
-
-class SettingsProxy {
-  constructor() {
-    this.settings = new Settings();
-  }
-
-  async getValue(key) 
-  {
-    if (Browser.is_chrome) {
-      return new Promise(function (resolve, reject) {
-        Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key},
-          function(resp) {
-            var val = null;
-            if (resp.val && resp.key === key)
-              val = resp.val
-            resolve(resp.val);
-          });
-        });
-    } else {
-      var resp = await Browser.api.runtime.sendMessage({'cmd': 'getPref', 'key':key});
-      var val = null;
-      if (resp.val && resp.key === key)
-        val = resp.val;
-      return val;
-    }
-  }
-
-  async createImportUrl(curUrl)
-  {
-    var handle_url = await this.getValue('ext.osds.import.url');
-    var srv = await this.getValue('ext.osds.import.srv');
-    return this.settings._createImportUrl_1(curUrl, handle_url, srv)
-  }
-
-  createDefaultImportCmdFor(srv, _url)
-  {
-    return this.settings.createDefaultImportCmdFor(srv, _url);
-  }
-
-  createSpongeCmdFor(srv, mode, _url)
-  {
-    return this.settings.createSpongeCmdFor(srv, mode, _url)
-  }
 
 }
 

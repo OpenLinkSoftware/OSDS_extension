@@ -23,12 +23,61 @@ const { OIDCWebClient } = OIDC;
 const oidc_session = 'oidc.session';
 const oidc_clients = 'oidc.clients.';
 
+class myStore {
+  constructor()
+  {
+    this.s = window.localStorage;
+    this.data = {};
+    this.keys = [];
+  }
+
+  sync()
+  {
+    this.keys = Object.keys(this.data);
+  }
+
+  key(idx) 
+  {
+    if (idx < 0 || idx >= this.keys.length)
+      return null;
+    return this.keys[idx];
+  }
+
+  setItem(key, val)
+  {
+    this.data[key] = val;
+    this.sync();
+  }
+
+  getItem(key)
+  {
+    return this.data[key];
+  } 
+
+  removeItem(key)
+  {
+    delete this.data[key];
+    this.sync();
+  }
+
+  get length()
+  {
+    return this.keys.length;
+  }
+
+}
+
+
+
+
 OidcWeb = function(data) {
   this.webid = null;
   this.storage = null;
   this.session = null;
+  this.jstore = new myStore();
 
-  const options = { solid: true };
+  const options = Browser.is_safari ? { solid: true, store: this.jstore} : { solid: true } ;
+
   this.authClient = new OIDCWebClient(options);
   this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
   this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
@@ -44,8 +93,13 @@ OidcWeb.prototype = {
         idp = this.session.issuer;
         var key = oidc_clients+idp;
         var rec = await this.localStore_get(key);
-        if (rec && rec[key] && !Browser.is_safari)
-          localStorage.setItem(oidc_clients+idp, rec[key]);
+
+        if (rec && rec[key]) {
+          if (Browser.is_safari)
+            this.jstore.setItem(oidc_clients+idp, rec[key]);
+          else
+            localStorage.setItem(oidc_clients+idp, rec[key]);
+        }
 
         await this.authClient.logout();
       }
@@ -154,13 +208,18 @@ OidcWeb.prototype = {
     try {
       var rec = await this.localStore_get(oidc_session);
 
-      if (!Browser.is_safari){
-        if (rec && rec[oidc_session]) {
-          var session = rec[oidc_session];
-          localStorage.setItem(oidc_session, session);
-        } 
+      if (rec && rec[oidc_session]) {
+        var session = rec[oidc_session];
+        if (Browser.is_safari)
+          this.jstore.setItem(oidc_session, session);
         else
-          localStorage.removeItem(oidc_session);
+          localStorage.setItem(oidc_session, session);
+      } 
+      else {
+        if (Browser.is_safari)
+          this.jstore.removeItem(oidc_session);
+        else
+          localStorage.setItem(oidc_session, session);
       }
 
       var prev_webid = this.webid;

@@ -422,6 +422,35 @@ function setPageAction(tabId, show)
 }
 
 
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "openIfHandled")
+    {
+      var tabId = request.tabId;
+      var tab = pages[request.tabId];
+      if (tab) {
+        var url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext);
+        Browser.openTab(url);
+        sendResponse({'cmd': request.cmd, 'opened':true});
+      } 
+      else {
+        sendResponse({'cmd': request.cmd, 'opened':false});
+      }
+    }
+/**
+    else
+    {
+      sendResponse({}); // stop
+    }
+**/
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
 Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
@@ -451,44 +480,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
             setPageAction(tabId, true);
       }
     }
-    else if (request.cmd === "getPref")
-    {
-      var val = '';
-      var settings = new Settings();
-      if (request.key)
-        val = await settings.getValue(request.key)
-      sendResponse({'cmd': request.cmd, 'key':request.key, 'val':val});
-    }
-    else if (request.cmd === "openIfHandled")
-    {
-      var tabId = request.tabId;
-      var tab = pages[request.tabId];
-      if (tab) {
-        var url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext);
-        Browser.openTab(url);
-        sendResponse({'cmd': request.cmd, 'opened':true});
-      } 
-      else {
-        sendResponse({'cmd': request.cmd, 'opened':false});
-      }
-    }
-/**
-    else
-    {
-      sendResponse({}); // stop
-    }
-**/
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
-  }
-
-});
-
-
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
-{
-  try {
-    if (request.cmd === "actionSuperLinks")
+    else if (request.cmd === "actionSuperLinks")
     {
       var curTab = await getCurTab();
       if (curTab.length > 0)
