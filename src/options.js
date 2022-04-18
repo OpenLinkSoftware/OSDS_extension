@@ -120,9 +120,9 @@ async function init()
 function changeHandleAll()
 {
    var v = DOM.iSel('chk_try_handle_all').checked ? false : true;
-     $('#chk_try_handle_xml').prop('disabled', v);
-     $('#chk_try_handle_csv').prop('disabled', v);
-     $('#chk_try_handle_json').prop('disabled', v);
+     DOM.iSel('chk_try_handle_xml').disabled =  v;
+     DOM.iSel('chk_try_handle_csv').disabled = v;
+     DOM.iSel('chk_try_handle_json').disabled = v;
 }
 
 function closeOptions()
@@ -287,8 +287,27 @@ async function loadPref()
     var chk_json = await gPref.getValue("ext.osds.handle_json");
     DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
 
-    var chk_all = await gPref.getValue("ext.osds.handle_all");
-    DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
+    if (Browser.is_safari) {
+      DOM.iSel("chk_try_handle_all").checked = false;
+      DOM.iSel("chk_try_handle_all").disabled = true;
+
+      DOM.iSel("chk_try_handle_xml").checked = true;
+      DOM.iSel("chk_try_handle_csv").checked = true;
+      DOM.iSel("chk_try_handle_json").checked = true;
+    } 
+    else {
+      var chk_all = await gPref.getValue("ext.osds.handle_all");
+      DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
+
+      var chk_xml = await gPref.getValue("ext.osds.handle_xml");
+      DOM.iSel("chk_try_handle_xml").checked = (chk_xml==="1");
+
+      var chk_csv = await gPref.getValue("ext.osds.handle_csv");
+      DOM.iSel("chk_try_handle_csv").checked = (chk_csv==="1");
+
+      var chk_json = await gPref.getValue("ext.osds.handle_json");
+      DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
+    }
 
     changeHandleAll();
 

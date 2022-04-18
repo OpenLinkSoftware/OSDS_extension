@@ -45,6 +45,17 @@ var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.upd
 
 $(document).ready(function()
 {
+  
+  if (Browser.is_safari) {
+      var el = DOM.qSel("body.sniffer");
+      el.classList.add("sniffer_sf");
+      el.classList.remove("sniffer");
+
+      el = DOM.qSel("div.content");
+      el.classList.add("content_sf");
+      el.classList.remove("content");
+  }
+
   document.getElementById("c_year").innerText = new Date().getFullYear();
 
   async function click_login() {
@@ -285,46 +296,49 @@ function load_data_from_url(loc)
     else if (type==="csv")
       hdr_accept = 'text/csv,application/csv;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
 
-/****      
-    var options = {
-          headers: {
-            'Accept': hdr_accept,
-            'Cache-control': 'no-cache'
-          },
-        };
+    if (Browser.is_safari) {
+      var options = {
+            headers: {
+              'Accept': hdr_accept,
+              'Cache-control': 'no-cache'
+            },
+          };
 
-    fetchWithTimeout(url, options, 30000)
-    .then(rc => {
-      if (!rc.ok) {  // not a 2xx level response
-        var msg = "Could not load data from: "+url+"\nError: "+rc.statusText;
-        alert(msg);
-        show_Data(msg, '');
-      }
-      rc.text().then(txt => {
-        start_parse_data(txt, type, url, ext);
+      fetchWithTimeout(url, options, 30000)
+      .then(rc => {
+        if (!rc.ok) {  // not a 2xx level response
+          var msg = "Could not load data from: "+url+"\nError: "+rc.statusText;
+          alert(msg);
+          show_Data(msg, '');
+        }
+        rc.text().then(txt => {
+          start_parse_data(txt, type, url, ext);
+        })
       })
-    })
-    .catch( e => {
-        var msg = "Could not load data from: "+url+"\nError: "+e;
-        alert(msg);
-        show_Data(msg, '');
-    })
-****/
+      .catch( e => {
+          var msg = "Could not load data from: "+url+"\nError: "+e;
+          alert(msg);
+          show_Data(msg, '');
+      })
 
-    jQuery.ajaxSetup({
-       dataType: "text",
-       headers:{'Accept': hdr_accept,
-                'Cache-control': 'no-cache'},
-       timeout: 30000
-    });
+    }
+    else {
 
-    jQuery.get(url, function(data, status){
-        start_parse_data(data, type, url, ext);
-    }, "text").fail(function(msg) {
-        var msg = "Could not load data from: "+url+"\nError: "+msg.statusText;
-        alert(msg);
-        show_Data(msg, '');
-    });
+      jQuery.ajaxSetup({
+         dataType: "text",
+         headers:{'Accept': hdr_accept,
+                  'Cache-control': 'no-cache'},
+         timeout: 30000
+      });
+
+      jQuery.get(url, function(data, status){
+          start_parse_data(data, type, url, ext);
+      }, "text").fail(function(msg) {
+          var msg = "Could not load data from: "+url+"\nError: "+msg.statusText;
+          alert(msg);
+          show_Data(msg, '');
+      });
+    }
 }
 
 

@@ -18,19 +18,16 @@
  *
  */
 
+
+
 (function () {
 
 var pages = {};
 var setting = new Settings();
-var ext_url = Browser.api.extension.getURL("page_panel.html");
+var page_panel_url = Browser.api.extension.getURL("page_panel.html");
 
 
-  Browser.api.webRequest.onBeforeRequest.addListener(
-      onBeforeRequestLocal, 
-        {types: ["main_frame"], urls: ["file:///*"]}, 
-        ["blocking"]);
-
-  async function onBeforeRequestLocal(d)
+  async function onBeforeLoadName(url, tabId)
   {
     var chk_all = await setting.getValue("ext.osds.handle_all");
 
@@ -43,57 +40,67 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
 
     var handle = false;
     var could_handle = false;
+    var type = "";
     var ext = "";
+    var path_name = (new URL(url)).pathname.toLowerCase();
 
-    if (d.url.match(/(.rdf)$/i)) {
+
+    if (Browser.is_safari) {
+      chk_all = "0";
+      handle_csv = true;
+      handle_json = true;
+      handle_xml = true;
+    }
+
+    if (path_name.endsWith(".rdf")) {
       handle = true;
       type = "rdf";
       ext = "rdf";
       could_handle = true;
     }
-    else if (d.url.match(/(.owl)$/i)) {
+    else if (path_name.endsWith(".owl")) {
       handle = true;
       type = "rdf";
       ext = "owl";
       could_handle = true;
     }
-    else if (d.url.match(/(.ntriples)$/i)) {
+    else if (path_name.endsWith(".ntriples")) {
       handle = true;
       type = "turtle";
       ext = "ntriples";
       could_handle = true;
     }
-    else if (d.url.match(/(.ttl)$/i)) {
+    else if (path_name.endsWith(".ttl")) {
       handle = true;
       type = "turtle";
       ext = "ttl";
       could_handle = true;
     }
-    else if (d.url.match(/(.n3)$/i)) {
+    else if (path_name.endsWith(".n3")) {
       handle = true;
       type = "turtle";
       ext = "n3";
       could_handle = true;
     }
-    else if (d.url.match(/(.jsonld)$/i) ) {
+    else if (path_name.endsWith(".jsonld") || path_name.endsWith(".ldjson")) {
       handle = true;
       type = "jsonld";
       ext = "jsonld";
       could_handle = true;
     }
-    else if (d.url.match(/(.json)$/i) ) {
+    else if (path_name.endsWith(".json")) {
       handle = handle_json;
       type = "json";
       ext = "json";
       could_handle = true;
     }
-    else if (handle_csv && d.url.match(/(.csv)$/i) ) {
+    else if (handle_csv && path_name.endsWith(".csv")) {
       handle = handle_csv;
       type = "csv";
       ext = "csv";
       could_handle = true;
     }
-    else if (handle_xml && d.url.match(/(.xml)$/i) ) {
+    else if (handle_xml && path_name.endsWith(".xml") ) {
       handle = handle_xml;
       type = "xml";
       ext = "xml";
@@ -103,22 +110,44 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     if (chk_all && chk_all!=="1") 
     {
       if (could_handle) {
-//        pages[d.tabId] = {content:headerContent.value, 
-        pages[d.tabId] = {content:"", 
-                          url:d.url,
+        pages[tabId] = {content:"", 
+                          url,
                           type,
                           ext
                          };
       } else {
-        delete pages[d.tabId];
+        delete pages[tabId];
       }
     } 
     else  if (handle)  {
-      var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
-      Browser.api.tabs.update(d.tabId, { url: _url });
+      var page_url = page_panel_url + "?url="+encodeURIComponent(url)+"&type="+type+"&ext="+ext;
+      Browser.api.tabs.update(tabId, { "url": page_url });
       return { cancel: false };
     }
   }
+
+
+  if (Browser.is_safari) {
+      Browser.api.webNavigation.onBeforeNavigate.addListener(
+        async (d) => {
+           return await onBeforeLoadName(d.url, d.tabId);
+        });
+  }
+
+
+
+  Browser.api.webRequest.onBeforeRequest.addListener(
+        async (d) => {
+           return await onBeforeLoadName(d.url, d.tabId);
+        },
+        {types: ["main_frame"], urls: ["file:///*"]}, 
+        ["blocking"]);
+
+  async function onBeforeRequestLocal(d)
+  {
+    return await onBeforeLoadName(d.url, d.tabId);
+  }
+
 
 
   Browser.api.webRequest.onBeforeSendHeaders.addListener(
@@ -153,17 +182,18 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
         ["blocking", "requestHeaders"]);
 
 
+
   Browser.api.webRequest.onHeadersReceived.addListener(
   	onHeadersReceived, 
-  	  {types: ["main_frame"], urls: ["<all_urls>"]}, 
-  	  ["responseHeaders", "blocking"]);
+  	{types: ["main_frame"], urls: ["<all_urls>"]}, 
+        ["responseHeaders", "blocking"]);
 
 
   async function onHeadersReceived(d)
   {
-    //console.log(d);
+      
     if (d.method && d.method!=="GET")
-      return;
+        return {};
 
     var headerContent = null;
     for (var header of d.responseHeaders) {
@@ -189,6 +219,13 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
     var ext = "";
     var content_type = null;
     var could_handle = false;
+
+    if (Browser.is_safari) {
+      chk_all = "0";
+      handle_csv = true;
+      handle_json = true;
+      handle_xml = true;
+    }
 
     if (headerContent) {
 
@@ -264,7 +301,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
                                           || content_type.match(/(text\/plain)/)
                                           || content_type.match(/(application\/octet-stream)/)
                      )) {
-        var url_path = (new URL(d.url)).pathname;
+        var url_path = (new URL(d.url)).pathname.toLowerCase();
         if (url_path.endsWith(".owl")) {
           handle = true;
           type = "rdf";
@@ -344,6 +381,7 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
       } else {
         delete pages[d.tabId];
       }
+      return {};
     } 
     else  if (handle)  {
         var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
@@ -358,12 +396,8 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
           }
         } else {
 
-          if (Browser.isEdgeWebExt) {
-            return { redirectUrl: _url };
-          }
-          else if (Browser.is_ff) {
+          if (Browser.is_ff) {
             Browser.api.tabs.update(d.tabId, { url: _url });
-//don't show save dialog      
             return { cancel: true };
           }
           else {
@@ -371,6 +405,8 @@ var ext_url = Browser.api.extension.getURL("page_panel.html");
             return { cancel: true };
           }
         }
+    } else {
+        return {};
     }
   }
 
@@ -407,7 +443,7 @@ function setPageAction(tabId, show)
 {
   storeBrowserAction(tabId, show);
 
-  if (Browser.is_ff || Browser.is_chrome) {
+  if (Browser.is_ff || Browser.is_chrome || Browser.is_safari) {
     if (show)
       Browser.api.browserAction.enable(tabId);
     else
@@ -431,8 +467,10 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       var tab = pages[request.tabId];
       if (tab) {
         var url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext);
-        Browser.openTab(url);
-        sendResponse({'cmd': request.cmd, 'opened':true});
+        if (!Browser.is_safari) {
+          Browser.openTab(url);
+        }
+        sendResponse({'cmd': request.cmd, 'opened':true, url});
       } 
       else {
         sendResponse({'cmd': request.cmd, 'opened':false});
@@ -464,7 +502,10 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       var setting = new Settings();
       var action_for_params =  await setting.getValue("ext.osds.pref.show_action");
       var settings = new Settings();
-      var chk_all = await setting.getValue("ext.osds.handle_all");
+      var chk_all = "0";
+
+      if (!Browser.is_safari)
+          chk_all = await setting.getValue("ext.osds.handle_all");
 
       if (doc_URL && url.search.length>0
           && (sparql_pattern.test(doc_URL) || action_for_params) )
@@ -475,8 +516,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       setPageAction(tabId, show_action);
       
       if (!show_action && chk_all && chk_all!=="1") {
-          var tab = pages[tabId];
-          if (tab && tab.url === request.doc_URL)
             setPageAction(tabId, true);
       }
     }
@@ -508,7 +547,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 if (Browser.is_ff || Browser.is_chrome) {
   try {
-//??    Browser.api.browserAction.disable();
     Browser.api.contextMenus.create(
         {"title": "Super Links", 
          "contexts":["page"],

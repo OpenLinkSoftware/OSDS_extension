@@ -259,15 +259,26 @@ async function loadPopup()
     doc_URL = curTabs[0].url;
   }
   
-  var setting = new Settings();
-  var chk_all = await setting.getValue("ext.osds.handle_all");
+  var chk_all = "0";
+
+  if (!Browser.is_safari) {
+      var setting = new Settings();
+      chk_all = await setting.getValue("ext.osds.handle_all");
+  }
+
   if (chk_all && chk_all!=="1") {
     Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
        function(resp) {
-            if (resp && resp.opened)
-               close();
-            else
+            if (resp && resp.opened) {
+               if (Browser.is_safari && resp.url) {
+                 location.href = resp.url;
+               }
+               else
+                 close();
+            }
+            else {
                showPopup(tabId);
+            }
        });
   } 
   else {
