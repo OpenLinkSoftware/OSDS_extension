@@ -384,7 +384,7 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       return {};
     } 
     else  if (handle)  {
-        var _url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext);
+        var _url = page_panel_url+"?url="+encodeURIComponent(d.url)+"&type="+type+"&ext="+ext;
         if (type === "json" || type === "xml" || type === "csv") {
           if (Browser.is_ff) {
             Browser.api.tabs.create({url:_url});
@@ -466,7 +466,7 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       var tabId = request.tabId;
       var tab = pages[request.tabId];
       if (tab) {
-        var url = Browser.api.extension.getURL("page_panel.html?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext);
+        var url = page_panel_url+"?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext;
         if (!Browser.is_safari) {
           Browser.openTab(url);
         }

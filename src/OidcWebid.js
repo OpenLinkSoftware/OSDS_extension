@@ -219,7 +219,7 @@ OidcWeb.prototype = {
         if (Browser.is_safari)
           this.jstore.removeItem(oidc_session);
         else
-          localStorage.setItem(oidc_session, session);
+          localStorage.removeItem(oidc_session);
       }
 
       var prev_webid = this.webid;

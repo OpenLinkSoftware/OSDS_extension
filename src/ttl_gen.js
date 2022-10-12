@@ -252,7 +252,7 @@
              return ":"+id;      
            }
            else
-             return "<"+this.pre(value)+">";      
+             return "<"+encodeURI(this.pre(value))+">";      
          }
        }
     },
@@ -261,9 +261,9 @@
     {
       val = String(val);
       if ( val.match(/^http(s)?:\/\//) ) {
-        val = "<"+this.pre(val)+">";
+        val = "<"+encodeURI(this.pre(val))+">";
       } else if ( val.match(/^mailto:/) ) {
-        val = "<"+this.pre(val)+">";
+        val = "<"+encodeURI(this.pre(val))+">";
       } else {
         val = '"'+this.pre(val)+'"';
       }
@@ -297,7 +297,7 @@
         data = data.substring(0, data.length-1);
 
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))
-        return "<"+val+">";
+        return "<"+encodeURI(this.pre(val))+">";
       else
         return pref.ns+":"+fixedEncodeURIComponent(this.pre(data));
     },
