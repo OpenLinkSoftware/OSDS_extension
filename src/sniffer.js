@@ -312,9 +312,9 @@
 
 
         if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
-            return ret; 
+            return {exists: true, data: ret}; 
         else
-            return null;
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]}};
     }
 
 
@@ -387,10 +387,8 @@
 
             if (!data_found) {
                 var ret = sniff_nanotation();
-                if (ret) {
-                    data_found = true;
-                    nano = ret;
-                }
+                data_found = ret.exists;
+                nano = ret.data;
             }
 
 
@@ -479,9 +477,7 @@
             }
 
             var ret = sniff_nanotation();
-            if (ret) {
-                nano = ret;
-            }
+            nano = ret.data;
 
         } catch (e) {
             console.log("OSDS:" + e);
