@@ -193,7 +193,6 @@ class Rest_Cons {
       return;
     }
 
-//??--    this.doc_url = "https://john.doe@www.example.com:123/forum/questions/?tag=networking&order=newest#top";
     DOM.iSel("rest_url").value = this.doc_url;
 
     var url = new URL(this.doc_url);
@@ -283,7 +282,7 @@ class Rest_Cons {
 
 //====== Upload data to SPARQL server
 class Save2Sparql {
-  constructor(sparqlendpoint, sparql_graph, baseURI, oidc)
+  constructor(sparqlendpoint, sparql_graph, baseURI, oidc, msg)
   {
     this.sparqlendpoint = sparqlendpoint;
     this.sparql_graph = sparql_graph;
@@ -291,60 +290,16 @@ class Save2Sparql {
     this.oidc = oidc
     var u = new URL(sparqlendpoint);
     this.idp_url = u.origin;
+    this.msg = msg;
   }
 
-  show_message(s1, s2)
-  {
-    if (s1) {
-      const tm = 15000;
-      var x = DOM.iSel("msg_snackbar");
-      if (x) {
-        DOM.qSel("#msg_snackbar #msg1").innerText = s1;
-        DOM.qSel("#msg_snackbar #msg2").innerText = s2 || '';
-        x.className = "show";
-        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
-      }
-    }
-  }
-
-  async check_login(relogin)
-  {
-    try {
-      if (relogin) 
-      {
-        await this.oidc.logout();
-        showInfo('Login to '+this.idp_url+'\n and call "Upload to SPARQL endpoint" again.');
-        sleep(8000);
-        this.oidc.login(this.idp_url, 1);
-        return false;
-      } 
-      else 
-      {
-        await this.oidc.checkSession();
-        if (this.oidc.webid) {
-          if (!this.oidc.isSessionForIdp(this.idp_url))
-            await this.oidc.logout();
-        }
-        if (!this.oidc.webid) {
-          showInfo('Login to '+this.idp_url+'\n and call "Upload to SPARQL endpoint" again.');
-          sleep(8000);
-          this.oidc.login(this.idp_url, 1);
-          return false;
-        }
-      }
-      return true;
-    } finally {
-    }
-  }
-
-  
 
   async upload_to_sparql(data)
   {
 
     var handler = new Convert_Turtle();
     try {
-      show_throbber('&nbsp;Preparing&nbsp;data...');
+      this.msg.throbber_show('&nbsp;Preparing&nbsp;data...');
       
       var ttl_data = await handler.prepare_query(data.txt, this.baseURI);
 
@@ -356,7 +311,7 @@ class Save2Sparql {
           return ret;
       }
     } finally {
-      hide_throbber();
+      this.msg.throbber_hide();
     }
   
     return {rc:true};
@@ -365,7 +320,7 @@ class Save2Sparql {
   async exec_sparql(prefixes, triples)
   {
     var pref = "";
-    var max_bytes = 32000;
+    var max_bytes = 30000;
     var pref_len = 10;
     var pref_sz;
     var insert_cmd = this.sparql_graph.length > 1
@@ -395,7 +350,7 @@ class Save2Sparql {
     for(var i=0; i < triples.length; i++) 
     {
       if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
-        show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+        this.msg.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
         var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
         if (!ret.rc)
@@ -414,7 +369,7 @@ class Save2Sparql {
 
     if (count > 0) 
     {
-      show_throbber('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+      this.msg.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
       var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
       if (!ret.rc)
@@ -473,21 +428,9 @@ class Save2Sparql {
 
 
 
-function show_throbber(msg)
-{
-  DOM.qSel('.throbber_msg #throbber_msg_text').innerHTML = msg;
-  $(".throbber_msg").css("display","flex");
-  sleep(100);
-}
-
-function hide_throbber()
-{
-  $(".throbber_msg").css("display","none");
-}
-
 async function getCurWin()
 {
-  if (Browser.isChromeWebExt) {
+  if (Browser.is_chrome) {
     return new Promise(function (resolve, reject) {
       Browser.api.windows.getCurrent({}, (w) => {
         resolve(w)
@@ -500,7 +443,7 @@ async function getCurWin()
 
 async function getCurTab()
 {
-  if (Browser.isChromeWebExt) {
+  if (Browser.is_chrome) {
     return new Promise(function (resolve, reject) {
       Browser.api.tabs.query({active:true, currentWindow:true}, (t) => {
         resolve(t)
@@ -513,7 +456,7 @@ async function getCurTab()
 
 
 function fixedEncodeURIComponent (str) {
-  return encodeURIComponent(str).replace(/[!'()*&?#$,:@=;+\/]/g, function(c) {
+  return encodeURIComponent(str).replace(/[!'()*&?#$,.:@=;+\/]/g, function(c) {
     return '%' + c.charCodeAt(0).toString(16);
   });
 }
@@ -533,9 +476,19 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function showSnackbar(text1, text2) {
+    const tm = 15000;
+    var x = DOM.iSel("super_links_snackbar");
+    DOM.qSel("#super_links_snackbar #msg1").innerText = text1;
+    DOM.qSel("#super_links_snackbar #msg2").innerText = text2 || '';
+    x.className = "show";
+    setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
+    await sleep(tm);
+}
+
+
+
 var DOM = {};
 DOM.qSel = (sel) => { return document.querySelector(sel); };
 DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
 DOM.iSel = (id) => { return document.getElementById(id); };
-
-

@@ -28,23 +28,24 @@ var doc_URL = null;
 var prevSelectedTab = null;
 var selectedTab = null;
 var gData = {
-        micro:{ json_text:null },
-        jsonld:{ json_text:null },
-        rdfa:{ ttl_text:null },
-        turtle:{ ttl_text:null },
-        rdf:{ text:null },
-        json:{ json_text:null },
-
-        ttl_nano :{ ttl_text:null},
-        jsonld_nano :{ json_text:null },
-        rdf_nano :{ rdf_text:null },
-        json_nano :{ json_text:null },
-        csv_nano :{ ttl_text:null, text:null },
-        posh:{ ttl_text:null },
+        baseURL: null,
         tab_index: null,
-        tabs:[],
-        baseURL: null
+        tabs: [],
+
+        micro: null,
+        jsonld: null,
+        rdfa: null,
+        turtle: null,
+        rdf: null,
+        rdfa: null,
+        json: null,
+        csv: null,
+        rss: null,
+        atom: null,
+
+        links: {}
       };
+
 var src_view = null;
 var g_RestCons = new Rest_Cons();
 var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
@@ -57,7 +58,7 @@ function showPopup(tabId)
 {
   //Request the data from the client (foreground) tab.
   try {
-    if (Browser.isFirefoxWebExt) {
+    if (Browser.is_ff) {
       Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data' })
         .then(response => {
           if (!response || !response.ping) {
@@ -173,6 +174,30 @@ function showPopup(tabId)
     return false;
   });
 
+  $('#tabs a[href="#rss"]').click(function(){
+    selectTab('#rss');
+    return false;
+  });
+
+  $('#tabs a[href="#atom"]').click(function(){
+    selectTab('#atom');
+    return false;
+  });
+
+  $('#load_rss').click(function() {
+        if (gData.links.rss)
+          gData.links.rss.loadData({}, 0);
+  });
+
+  $('#load_atom').click(function() {
+        if (gData.links.atom)
+          gData.links.atom.loadData({}, 0);
+  });
+
+
+  $('#tabs a[href="#rss"]').hide();
+  $('#tabs a[href="#atom"]').hide();
+
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
       lineNumbers: true
@@ -234,15 +259,26 @@ async function loadPopup()
     doc_URL = curTabs[0].url;
   }
   
-  var setting = new Settings();
-  var chk_all = setting.getValue("ext.osds.handle_all");
+  var chk_all = "0";
+
+  if (!Browser.is_safari) {
+      var setting = new Settings();
+      chk_all = await setting.getValue("ext.osds.handle_all");
+  }
+
   if (chk_all && chk_all!=="1") {
     Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
        function(resp) {
-            if (resp && resp.opened)
-               close();
-            else
+            if (resp && resp.opened) {
+               if (Browser.is_safari && resp.url) {
+                 location.href = resp.url;
+               }
+               else
+                 close();
+            }
+            else {
                showPopup(tabId);
+            }
        });
   } 
   else {
@@ -306,8 +342,6 @@ $(document).on('click', 'a', function(e) {
 });
 
 
-
-
 function selectTab(tab)
 {
   prevSelectedTab = selectedTab;
@@ -337,6 +371,8 @@ function selectTab(tab)
   updateTab('#posh', selectedTab);
   updateTab('#json', selectedTab);
   updateTab('#csv', selectedTab);
+  updateTab('#rss', selectedTab);
+  updateTab('#atom', selectedTab);
   $('#tabs a[href="#src"]').hide();
   $('#tabs a[href="#cons"]').hide();
 }
@@ -352,10 +388,85 @@ function hideDataTabs()
   $('#tabs a[href="#posh"]').hide();
   $('#tabs a[href="#json"]').hide();
   $('#tabs a[href="#csv"]').hide();
+  $('#tabs a[href="#rss"]').hide();
+  $('#tabs a[href="#atom"]').hide();
 }
 
 
-function show_Data(dData)
+function update_tab(tabname, title, val, err_tabs)
+{
+  function create_err_msg(fmt_name, errors)
+  {
+    var err_html = "";
+    var err_load = "";
+    var msg = "";
+
+    if (errors) {
+
+      if ($.isArray(errors)) {
+        for(var i=0; i<errors.length; i++) {
+          if (errors[i].startsWith("#L#"))
+            err_load += "<tr><td>"+errors[i].substring(3)+"</tr></td>";
+          else
+            err_html += "<tr><td>"+errors[i]+"</tr></td>";
+        }
+      }
+      else if (errors.length > 0) {
+          err_html += "<tr><td>"+errors+"</tr></td>";
+      }
+
+      if (err_html.length > 0)
+        msg += "<table class='docdata table'><tr><td>"+fmt_name
+              +" discovered, but fails syntax checking by parser:</td></tr>"
+              +err_html+"</table>";
+
+      if (err_load.length > 0)
+        msg += "<table class='docdata table'>"
+              +err_load+"</table>";
+
+    }
+    return (msg.length>0)?msg:null;
+  }
+
+
+  var html = "";
+
+  $(`#${tabname}_items table.wait`).hide();
+  $(`#${tabname}_items #docdata_view`).remove();
+  $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
+
+  if (val.html && val.html.trim().length > 0) {
+      html += val.html;
+      gData.tabs.push(`#${tabname}`);
+  }
+  if (val.error) {
+      var err_msg = create_err_msg(title, val.error);
+      if (err_msg) {
+        html += err_msg;
+        if (err_tabs)
+          err_tabs.push(`#${tabname}`);
+      }
+  }
+  if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
+      $(`#${tabname}_items #docdata_view`).append(html);
+      return true;
+  } else {
+    $(`#tabs a[href="#${tabname}"]`).hide();
+    $(`#${tabname}-save`).hide();
+    return false;
+  }
+}
+
+
+async function update_tab_exec(tabname, title, block, err_tabs)
+{
+  var bnode_types = {};
+  var val = await block.to_html(bnode_types, 0);
+
+  return update_tab(tabname, title, val, err_tabs);
+}
+
+async function show_Data()
 {
   var cons = false;
   var micro = false;
@@ -366,67 +477,45 @@ function show_Data(dData)
   var posh = false;
   var json = false;
   var csv = false;
+  var rss = false;
+  var atom = false;
   var html = "";
   var err_tabs = [];
+  var bnode_types = {};
 
   gData.tabs = [];
-  wait_data = $('table.wait').hide();
+//  $('table.wait').hide();
+  $('#rss-save').hide();
+  $('#atom-save').hide();
 
+  if (gData.micro)
+    micro = await update_tab_exec('micro', 'Microdata', gData.micro, err_tabs);
 
-  function create_err_msg(fmt_name, errors)
-  {
-    var err_html = "";
-    if (errors) {
+  if (gData.jsonld)
+    jsonld = await update_tab_exec('jsonld', 'JSON-LD', gData.jsonld, err_tabs);
 
-      if ($.isArray(errors)) {
-        for(var i=0; i<errors.length; i++)
-          err_html += "<tr><td>"+errors[i]+"</tr></td>";
-      }
-      else if (errors.length > 0) {
-          err_html += "<tr><td>"+errors+"</tr></td>";
-      }
+  if (gData.turtle)
+    turtle = await update_tab_exec('turtle', 'Turtle', gData.turtle, err_tabs);
 
-      if (err_html.length > 0)
-        err_html = "<table class='docdata table'><tr><td>"+fmt_name
-                  +" discovered, but fails syntax checking by parser:</td></tr>"
-                  +err_html+"</table>";
-    }
-    return (err_html.length>0)?err_html:null;
-  }
+  if (gData.rdfa)
+    rdfa = await update_tab_exec('rdfa', 'RDFa', gData.rdfa, err_tabs);
 
-  function add_item(tabname, title, val)
-  {
-    $(`#${tabname}_items #docdata_view`).remove();
-    $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
-    var html = "";
-    if (val.expanded!==null && val.expanded.trim().length > 0) {
-        html += val.expanded;
-        gData.tabs.push(`#${tabname}`);
-    }
-    if (val.error) {
-        var err_msg = create_err_msg(title, val.error);
-        if (err_msg) {
-          html += err_msg;
-          err_tabs.push(`#${tabname}`);
-        }
-    }
-    if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-        $(`#${tabname}_items #docdata_view`).append(html);
-        return true;
-    } else {
-      return false;
-    }
-  }
+  if (gData.rdf)
+    rdf = await update_tab_exec('rdf', 'RDF/XML', gData.rdf, err_tabs);
+  
+  if (gData.posh)
+    posh = await update_tab_exec('posh', 'POSH', gData.posh, err_tabs);
 
-  micro = add_item('micro', 'Microdata', dData.micro);
-  jsonld = add_item('jsonld', 'JSON-LD', dData.jsonld);
-  turtle = add_item('turtle', 'Turtle', dData.turtle);
-  rdfa = add_item('rdfa', 'RDFa', dData.rdfa);
-  rdf = add_item('rdf', 'RDF/XML', dData.rdf);
-  posh = add_item('posh', 'POSH', dData.posh);
-  json = add_item('json', 'JSON', dData.json);
-  csv = add_item('csv', 'CSV', dData.csv_nano);
+  if (gData.json)
+    json = await update_tab_exec('json', 'JSON', gData.json, err_tabs);
 
+  if (gData.csv)
+    csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
+
+  if (gData.links.rss)
+    rss = true;
+  if (gData.links.atom)
+    atom = true;
 
   if (gData.tabs.length > 0)
     selectTab(gData.tabs[0]);
@@ -466,425 +555,165 @@ function show_Data(dData)
     $('#tabs a[href="#csv"]').hide();
     $('#csv-save').hide();
   }
+  if (rss) {
+    $('#tabs a[href="#rss"]').show();
+  } 
+  if (atom) {
+    $('#tabs a[href="#atom"]').show();
+  }
 
   gData_showed = true;
 }
 
 
-
-async function check_Microdata(val)
+function links_cb_start(tab)
 {
-    if (val.d.micro.data)
-    {
-      try {
-        var handler = new Handle_Microdata();
-        gData.micro.json_text = [JSON.stringify(val.d.micro.data, undefined, 2)];
-        var ret = handler.parse(val.d.micro.data, gData.baseURL, val.bnode_types);
-
-        if (ret.errors.length > 0)
-          val.d.micro.error = val.d.micro.error.concat(ret.errors);
-
-        if (ret.data)
-          val.d.micro.expanded = ret.data;
-
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-      } catch(ex) {
-        val.d.micro.error.push(ex.toString());
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      }
-    }
-    else
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
+  $(`#${tab}_items #load_${tab}`).attr('disabled','disabled');
+  $(`#${tab}_items #throbber`).show();
 }
 
-
-
-
-async function check_JSON_LD(val)
+function links_cb_error(tab)
 {
-  if (val.d.jsonld.text!==null && val.d.jsonld.text.length > 0)
-  {
-    try {
-      var handler = new Handle_JSONLD();
-      var ret = await handler.parse(val.d.jsonld.text, gData.baseURL, val.bnode_types);
-
-      gData.jsonld.json_text = val.d.jsonld.text;
-
-      if (ret.errors.length > 0)
-        val.d.jsonld.error = val.d.jsonld.error.concat(ret.errors);
-
-      if (ret.data) {
-        if (val.d.jsonld.expanded) 
-          val.d.jsonld.expanded += ret.data;
-        else
-          val.d.jsonld.expanded = ret.data;
-      }
-      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
-
-    } catch(ex) {
-      val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
+  $(`#${tab}_items #load_${tab}`).removeAttr('disabled');
+  $(`#${tab}_items #throbber`).hide();
 }
 
-
-async function check_JsonLD_Nano(val)
+function links_cb_success(tab, tabName, rc)
 {
-  if (val.d.jsonld_nano.text!==null && val.d.jsonld_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_JSONLD();
-      handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.jsonld_nano.text, gData.baseURL, val.bnode_types);
+  if (rc) {
+    update_tab(tab, tabName, rc);
+    $(`#${tab}_items table.loader`).hide();
 
-      gData.jsonld_nano.json_text = val.d.jsonld_nano.text;
-
-      if (ret.errors.length > 0)
-        val.d.jsonld.error = val.d.jsonld.error.concat(ret.errors);
-
-      if (ret.data) {
-        if (val.d.jsonld.expanded) 
-          val.d.jsonld.expanded += ret.data;
-        else
-          val.d.jsonld.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      
-    } catch(ex) {
-      val.d.jsonld.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_Json_Nano(val)
-{
-  if (val.d.json_nano.text!==null && val.d.json_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_JSON();
-      handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.json_nano.text, gData.baseURL, val.bnode_types);
-
-      gData.json_nano.json_text = ret.text;
-
-      if (ret.errors.length > 0)
-        val.d.json.error = val.d.json.error.concat(ret.errors);
-
-      if (ret.data)
-        val.d.json.expanded = ret.data;
-
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch(ex) {
-      val.d.json.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_Turtle(val)
-{
-  if (val.d.turtle.text!==null && val.d.turtle.text.length > 0)
-  {
-    try {
-      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-      var ret = await handler.parse(val.d.turtle.text, gData.baseURL);
-
-      gData.turtle.ttl_text = val.d.turtle.text;
-
-      if (ret.errors.length>0)
-        val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
-
-      if (ret.data) {
-        if (val.d.turtle.expanded)
-          val.d.turtle.expanded += ret.data;
-        else
-          val.d.turtle.expanded = ret.data;
-      }
-      return {d:val.d, start_id:handler.start_id, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.turtle.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_Turtle_Nano(val)
-{
-  if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0)
-  {
-    var fix = new Fix_Nano();
-    var output = await fix.parse(val.d.ttl_nano.text);
-    
-    val.d.ttl_nano.text = output;
-
-    if (val.d.ttl_nano.text!==null && val.d.ttl_nano.text.length > 0) {
-      try {
-        var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-        var ret = await handler.parse_nano(val.d.ttl_nano.text, gData.baseURL);
-      
-        gData.ttl_nano.ttl_text = val.d.ttl_nano.text;
-
-        if (ret.errors.length>0)
-          val.d.turtle.error = val.d.turtle.error.concat(ret.errors);
-                
-        if (ret.data) {
-          if (val.d.turtle.expanded)
-            val.d.turtle.expanded += ret.data;
-          else
-            val.d.turtle.expanded = ret.data;
-        }
-
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-      } catch (ex) {
-        val.d.turtle.error.push(ex.toString());
-        return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-      }
-    }
-    else
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_POSH(val)
-{
-  if (val.d.posh.text!==null && val.d.posh.text.length > 0)
-  {
-    try {
-      var handler = new Handle_Turtle(val.start_id, false, false, val.bnode_types);
-      var ret = await handler.parse([val.d.posh.text], gData.baseURL);
-
-      gData.posh.ttl_text = val.d.posh.text;
-
-      if (ret.errors.length>0)
-        val.d.posh.error = val.d.posh.error.concat(ret.errors);
-                
-      if (ret.data) {
-        val.d.posh.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.posh.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_RDFa(val)
-{
-  if (val.d.rdfa.data)
-  {
-    try {
-      var handler = new Handle_RDFa();
-      var ret = handler.parse(val.d.rdfa.data, gData.baseURL, val.bnode_types);
-
-      if (ret.errors.length>0)
-        val.d.rdfa.error = val.d.rdfa.error.concat(ret.errors);
-                
-      if (ret.data) {
-        val.d.rdfa.expanded = ret.data;
-        gData.rdfa.ttl_text = [val.d.rdfa.ttl];
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.rdfa.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-
-async function check_RDF_XML(val)
-{
-  if (val.d.rdf.text && val.d.rdf.text.length > 0)
-  {
-    try {
-      var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf.text, gData.baseURL, val.bnode_types);
-
-      gData.rdf.text = val.d.rdf.text;
-
-      if (ret.errors.length>0)
-        val.d.rdf.error = val.d.rdf.error.concat(ret.errors);
-                
-      if (ret.data) {
-        if (val.d.rdf.expanded)
-          val.d.rdf.expanded += ret.data;
-        else
-          val.d.rdf.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_RDF_XML_Nano(val)
-{
-  if (val.d.rdf_nano.text!==null && val.d.rdf_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_RDF_XML();
-      var ret = await handler.parse(val.d.rdf_nano.text, gData.baseURL, val.bnode_types);
-
-      gData.rdf_nano.rdf_text = val.d.rdf_nano.text;
-
-      if (ret.errors.length>0)
-        val.d.rdf.error = val.d.rdf.error.concat(ret.errors);
-                
-      if (ret.data) {
-        if (val.d.rdf.expanded)
-          val.d.rdf.expanded += ret.data;
-        else
-          val.d.rdf.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.rdf.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
-}
-
-
-async function check_CSV_Nano(val)
-{
-  if (val.d.csv_nano.text!==null && val.d.csv_nano.text.length > 0)
-  {
-    try {
-      var handler = new Handle_CSV();
-      handler.start_id = val.start_id;
-      var ret = await handler.parse(val.d.csv_nano.text, gData.baseURL);
-
-      gData.csv_nano.ttl_text = ret.ttl_data;
-
-      if (ret.errors.length>0)
-        val.d.csv_nano.error = val.d.csv_nano.error.concat(ret.errors);
-                
-      if (ret.data) {
-        val.d.csv_nano.expanded = ret.data;
-      }
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-
-    } catch (ex) {
-      val.d.csv_nano.error.push(ex.toString());
-      return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-    }
-  }
-  else
-  {
-    return {d:val.d, start_id:0, bnode_types:val.bnode_types};
-  }
+    $(`#tabs a[href="#${tab}"]`).show();
+    $(`#${tab}-save`).show();
+  } 
 }
 
 
 
 async function parse_Data(dData)
 {
-  dData.micro.expanded = null;
-  dData.micro.error = [];
-  dData.jsonld.expanded = null;
-  dData.jsonld.error = [];
-  dData.json.expanded = null;
-  dData.json.error = [];
-  dData.turtle.expanded = null;
-  dData.turtle.error = [];
-  dData.rdfa.expanded = null;
-  dData.rdfa.error = [];
-  dData.ttl_nano.expanded = null;
-  dData.ttl_nano.error = null;
-  dData.jsonld_nano.expanded = null;
-  dData.jsonld_nano.error = null;
-  dData.json_nano.expanded = null;
-  dData.json_nano.error = null;
-  dData.csv_nano.expanded = null;
-  dData.csv_nano.error = [];
-  dData.posh.expanded = null;
-  dData.posh.error = [];
-  dData.rdf.expanded = null;
-  dData.rdf.error = [];
-  dData.rdf_nano.expanded = null;
-  dData.rdf_nano.error = null;
   doc_URL = dData.doc_URL;
 
   var url = new URL(doc_URL);
   url.hash ='';
-//??  url.search = '';
   gData.baseURL = url.toString();
 
   var val = {d:dData, start_id:0, bnode_types:{}};
+  var bnode_types = {};
 
   try {
-    val = await check_Microdata(val);
-    val = await check_JSON_LD(val);
-    val = await check_JsonLD_Nano(val);
-    val = await check_Json_Nano(val);
-    val = await check_Turtle(val);
-    val = await check_Turtle_Nano(val);
-    val = await check_POSH(val);
-    val = await check_RDFa(val);
-    val = await check_RDF_XML(val);
-    val = await check_RDF_XML_Nano(val);
-    val = await check_CSV_Nano(val);
-    return val.d;
+    gData.links.atom = null;
+    gData.links.rss = null;
+    gData.links.jsonld = null;
+    gData.links.rdf = null;
+    gData.links.ttl = null;
+    
+    gData.micro = new Microdata_Block(gData.baseURL, [JSON.stringify(dData.micro.data, undefined, 2)], dData.micro.data);
+
+    gData.jsonld = new JSONLD_Block(gData.baseURL, dData.jsonld.text);
+    gData.jsonld.add_nano(dData.jsonld_nano.text);
+
+    gData.json = new JSON_Block(gData.baseURL, dData.json_nano.text);
+
+    gData.turtle = new TTL_Block(gData.baseURL, dData.turtle.text);
+    await gData.turtle.add_nano(dData.ttl_nano.text);
+    await gData.turtle.add_nano_curly(dData.ttl_curly_nano.text);
+
+    gData.posh = new TTL_Block(gData.baseURL, [dData.posh.text]);
+
+    gData.rdfa = new RDFa_Block(gData.baseURL, dData.rdfa.ttl, dData.rdfa.data);
+    
+    gData.rdf = new RDF_Block(gData.baseURL, dData.rdf.text);
+    gData.rdf.add_nano(dData.rdf_nano.text);
+
+    gData.csv = new CSV_Block(gData.baseURL, dData.csv_nano.text);
+
+    if (dData.posh.links) 
+    {
+      var setting = new Settings();
+      var chk_discovery = await setting.getValue("ext.osds.auto_discovery");
+      var atom_links = [];
+      var rss_links = [];
+      var jsonld_links = []
+      var rdf_links = []
+      var ttl_links = []
+
+      for(var href in val.d.posh.links) {
+        var type = val.d.posh.links[href];
+        if (type === 'application/atom+xml')
+           atom_links.push(href);
+        else if (type === 'application/rss+xml')
+          rss_links.push(href);
+        else if (type === 'application/json+ld' || type === 'application/ld+json')
+          jsonld_links.push(href);
+        else if (type === 'application/rdf+xml')
+          rdf_links.push(href);
+        else if (type === 'text/turtle' || type === 'text/n3')
+          ttl_links.push(href);
+      }
+
+
+      if (dData.posh.dlinks.rss.length > 0) {
+        var list = dData.posh.dlinks.rss;
+        var dlinks = []
+
+        for(var v of list) {
+          var found = false;
+  
+          for(var rss of rss_links)
+            found = (rss === v);
+
+          if (!found)
+            dlinks.push(v);
+        }
+        rss_links = rss_links.concat(dlinks);
+      }
+
+
+      if (rss_links.length > 0) 
+        gData.links.rss = new RSS_Links("rss", "RSS", gData.baseURL, rss_links, links_cb_start, links_cb_error, links_cb_success);
+
+      if (atom_links.length > 0)
+        gData.links.atom = new Atom_Links("atom", "Atom", gData.baseURL, atom_links, links_cb_start, links_cb_error, links_cb_success);
+
+      if (chk_discovery === "1") {
+        $('#atom_items #load_atom').hide();
+        $('#atom_items #throbber').show();
+        $('#rss_items #load_rss').hide();
+        $('#rss_items #throbber').show();
+
+        if (gData.links.rss)
+          gData.links.rss.loadData({}, 0);
+
+        if (gData.links.atom)
+          gData.links.atom.loadData({}, 0);
+      }
+
+      if (jsonld_links.length > 0) {
+        $('#jsonld_items #throbber').show();
+        $('#jsonld_items #load_jsonld').hide();
+        $(`#jsonld_items table.loader`).show();
+        gData.links.jsonld = new JSONLD_Links("jsonld", "JSON-LD", gData.baseURL, jsonld_links, gData.jsonld, links_cb_start, links_cb_error, links_cb_success);
+        gData.links.jsonld.loadData({}, 0); 
+      }
+
+      if (rdf_links.length > 0) {
+        $('#rdf_items #throbber').show();
+        $('#rdf_items #load_jsonld').hide();
+        $(`#rdf_items table.loader`).show();
+        gData.links.rdf = new RDF_Links("rdf", "RDF/XML", gData.baseURL, rdf_links, gData.rdf, links_cb_start, links_cb_error, links_cb_success);
+        gData.links.rdf.loadData({}, 0); 
+      }
+
+      if (ttl_links.length > 0) {
+        $('#ttl_items #throbber').show();
+        $('#ttl_items #load_jsonld').hide();
+        $(`#ttl_items table.loader`).show();
+        gData.links.ttl = new TTL_Links("turtle", "Turtle", gData.baseURL, ttl_links, gData.turtle, links_cb_start, links_cb_error, links_cb_success);
+        gData.links.ttl.loadData({}, 0); 
+      }
+    }
   } catch (e) {
     console.log(e);
   }
@@ -909,8 +738,8 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       if (request.is_data_exists)
       {
         try {
-          dData = await parse_Data(dData);
-          show_Data(dData);
+          await parse_Data(dData);
+          await show_Data();
         } catch(ex) {
           console.log("OSDS: Error="+ex);
           hideDataTabs();
@@ -939,6 +768,9 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 ////////////////////////////////////////////////////
 async function SuperLinks_exec()
 {
+  var settings = new Settings();
+  await settings._syncAll();
+
   if (doc_URL!==null) {
     Browser.api.runtime.sendMessage({cmd: 'actionSuperLinks'});
   }
@@ -948,10 +780,11 @@ async function SuperLinks_exec()
 
 
 
-function Import_doc()
+async function Import_doc()
 {
   if (doc_URL!==null) {
-     var _url = (new Settings()).createImportUrl(doc_URL);
+     var settings = new Settings();
+     var _url = await settings.createImportUrl(doc_URL);
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -959,17 +792,19 @@ function Import_doc()
 }
 
 
-function Rww_exec()
+async function Rww_exec()
 {
-  function openRww(data)
+  var settings = new Settings();
+
+  async function openRww(data)
   {
-     var _url = (new Settings()).createRwwUrl(doc_URL, data);
+     var _url = await settings.createRwwUrl(doc_URL, data);
      Browser.openTab(_url, gData.tab_index);
   }
 
 
   if (doc_URL!==null) {
-     var edit_url = (new Settings()).getValue('ext.osds.rww.edit.url');
+     var edit_url = await settings.getValue('ext.osds.rww.edit.url');
 
      if (edit_url.indexOf("{data}")!=-1) {
         save_data("export-rww", "data.txt", "ttl", openRww);
@@ -982,11 +817,12 @@ function Rww_exec()
 }
 
 
-function Sparql_exec()
+async function Sparql_exec()
 {
   if (doc_URL!==null) {
      var u = new URL(doc_URL);
-     var _url = (new Settings()).createSparqlUrl(u.toString());
+     var settings = new Settings();
+     var _url = await settings.createSparqlUrl(u.toString());
      Browser.openTab(_url, gData.tab_index);
   }
 
@@ -1084,10 +920,10 @@ function Download_exec_update_state()
     filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
   else if (fmt == "json")
     filename = "json_data.txt";
-  else if (fmt == "ttl") 
-    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
-  else
+  else if (fmt == "rdf") 
     filename = "rdf_data.rdf";
+  else 
+    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
 
   if (cmd ==="sparqlupload") {
     $('#save-filename').hide();    
@@ -1109,6 +945,9 @@ function Download_exec_update_state()
 
 async function Download_exec()
 {
+  var settings = new Settings();
+  await settings._syncAll();
+
   var _url = new URL(doc_URL);
   _url.hash = "osds";
   $('#save-sparql-graph').val(_url.toString());
@@ -1147,40 +986,47 @@ async function Download_exec()
   DOM.qSel(`${selectedTab}-chk`).checked = true;
 
 
-  if (selectedTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
+  if (selectedTab==="#jsonld") {
     filename = "jsonld_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.ttl_nano.ttl_text!==null)) {
+  else if (selectedTab==="#turtle") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#micro" && gData.micro.json_text!==null) {
+  else if (selectedTab==="#micro") {
     filename = "microdata_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
+  else if (selectedTab==="#rdfa") {
     filename = "rdfa_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#rdf" && (gData.rdf.text!==null || gData.rdf_nano.rdf_text!==null)) {
+  else if (selectedTab==="#rdf") {
     filename = "rdf_xml_data.txt";
     fmt = "rdf";
   }
-  else if (selectedTab==="#posh" && gData.posh.ttl_text!==null) {
+  else if (selectedTab==="#posh") {
     filename = "posh_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#json" && (gData.json.json_text!==null || gData.json_nano.json_text!==null)) {
+  else if (selectedTab==="#json") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
   }
-  else if (selectedTab==="#csv" && (gData.csv_nano.ttl_text!==null)) {
+  else if (selectedTab==="#csv") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-
+  else if (selectedTab==="#rss") {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
+  else if (selectedTab==="#atom") {
+    filename = "turtle_data.txt";
+    fmt = "ttl";
+  }
 
 
   if (filename!==null) {
@@ -1222,8 +1068,13 @@ async function save_data(action, fname, fmt, callback)
   {
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
     var sparql_graph = $('#save-sparql-graph').val().trim();
-    var save_lst = [];
-    var rc = false;
+    var exec_cmd = { cmd:'actionSPARQL_Upload', 
+                     baseURI: gData.baseURL,
+                     data:[], 
+                     sparql_ep:sparqlendpoint,
+                     sparql_graph, 
+                     sparql_check:null
+                   };
     
     fmt = "ttl";
 
@@ -1233,50 +1084,19 @@ async function save_data(action, fname, fmt, callback)
     }
     
     for(var v of gData.tabs) {
-      if (DOM.qSel(`${v}-chk`).checked)
-        save_lst.push(v);
-    }
-
-    var saver = new Save2Sparql(sparqlendpoint, sparql_graph, gData.baseURL, gOidc);
-    var rc = await saver.check_login();
-    if (!rc)
-      return;
-
-    for (var _tab of save_lst) 
-    {
-      var dt = await prepare_data(true, _tab, fmt);
-      if (dt && dt.error.length > 0) {
-        showInfo(dt.error);
-      }
-      else if (dt && dt.txt.length > 0) 
-      {
-        var ret = await saver.upload_to_sparql(dt);
-        if (!ret.rc) {
-          if (ret.status === 401 || ret.status === 403) {
-            var rc = await saver.check_login(true);
-            if (!rc)
-              return;
-          } 
-          else {
-            showInfo('Unable to save:' +ret.error);
-            return;
-          }
-        } 
-        else {
-          rc = true;
-        }
+      if (DOM.qSel(`${v}-chk`).checked) {
+        var dt = await prepare_data(true, v, fmt);
+        if (dt)
+          exec_cmd.data.push(dt);
       }
     }
 
-    if (rc && document.querySelector('#save-sparql-check-res').checked) {
-      var _url = (new Settings()).createSparqlUrl(sparql_graph, sparqlendpoint);
-      var tabs = await getCurTab();
-    
-      if (tabs.length > 0) 
-        Browser.api.tabs.create({'url':_url, 'index': tabs[0].index+1});
-      else
-        Browser.api.tabs.create({'url':_url});
+    if (document.querySelector('#save-sparql-check-res').checked) {
+      var settings = new Settings();
+      exec_cmd.sparql_check = await settings.createSparqlUrl(sparql_graph, sparqlendpoint);
     }
+
+    Browser.api.runtime.sendMessage(exec_cmd);
 
   } 
   else 
@@ -1287,7 +1107,7 @@ async function save_data(action, fname, fmt, callback)
 
     if (retdata && retdata.error.length > 0) {
       showInfo(retdata.error);
-      return;
+//??--      return;
     }
     
     if (action==="export-rww") {
@@ -1296,8 +1116,25 @@ async function save_data(action, fname, fmt, callback)
     }
     else if (action==="filesave") 
     {
-      blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+      var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
       saveAs(blob, fname);
+/***
+    var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+    var blobUrl = window.URL.createObjectURL(blob);
+
+    var link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fname; 
+
+
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(link);
+      }, 2000);
+
+***/
     }
     else if (action==="fileupload") 
     {
@@ -1352,206 +1189,45 @@ async function save_data(action, fname, fmt, callback)
 
 async function prepare_data(for_query, curTab, fmt)
 {
-  function out_from(for_query, data, error)
-  {
-    var retdata = {txt:"", error:""};
-    var outdata = [];
-    var errors = [];
-
-    if (data) {
-      if ($.isArray(data))
-        outdata = outdata.concat(data);
-      else
-        outdata.push(data);
-    }
-
-    if (error) {
-      if ($.isArray(error))
-        errors = errors.concat(error);
-      else
-        errors.push("\n"+error);
-    }
-
-    if (for_query) {
-      retdata.txt = outdata;
-    } else {
-      for(var i=0; i < outdata.length; i++)
-        retdata.txt += outdata[i]+"\n\n";
-    }
-
-    retdata.error = errors.join("\n\n");
-
-    return retdata;
-  }
-
-
   try{
-    var data = [];
-    var quad_data = [];
-    var blob = null;
-    var src_fmt = null;
+    var block = null;
 
-    
-    if (curTab==="#jsonld" && (gData.jsonld.json_text!==null || gData.jsonld_nano.json_text!==null)) {
-      src_fmt = "jsonld";
-
-      if (gData.jsonld.json_text!==null)
-        data = data.concat(gData.jsonld.json_text);
-
-      if (gData.jsonld_nano.json_text!==null)
-        data = data.concat(gData.jsonld_nano.json_text);
-    }
-    else if (curTab==="#json" && (gData.json.json_text!==null || gData.json_nano.json_text!==null)) {
-      src_fmt = "json";
-
-      if (gData.json.json_text!==null)
-        data = data.concat(gData.json.json_text);
-
-      if (gData.json_nano.json_text!==null)
-        data = data.concat(gData.json_nano.json_text);
-    }
-    else if (curTab==="#turtle" && (gData.turtle.ttl_text!==null || gData.ttl_nano.ttl_text!==null)) {
-      src_fmt = "ttl";
-      if (gData.turtle.ttl_text!==null)
-        data = data.concat(gData.turtle.ttl_text);
-
-      if (gData.ttl_nano.ttl_text!==null)
-        quad_data = quad_data.concat(gData.ttl_nano.ttl_text);
-    }
-    else if (curTab==="#micro" && gData.micro.json_text!==null) {
-      src_fmt = "jsonld";
-      data = data.concat(gData.micro.json_text);
-    }
-    else if (curTab==="#rdfa" && gData.rdfa.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.rdfa.ttl_text);
-    }
-    else if (curTab==="#rdf" && (gData.rdf.text!==null || gData.rdf_nano.rdf_text!==null)) {
-      src_fmt = "rdf";
-      if (gData.rdf.text!==null)
-        data = data.concat(gData.rdf.text);
-
-      if (gData.rdf_nano.rdf_text!==null)
-        data = data.concat(gData.rdf_nano.rdf_text);
-    }
-    else if (curTab==="#posh" && gData.posh.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.posh.ttl_text);
-    }
-    else if (curTab==="#csv" && gData.csv_nano.ttl_text!==null) {
-      src_fmt = "ttl";
-      data = data.concat(gData.csv_nano.ttl_text);
-    }
+    if (curTab==="#jsonld")
+      block = gData.jsonld;
+    else if (curTab==="#json")
+      block = gData.json;
+    else if (curTab==="#turtle")
+      block = gData.turtle;
+    else if (curTab==="#micro")
+      block = gData.micro;
+    else if (curTab==="#rdfa")
+      block = gData.rdfa;
+    else if (curTab==="#rdf")
+      block = gData.rdf;
+    else if (curTab==="#posh")
+      block = gData.posh;
+    else if (curTab==="#csv")
+      block = gData.csv;
+    else if (curTab==="#rss" && gData.links.rss && gData.links.rss.loaded())
+      block = gData.links.rss.block;
+    else if (curTab==="#atom" && gData.links.atom && gData.links.atom.loaded())
+      block = gData.links.atom.block;
     else
       return null;
 
-    if (data.length==0 && quad_data.length==0)
-      return null;
 
+    if (fmt === "ttl")
+      return await block.to_ttl(for_query);
+    else if (fmt === "jsonld")
+      return await block.to_jsonld();
+    else if (fmt === "rdf")
+      return await block.to_rdf();
+    else if (fmt === "json")
+      return await block.to_json();
 
-    if (curTab==="#micro" && data.length > 0)
-    {
-      var handler = new Handle_Microdata(true);
-      var ret = handler.parse(JSON.parse(data[0]), gData.baseURL);
-      if (ret.errors.length > 0) {
-        return out_from(for_query, null, ret.errors);
-      }
-      if (ret.data==null)
-        return null;
-
-      var ttl_data = ret.data;
-
-      if (fmt==="ttl") {
-        return out_from(for_query, ttl_data, null);
-      }
-      else if (fmt==="jsonld") { // json
-        var conv = new Convert_Turtle();
-        var text_data = await conv.to_jsonld([ttl_data], null, gData.baseURL);
-        return out_from(for_query, text_data, conv.skipped_error); 
-      }
-      else {
-        var conv = new Convert_Turtle();
-        var text_data = await conv.to_rdf([ttl_data], null, gData.baseURL);
-        return out_from(for_query, text_data, conv.skipped_error); 
-      }
-    }
-    else if (curTab==="#rdfa" && data.length > 0)
-    {
-      var handler = new Convert_Turtle();
-      var ttl_data = await handler.fix_ttl(data, gData.baseURL);
-      if (handler.skipped_error.length > 0) {
-        return out_from(for_query, null, handler.skipped_error);
-      } 
-      else if (ttl_data && ttl_data.length > 0) 
-      {
-          if (fmt==="ttl") {
-            return out_from(for_query, ttl_data, null);
-          }
-          else if (fmt==="jsonld") { // json
-            var conv = new Convert_Turtle();
-            var text_data = await conv.to_jsonld(ttl_data, null, gData.baseURL);
-            return out_from(for_query, text_data, conv.skipped_error);
-          }
-          else {
-            var conv = new Convert_Turtle();
-            var text_data = await conv.to_rdf(ttl_data, null, gData.baseURL);
-            return out_from(for_query, text_data, conv.skipped_error);
-          }
-      }
-    }
-    else if (src_fmt!==fmt)
-    {
-      if (src_fmt==="ttl") {
-        var conv = new Convert_Turtle();
-        if (fmt==="jsonld") {
-          var text_data = await conv.to_jsonld(data, quad_data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf") {
-          var text_data = await conv.to_rdf(data, quad_data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="jsonld"){
-        var conv = new Convert_JSONLD();
-        if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="json"){
-        var conv = new Convert_JSON();
-        if (fmt==="ttl"){
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="rdf"){
-          var text_data = await conv.to_rdf(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-      else if (src_fmt==="rdf"){
-        var conv = new Convert_RDF_XML();
-        if (fmt==="ttl") {
-          var text_data = await conv.to_ttl(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-
-        } else if (fmt==="jsonld"){
-          var text_data = await conv.to_jsonld(data, gData.baseURL);
-          return out_from(for_query, text_data, conv.skipped_error);
-        }
-      }
-    } else {
-      data = data.concat(quad_data);
-      return out_from(for_query, data, null);
-    }
 
   } catch(ex) {
-    return out_from(for_query, null, ex.toString());
+    return {txt: "", error: ex.toString()};
   }
 
 }

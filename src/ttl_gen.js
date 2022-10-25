@@ -34,7 +34,10 @@
     this.escapeAll = /["\\\t\n\r\b\f\u0000-\u0019]|[\ud800-\udbff][\udc00-\udfff]/g;
     this.escapeReplacements = { '\\': '\\\\', '"': '\\"', '\t': '\\t',
                            '\n': '\\n', '\r': '\\r', '\b': '\\b', '\f': '\\f' };
-    this.test_esc = /[!'()*&?#$,:@=;+.\/]/g;
+    this.escape3    = /["\ud800-\udbff]/;
+    this.escapeAll3 = /[\ud800-\udbff][\udc00-\udfff]/g;
+
+    this.test_esc = /[!'()*&?#$:@=;+.\/]/g;
     this.bnode_types = bnode_types || {};
   };
 
@@ -245,10 +248,11 @@
          else
          {
            if (!this.skip_docpref && value.startsWith(this.docURI_pref)) {
-             return ":"+this.pre(value.substring(this.docURI_pref.length));      
+             var id = this.pre(value.substring(this.docURI_pref.length));
+             return ":"+id;      
            }
            else
-             return "<"+this.pre(value)+">";      
+             return "<"+encodeURI(this.pre(value))+">";      
          }
        }
     },
@@ -257,9 +261,9 @@
     {
       val = String(val);
       if ( val.match(/^http(s)?:\/\//) ) {
-        val = "<"+this.pre(val)+">";
+        val = "<"+encodeURI(this.pre(val))+">";
       } else if ( val.match(/^mailto:/) ) {
-        val = "<"+this.pre(val)+">";
+        val = "<"+encodeURI(this.pre(val))+">";
       } else {
         val = '"'+this.pre(val)+'"';
       }
@@ -268,8 +272,20 @@
 
     obj_value : function (val) 
     {
+      var qv = '"';
+      
       val = String(val);
-      return '"'+this.pre(val)+'"';
+
+      if (val.indexOf("\n")!=-1 || val.indexOf("\r")!=-1) {
+        qv = '"""'
+        val = this.pre3(val);
+        val = val.replace(/\\/g,'\\\\').replace(/\"/g,"\\\""); 
+      } 
+      else {
+        val = this.pre(val);
+      }
+
+      return qv+val+qv;
     },
 
     pref_link : function (val, pref) 
@@ -281,7 +297,7 @@
         data = data.substring(0, data.length-1);
 
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))
-        return "<"+val+">";
+        return "<"+encodeURI(this.pre(val))+">";
       else
         return pref.ns+":"+fixedEncodeURIComponent(this.pre(data));
     },
@@ -314,6 +330,31 @@
       return value;
     },
 
+
+    pre3 : function (value) 
+    {
+      var self = this;
+      function characterReplacer(character) {
+        // Replace a single character with its 4-bit unicode escape sequence
+        if (character.length === 1) {
+          result = character.charCodeAt(0).toString(16);
+          result = '\\u0000'.substr(0, 6 - result.length) + result;
+        }
+        // Replace a surrogate pair with its 8-bit unicode escape sequence
+        else {
+          result = ((character.charCodeAt(0) - 0xD800) * 0x400 +
+                     character.charCodeAt(1) + 0x2400).toString(16);
+          result = '\\U00000000'.substr(0, 10 - result.length) + result;
+        }
+        return result;
+      }
+
+      if (this.escape3.test(value))
+        value = value.replace(this.escapeAll3, characterReplacer);
+
+      return value;
+    },
+
     is_BNode : function (str) {
         return str.startsWith("_:");
     },
@@ -322,7 +363,6 @@
     },
 
     VBNode2BNode : function (str) {
-        //return "_:nodeID"+this.pre(str.substr(9));
         return "nodeID"+this.pre(str.substr(9));
     },
 

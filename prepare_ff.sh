@@ -21,7 +21,7 @@ DST_DIR=$EXT_DIRNAME
 
 
 #copy common files                                       
-for I_DIR in background.html background.js content.css converters.js frame.js; do
+for I_DIR in background.html background.js content.css converters.js frame.js datablock.js; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
@@ -33,7 +33,7 @@ for I_DIR in page_panel.html page_panel.js panel.html panel.js dataview.css; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in settings.js sniffer.css sniffer.js ttl_gen.js utils.js webrequest.js; do
+for I_DIR in settings.js sniffer.js ttl_gen.js utils.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
@@ -43,7 +43,7 @@ done
 
 #copy Firefox related files
 cp -va $SRC_DIR/manifest.json.ff $DST_DIR/manifest.json
-cp -va $SRC_DIR/browser_ff_WebExt.js $DST_DIR/browser.js
+cp -va $SRC_DIR/browser_ff.js $DST_DIR/browser.js
 
 for I_DIR in images lib; do
   mkdir -pv $DST_DIR/$I_DIR

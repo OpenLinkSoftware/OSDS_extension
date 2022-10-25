@@ -20,7 +20,7 @@ SRC_DIR=$EXT_SRC
 DST_DIR=$EXT_DIRNAME
 
 #copy common files
-for I_DIR in background.html background.js content.css converters.js frame.js; do
+for I_DIR in background.html background.js content.css converters.js frame.js datablock.js; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
@@ -32,7 +32,7 @@ for I_DIR in page_panel.html page_panel.js panel.html panel.js dataview.css; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in settings.js sniffer.css sniffer.js ttl_gen.js utils.js webrequest.js; do
+for I_DIR in settings.js sniffer.js ttl_gen.js utils.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 

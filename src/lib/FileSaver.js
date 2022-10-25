@@ -26,11 +26,17 @@ var saveAs = saveAs || (function(view) {
 		}
 		, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a")
 		, can_use_save_link = "download" in save_link
-		, click = function(node) {
-			var event = new MouseEvent("click");
-			node.dispatchEvent(event);
-		}
 		, is_safari = /Version\/[\d\.]+.*Safari/.test(navigator.userAgent)
+		, click = function(node) {
+                        if (is_safari) {
+                          doc.body.appendChild(node);
+                          node.click();
+                        } 
+                        else {
+                          var event = new MouseEvent("click");
+                          node.dispatchEvent(event);
+                        }
+		}
 		, webkit_req_fs = view.webkitRequestFileSystem
 		, req_fs = view.requestFileSystem || webkit_req_fs || view.mozRequestFileSystem
 		, throw_outside = function(ex) {
@@ -43,7 +49,7 @@ var saveAs = saveAs || (function(view) {
 		// See https://code.google.com/p/chromium/issues/detail?id=375297#c7 and
 		// https://github.com/eligrey/FileSaver.js/commit/485930a#commitcomment-8768047
 		// for the reasoning behind the timeout and revocation flow
-		, arbitrary_revoke_timeout = 500 // in ms
+		, arbitrary_revoke_timeout = 2000 // in ms
 		, revoke = function(file) {
 			var revoker = function() {
 				if (typeof file === "string") { // file is an object URL
@@ -51,8 +57,11 @@ var saveAs = saveAs || (function(view) {
 				} else { // file is a File
 					file.remove();
 				}
+				if (is_safari)
+				  doc.body.removeChild(save_link);
 			};
-			if (view.chrome) {
+
+			if (view.chrome && !is_safari) {
 				revoker();
 			} else {
 				setTimeout(revoker, arbitrary_revoke_timeout);

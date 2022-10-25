@@ -72,7 +72,7 @@ function recvMessage(event)
     if (ev_data && ev_data.sniff && ev_data.frame) {
 //       console.log("from top =>"+event.data);
 
-       var txt = document.body.innerText;
+       var txt = document.body ? document.body.innerText : null;
 
        if (txt === undefined || (txt!==null && txt.length==0))
          txt = frame_getSelectionString(document.body);

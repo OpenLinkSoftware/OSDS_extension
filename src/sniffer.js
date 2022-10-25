@@ -28,13 +28,13 @@
     var micro_items = 0;
     var json_ld_Text = null;
     var turtle_Text = null;
-    var posh_Text = null;
+    var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, jsonld:null, rdf:null, json:null, csv:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null};
     var data_found = false;
 
-    var ttl_nano_pattern = /(## (Nanotation|Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle) +(End|Stop) ##)(.*)/gmi;
+    var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
     var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
     var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
     var csv_nano_pattern = /(## CSV +Start ##)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
@@ -155,7 +155,7 @@
 
     function sniff_nanotation() {
         var doc_Texts = [];
-        var ret = {ttl:[], jsonld:[], json:[], rdf:[], csv:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]};
 
         function isWhitespace(c) {
             var cc = c.charCodeAt(0);
@@ -187,7 +187,7 @@
                 var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
                 var s_split = txt.split(eoln);
                 var s_doc = "";
-                var p1 = /## +([Nn]anotation|[Tt]urtle) +(Start|End|Stop) *##/i;
+                var p1 = /## +(Nanotation|Turtle|RDF-Turtle) +(Start|End|Stop) *##/i;
                 var p2 = /^ *#/;
                 var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/i;
                 var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/i;
@@ -230,7 +230,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        ret.ttl.push(str);
+                        ret.ttl_curly.push(str);
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -311,10 +311,10 @@
         }
 
 
-        if (ret.ttl.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
-            return ret; 
+        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
+            return {exists: true, data: ret}; 
         else
-            return null;
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]}};
     }
 
 
@@ -363,12 +363,12 @@
 
             if (!data_found) {
                 try {
-                    posh_Text = new POSH().getData(document.location.href);
+                    posh_Data = new POSH().getData(document.location.href);
                 } catch (e) {
                     console.log("OSDS:" + e);
                 }
 
-                if (posh_Text && posh_Text.length > 0)
+                if (posh_Data && posh_Data.triples && posh_Data.triples.length > 0)
                     data_found = true;
             }
 
@@ -387,10 +387,8 @@
 
             if (!data_found) {
                 var ret = sniff_nanotation();
-                if (ret) {
-                    data_found = true;
-                    nano = ret;
-                }
+                data_found = ret.exists;
+                nano = ret.data;
             }
 
 
@@ -417,9 +415,9 @@
         try {
             micro_items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
 
-            if (posh_Text === null) {
+            if (posh_Data === null) {
                 try {
-                    posh_Text = new POSH().getData(document.location.href);
+                    posh_Data = new POSH().getData(document.location.href);
                 } catch (e) {
                     console.log("OSDS:" + e);
                 }
@@ -479,9 +477,7 @@
             }
 
             var ret = sniff_nanotation();
-            if (ret) {
-                nano = ret;
-            }
+            nano = ret.data;
 
         } catch (e) {
             console.log("OSDS:" + e);
@@ -644,11 +640,12 @@
       if (!data)
         return;
 
-      var settings = new SettingsProxy();
+      var settings = new Settings();
       var highlight_mode = await settings.getValue('ext.osds.super-links-highlight');
 
       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
-      $(".super_links_msg").css("display","flex");
+      DOM.qSel('.super_links_msg').style.display = 'flex';
+
 
       setTimeout(() => {
         try {
@@ -689,7 +686,7 @@
         } catch(e) {
           console.log(e);
         } finally {
-          setTimeout(()=> $(".super_links_msg").css("display","none"), 2000);
+          setTimeout(()=> DOM.qSel('.super_links_msg').style.display = 'none', 2000);
         }
       }, 200);
     }
@@ -761,7 +758,7 @@
     {
       $('.super_links_popup-content').children().remove();
 
-      var settings = new SettingsProxy();
+      var settings = new Settings();
       var viewer_mode = await settings.getValue('ext.osds.super-links-viewer');
 
       async function create_href(url) {
@@ -890,6 +887,35 @@
 
         try {
 
+            if ($(".osds_popup").length == 0) {
+               $('body').append(
+                 `<div class="osds_popup">
+                    <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
+                    <div class="osds_popup-content">
+                      <p id="osds_popup_msg">  </p>
+                      <div class="osds_popup_btns">
+                        <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
+                        <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
+                      <div>
+                    </div>
+                  </div>`
+               );
+
+               DOM.qSel('.osds_popup').style.display = 'none';
+
+               DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+                   DOM.qSel('.osds_popup').style.display = 'none';
+                   Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+                   return false;
+               };
+               DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+                   DOM.qSel('.osds_popup').style.display = 'none';
+                   Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+                   return false;
+               };
+            }
+            
+            
             is_data_exist();
             if (!data_found) {
                 window.setTimeout(is_data_exist, 3000);
@@ -915,6 +941,7 @@
                     rdf: {text: null},
                     turtle: {text: null},
                     ttl_nano: {text: null},
+                    ttl_curly_nano: {text: null},
                     jsonld_nano: {text: null},
                     json_nano: {text: null},
                     rdf_nano: {text: null},
@@ -922,9 +949,58 @@
                     posh: {text: null}
                 };
 
-                var microdata = jQuery.microdata.json(micro_items, function (o) {
+                var microdata = jQuery.microdata.json(micro_items, 
+                   function (o) 
+                   {
+                     function scan_array(v)
+                     {
+                       if (v.length > 0)
+                       {
+                         var v_str = {};
+                         var v_arr = [];
+                         for(var e of v)
+                         {
+                           if (typeof e === 'string')
+                             v_str[e] = 1;
+                           else
+                             v_arr.push(e);
+                         } 
+                         return v_arr.concat(Object.keys(v_str))
+                       }     
+                       else
+                         return v;
+                     }
+
+                     function scan_obj(v)
+                     {
+                       if (typeof v === 'object')
+                       {
+                         for(var key in v)
+                           v[key] = scan_item(v[key]);
+                       }
+                       return v;
+                     }
+
+                     function scan_item(v)
+                     {
+                       if (Array.isArray(v))
+                         return scan_array(v);
+                       else
+                         return scan_obj(v)
+                     }
+
+                     try {
+                       if (o) {
+                         for(var i=0; i < o.items.length; i++)
+                           o.items[i] = scan_obj(o.items[i]);
+                       }
+                     } catch(ex) {
+                       console.log(ex);
+                     }
+
                     return o;
-                });
+                   }
+                 );
                 var rdfa = get_rdfa_data(); //null;
 
                 docData.micro.data = microdata;
@@ -933,13 +1009,23 @@
                 docData.rdf.text = rdf_Text;
                 docData.rdfa.data = rdfa.data;
                 docData.rdfa.ttl = rdfa.ttl;
-                docData.posh.text = posh_Text;
+                docData.posh.text = posh_Data.triples;
+                docData.posh.links = posh_Data.links;
 
                 docData.ttl_nano.text = nano.ttl;
+                docData.ttl_curly_nano.text = nano.ttl_curly;
                 docData.jsonld_nano.text = nano.jsonld;
                 docData.json_nano.text = nano.json;
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
+
+                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
+
+                docData.posh.dlinks = {rss:[]};
+
+                for(var v of list)
+                  docData.posh.dlinks.rss.push(v.href);
+
 
                 if ((microdata.items && microdata.items.length > 0)
                     || (json_ld_Text && json_ld_Text.length > 0)
@@ -947,11 +1033,13 @@
                     || (rdf_Text     && rdf_Text.length > 0)
                     || (rdfa.data    && rdfa.data.length > 0)
                     || (nano.ttl     && nano.ttl.length > 0)
+                    || (nano.ttl_curly && nano.ttl_curly.length > 0)
                     || (nano.jsonld  && nano.jsonld.length > 0)
                     || (nano.json    && nano.json.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
-                    || (posh_Text    && posh_Text.length > 0)
+                    || (posh_Data    && posh_Data.triples.length > 0)
+                    || (posh_Data    && posh_Data.links.length > 0)
                    )
                   data_exists = true;
 
@@ -986,6 +1074,9 @@
                   </div>`
                );
             }
+            DOM.qSel('.super_links_popup').style.display = 'none';
+            DOM.qSel('.super_links_msg').style.display = 'none';
+
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if (request.property == "req_doc_data") {
@@ -1000,16 +1091,25 @@
                 else if (request.property == "super_links_msg_show") {
                     if (request.message) {
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
-                      $(".super_links_msg").css("display","flex");
+                      DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
                 else if (request.property == "super_links_msg_hide") {
-                    $(".super_links_msg").css("display","none");
+                    DOM.qSel('.super_links_msg').style.display = 'none';
                 }
                 else if (request.property == "super_links_snackbar") {
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
+                }
+                else if (request.property == "osds_msg_show") {
+                    if (request.message) {
+                      DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
+                      DOM.qSel('.osds_popup').style.display = 'block';
+                    }
+                }
+                else if (request.property == "osds_msg_hide") {
+                    DOM.qSel('.osds_popup').style.display = 'none';
                 }
 
                 sendResponse({});  // stop
@@ -1020,20 +1120,6 @@
             console.log("OSDS:" + e);
         }
     });
-
-
-
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-
-    async function showSnackbar(text1, text2) {
-        const tm = 15000;
-        var x = DOM.iSel("super_links_snackbar");
-        DOM.qSel("#super_links_snackbar #msg1").innerText = text1;
-        DOM.qSel("#super_links_snackbar #msg2").innerText = text2 || '';
-        x.className = "show";
-        setTimeout(function(){ x.className = x.className.replace("show", ""); }, tm);
-        await delay(tm);
-    }
 
 
 })();

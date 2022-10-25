@@ -23,12 +23,61 @@ const { OIDCWebClient } = OIDC;
 const oidc_session = 'oidc.session';
 const oidc_clients = 'oidc.clients.';
 
+class myStore {
+  constructor()
+  {
+    this.s = window.localStorage;
+    this.data = {};
+    this.keys = [];
+  }
+
+  sync()
+  {
+    this.keys = Object.keys(this.data);
+  }
+
+  key(idx) 
+  {
+    if (idx < 0 || idx >= this.keys.length)
+      return null;
+    return this.keys[idx];
+  }
+
+  setItem(key, val)
+  {
+    this.data[key] = val;
+    this.sync();
+  }
+
+  getItem(key)
+  {
+    return this.data[key];
+  } 
+
+  removeItem(key)
+  {
+    delete this.data[key];
+    this.sync();
+  }
+
+  get length()
+  {
+    return this.keys.length;
+  }
+
+}
+
+
+
+
 OidcWeb = function(data) {
   this.webid = null;
   this.storage = null;
   this.session = null;
+  this.jstore = new myStore();
 
-  const options = { solid: true };
+  const options = Browser.is_safari ? { solid: true, store: this.jstore} : { solid: true } ;
+
   this.authClient = new OIDCWebClient(options);
   this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
   this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
@@ -44,8 +93,13 @@ OidcWeb.prototype = {
         idp = this.session.issuer;
         var key = oidc_clients+idp;
         var rec = await this.localStore_get(key);
-        if (rec && rec[key])
-          localStorage.setItem(oidc_clients+idp, rec[key]);
+
+        if (rec && rec[key]) {
+          if (Browser.is_safari)
+            this.jstore.setItem(oidc_clients+idp, rec[key]);
+          else
+            localStorage.setItem(oidc_clients+idp, rec[key]);
+        }
 
         await this.authClient.logout();
       }
@@ -66,7 +120,7 @@ OidcWeb.prototype = {
      const _url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
                          : this.login_url;
 
-     if (Browser.isFirefoxWebExt) {
+     if (Browser.is_ff) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
@@ -85,6 +139,8 @@ OidcWeb.prototype = {
        this.popupCenter({url: _url, title:"Login", w:width, h:height});
      }
 
+     if (Browser.is_safari)
+       window.close();
   },
 
   login2: function(idp_url) {
@@ -94,7 +150,7 @@ OidcWeb.prototype = {
 //     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
      const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
 
-     if (Browser.isFirefoxWebExt) {
+     if (Browser.is_ff) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
@@ -112,6 +168,9 @@ OidcWeb.prototype = {
      } else {
        this.popupCenter({url, title:"Login", w:width, h:height});
      }
+
+     if (Browser.is_safari)
+       window.close();
   },
 
   popupCenter: function({url, title, w, h})
@@ -128,7 +187,7 @@ OidcWeb.prototype = {
     var newWindow = window.open(url, title, 'scrollbars=yes, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);  
     
     // Puts focus on the newWindow  
-    if (window.focus) {  
+    if (window.focus && newWindow) {  
         newWindow.focus();  
     }  
   },
@@ -151,9 +210,17 @@ OidcWeb.prototype = {
 
       if (rec && rec[oidc_session]) {
         var session = rec[oidc_session];
-        localStorage.setItem(oidc_session, session);
-      } else
-        localStorage.removeItem(oidc_session);
+        if (Browser.is_safari)
+          this.jstore.setItem(oidc_session, session);
+        else
+          localStorage.setItem(oidc_session, session);
+      } 
+      else {
+        if (Browser.is_safari)
+          this.jstore.removeItem(oidc_session);
+        else
+          localStorage.removeItem(oidc_session);
+      }
 
       var prev_webid = this.webid;
 
@@ -182,7 +249,7 @@ OidcWeb.prototype = {
   {
     var rec = {};
     rec[key]=val;
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.set(rec, () => resolve());
       })
@@ -193,7 +260,7 @@ OidcWeb.prototype = {
 
   localStore_get: async function(key) 
   {
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.get(key, (rec) => {
           resolve(rec)
@@ -206,7 +273,7 @@ OidcWeb.prototype = {
 
   localStore_remove: async function(key) 
   {
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.remove(key, (rec) => {
           resolve(rec)
@@ -249,7 +316,6 @@ function putResource (oidc, url, data, contentType, links, options = {})
   options.headers['Link'] = links
 
   return oidc.fetch(url, options)
-
     .then(response => {
       if (!response.ok) {  // not a 2xx level response
         let error = new Error('Error writing resource: ' +

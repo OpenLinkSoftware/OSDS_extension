@@ -25,10 +25,12 @@ var POSH = (function () {
   function POSH(uriStr) {
     this.terms = {};
     this.terms["description"] = "schema:description";
+    this.terms["title"] = "schema:title";
     this.terms["describedby"] = "wdrs:describedby";
     this.facebook_vision = "Image may contain: ";
 
     this.namespace = new Namespace();
+    this.twcard_id = 0;
 
     this.prefixes = {
         "xhv": "http://www.w3.org/1999/xhtml/vocab#",
@@ -111,6 +113,7 @@ var POSH = (function () {
   POSH.prototype = {
     getData: function (baseURI) 
     {
+      var links = {};
       var triples = "";
       var self = this;
       var twittercard = false;
@@ -169,8 +172,9 @@ var POSH = (function () {
         }
       }
 
-      function addTriple(s, p, o, obj_is_Literal)
+      function addTriple_s(s, p, o, obj_is_Literal)
       {
+        var ttl = "";
         var qv = '"';
 
         if (o.indexOf("\n")!=-1 || o.indexOf("\r")!=-1) {
@@ -180,43 +184,51 @@ var POSH = (function () {
           o = o.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
         }
 
-        triples += node2str(s)+" "+node2str(p)+" ";
+        ttl += node2str(s)+" "+node2str(p)+" ";
 
         if (obj_is_Literal) {
-          triples += qv+o+qv;
+          ttl += qv+o+qv;
         }
         else {
           if (o==="<>" || o==="<#this>")
-            triples += o;
+            ttl += o;
           else if (o.startsWith("http://") 
                  || o.startsWith("https://")
                  || o.startsWith("mailto:")
                 )
-            triples += "<"+o+">";
+            ttl += "<"+o+">";
           else if (o.startsWith("#"))
-            triples += "<"+encodeURI(o)+">";
+            ttl += "<"+encodeURI(o)+">";
           else if (o.lastIndexOf(":")!=-1) 
           {
             var arr = o.split(":");
             var pref_link = self.namespace.has_known_prefix(arr[0]);
             if (!pref_link) {//unknown prefix
-              triples += qv+o+qv;
+              ttl += qv+o+qv;
             } else {
               var p = self.prefixes[arr[0]];
               if (!p)
                 self.prefixes[arr[0]] = pref_link;
-              triples += arr[0]+":"+fixedEncodeURIComponent(o.substring(arr[0].length+1));
+              ttl += arr[0]+":"+fixedEncodeURIComponent(o.substring(arr[0].length+1));
             }
           }
           else
-            triples += qv+o+qv;
+            ttl += qv+o+qv;
         }
 
-        triples += " .\n";
+        ttl += " .\n";
+        return ttl;
       } 
 
 
-      function handleTwitterCard(p, o) 
+      function addTriple(s, p, o, obj_is_Literal)
+      {
+        var s = addTriple_s(s, p, o, obj_is_Literal);
+        triples += s;
+      } 
+
+
+      function handleTwitterCard() 
       {
         var cardtype = "SummaryCard";
         var content;
@@ -227,22 +239,51 @@ var POSH = (function () {
           if (content==="player")
             cardType = "PlayerCard";
           else if (content==="photo")
-            o = "PhotoCard";
+            cardType = "PhotoCard";
         }
 
-        addTriple("#this", "rdf:about", "#TwitterCard");
-        addTriple("#TwitterCard", "rdf:type", "schema:CreativeWork");
-        addTriple("#TwitterCard", "rdf:type", "opltw:"+cardtype);
-        addTriple("#TwitterCard", "schema:url", "<>");
+        var entity = "#TwitterCard"+(self.twcard_id>0 ? "_"+self.twcard_id : "");
+        var ttl = handleTwitterCardFor(entity, "head meta[name^='twitter:']");
+        if (ttl.length > 0) {
+          self.twcard_id++;
+          addTriple("#this", "rdf:about", entity);
+          addTriple(entity, "rdf:type", "opltw:"+cardtype);
+          addTriple(entity, "schema:url", "<>");
+          triples += ttl;
+        }
 
+        var entity = "#TwitterCard"+(self.twcard_id>0 ? "_"+self.twcard_id : "");
+        ttl = handleTwitterCardFor(entity, "head meta[name^='og:']");
+        if (ttl.length > 0) {
+          self.twcard_id++;
+          addTriple("#this", "rdf:about", entity);
+          addTriple(entity, "rdf:type", "opltw:"+cardtype);
+          addTriple(entity, "schema:url", "<>");
+          triples += ttl;
+        }
 
-        $("head meta[name^='twitter:'],meta[name^='og:'],meta[property^='og:']").each(function(i, el){
+        entity = "#TwitterCard"+(self.twcard_id>0 ? "_"+self.twcard_id : "");
+        ttl = handleTwitterCardFor(entity, "head meta[property^='og:']");
+        if (ttl.length > 0) {
+          self.twcard_id++;
+          addTriple("#this", "rdf:about", entity);
+          addTriple(entity, "rdf:type", "opltw:"+cardtype);
+          addTriple(entity, "schema:url", "<>");
+          triples += ttl;
+        }
+      }
+
+      function handleTwitterCardFor(entity, mask) 
+      {
+        var ttl = "";
+        $(mask).each(function(i, el){
+         try {
            var name = el.getAttribute("name");
            var content = el.getAttribute("content");
            var property = el.getAttribute("property");
 
            var val = null;
-           var add_dog = content.startsWith("@")?"@":"";
+           var add_dog = (content && content.startsWith("@"))?"@":"";
 
            if (name) {
              if (add_dog.length>0)
@@ -266,23 +307,24 @@ var POSH = (function () {
                if (op) {
                  if (!op.cmd) {
                    if (op.o==="iri:content")
-                     addTriple("#TwitterCard", op.p, content);
+                     ttl += addTriple_s(entity, op.p, content);
                    else if (op.o==="val:content")
-                     addTriple("#TwitterCard", op.p, content);
+                     ttl += addTriple_s(entity, op.p, content);
                    else
-                     addTriple("#TwitterCard", op.p, content);
+                     ttl += addTriple_s(entity, op.p, content);
                  } else {
                    //command exec
-                   addTriple("#TwitterCard", op.p, op.cmd(content));
+                   ttl += addTriple_s(entity, op.p, op.cmd(content));
                  }
                } 
              }
            }
-
+         } catch(e) {
+           console.log(e);
+         }
         });
-
+        return ttl;
       }
-
 
       function fix_href(n)
       {
@@ -321,16 +363,24 @@ var POSH = (function () {
       }
 
 //      $("head link,meta[name],meta[property]").each(function(i, el){
-      $("head link,meta[name]").each(function(i, el){
-         if (el.localName==="link") {
+      $("head link,meta[name],title").each(function(i, el){
+        try{
+         if (el.localName==="title") {
+           addTriple("#this", "title", el.textContent, true);
+         }
+         else if (el.localName==="link") {
            var rev = el.getAttribute("rev");
            var rel = el.getAttribute("rel");
-           var href = el.getAttribute("href");
+           var href = el.href;
+           var type = el.type;
+
+           if (href && rel && type && rel === "alternate") {
+               links[href] = type;
+           }
 
            if (rel && href) {
              href = encodeURI(fix_href(href));
              var title = el.getAttribute("title");
-             var type = el.getAttribute("type");
              addTriple("#this", encodeURI(rel), href);   
              addTriple(url_hash(href,"#this"), "rdf:type", "schema:CreativeWork");
              if (title)
@@ -358,6 +408,9 @@ var POSH = (function () {
            }
 
          }
+       } catch(e) {
+         console.log(e);
+       }
       });
 
       $("img[alt^='"+this.facebook_vision+"']").each(function(i, el){
@@ -378,7 +431,8 @@ var POSH = (function () {
         return true;
       });
 
-      return (triples.length > 0)?s+triples: triples;
+      return {triples: (triples.length > 0)?s+triples: triples, 
+              links };
     }
   }
 

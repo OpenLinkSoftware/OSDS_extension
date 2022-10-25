@@ -18,29 +18,53 @@
  *
  */
 
-#msg_snackbar {
+.super_links_msg {
+        all: initial;
+	display: none;
+	line-height: normal !important;
+	flex-direction: row !important; 
+	position: fixed !important;
+	border: 2px solid #000 !important;
+	border-radius: 2px !important;
+	width: 200px !important;
+	height: 20px !important;
+	top:4px !important;
+	left: 4px !important;
+	background: khaki !important;
+	color: black !important;
+ 	z-index: 2147483647 !important;
+	padding: 10px 10px 10px 20px !important;
+	font-family: Arial, Helvetica, sans-serif !important;
+	font-size: 14px !important;
+	box-sizing: content-box !important;
+}
+
+.super_links_img {
+	width: 16px !important;
+	height: 16px !important;
+}
+
+#super_links_snackbar {
   visibility: hidden;
-  min-width: 250px;
-  margin-left: -125px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 2px;
-  padding: 16px;
-  position: fixed;
-  z-index: 1;
-  left: 50%;
-  bottom: 30px;
-  font-size: 17px;
+  min-width: 250px !important;
+  margin-left: -125px !important;
+  background-color: #333 !important;
+  color: #fff !important;
+  text-align: center !important;
+  border-radius: 2px !important;
+  padding: 16px !important;
+  position: fixed !important;
+  z-index: 1 !important;
+  left: 50% !important;
+  bottom: 30px !important;
+  font-size: 17px !important;
 }
 
-#msg_snackbar.show {
+#super_links_snackbar.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s !important;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s !important;
 }
-
-
 
 
 .super_links_msg {
@@ -59,33 +83,8 @@
 	font-family: Arial, Helvetica, sans-serif;
 }
 
+
 .super_links_img {
-	width: 16px;
-	height: 16px;
-}
-
-
-.throbber_msg {
-        all: initial;
-	display: none;
-	line-height: normal;
-	flex-direction: row; 
-	position: fixed;
-	border: 2px solid #000;
-	border-radius: 2px;
-	width: 200px;
-	height: 20px;
-	top:4px;
-	left: 4px;
-	background: cyan;
-	color: black;
- 	z-index: 2147483647;
-	padding: 10px 10px 10px 20px;
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: 14px;
-}
-
-.throbber_img {
 	width: 16px;
 	height: 16px;
 }

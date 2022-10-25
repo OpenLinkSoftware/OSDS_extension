@@ -72,7 +72,7 @@ async function save_data(key, val)
 {
     var rec = {};
     rec[key]=val;
-    if (Browser.isChromeWebExt) {
+    if (Browser.is_chrome) {
       return new Promise(function (resolve, reject) {
         Browser.api.storage.local.set(rec, () => {
           resolve()

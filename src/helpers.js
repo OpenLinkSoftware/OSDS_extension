@@ -18,6 +18,137 @@
  *
  */
 
+class SPARQL_Upload {
+  constructor(tab, messages, req)
+  {
+    this.data = req.data;
+    this.sparql_ep = req.sparql_ep;
+    this.baseURI = req.baseURI;
+    this.sparql_graph = req.sparql_graph;
+    this.sparql_check = req.sparql_check;
+
+    this.tab = tab;
+    this.messages = messages;
+    this.state = 'init';
+    this.oidc = new OidcWeb();
+    var u = new URL(this.sparql_ep);
+    this.idp_url = u.origin;
+
+    this.save2sparql = new Save2Sparql(this.sparql_ep, this.sparql_graph, this.baseURI, this.oidc, this.messages);
+  }
+
+
+  async check_login(relogin)
+  {
+    try {
+      this.messages.throbber_show("&nbsp;Initializing...");
+
+      if (relogin) 
+      {
+        await this.oidc.logout();
+        this.state = 'login';
+        this.oidc.login2(this.idp_url);
+        return false;
+      } 
+      else 
+      {
+        await this.oidc.checkSession();
+        if (this.oidc.webid) {
+          if (!this.oidc.isSessionForIdp(this.idp_url))
+            await this.oidc.logout();
+        }
+        if (!this.oidc.webid) {
+          this.state = 'login';
+          this.oidc.login2(this.idp_url);
+          return false;
+        }
+      }
+      return true;
+    } finally {
+      this.messages.throbber_hide();
+    }
+  }
+
+  
+  async logout()
+  {
+    await this.oidc.logout();
+  }
+
+  
+  async reexec()
+  {
+    if (this.state === 'init') {
+      var rc = await this.check_login();
+      if (rc) {
+        return await this.mexec();
+      }
+    } 
+    else if (this.state === 'login' || this.state === 'query') 
+    {
+      return await this.mexec();
+    } 
+    return false;
+  }
+
+
+  async mexec()
+  {
+    this.state = `query`;
+
+    var handler = new Convert_Turtle();
+    try {
+      for(var v of this.data) {
+        this.messages.throbber_show('&nbsp;Preparing&nbsp;data...');
+
+        if (v.error.length > 0 && v.txt.length == 0) {
+          
+          this.messages.snackbar_show('Unable prepare data:' +v.error);
+
+        } else if (v.txt.length > 0) {
+          
+          var ttl_data = await handler.prepare_query(v.txt, this.baseURI);
+          for(var i=0; i < ttl_data.length; i++) {
+
+            var ret = await this.save2sparql.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
+
+            this.messages.throbber_hide();
+
+            if (!ret.rc) {
+              if (ret.status === 401 || ret.status === 403) {
+                 this.logout();
+                 this.state = 'init';
+                 this.messages.msg_show(ret.error);
+                 return false;
+
+              } else {
+                 this.state = 'init';
+                 this.messages.msg_show(ret.error);
+                 return false;
+              }
+            }
+          }
+
+        }
+
+      }
+      if (this.sparql_check) {
+        if (this.tab)
+          Browser.api.tabs.create({'url':this.sparql_check, 'index': this.tab.index+1});
+        else
+          Browser.api.tabs.create({'url':this.sparql_check});
+      }
+      
+    } finally {
+      this.messages.throbber_hide();
+    }
+  
+    return true;
+  }
+
+}
+
+
 
 class SuperLinks {
   constructor(url, tabId, messages)
@@ -87,9 +218,9 @@ class SuperLinks {
     var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
     
     var setting = new Settings();
-    var sponge_type = setting.getValue('ext.osds.super-links-sponge');
-    var sponge_mode = setting.getValue('ext.osds.super-links-sponge-mode');
-    var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+    var sponge_type = await setting.getValue('ext.osds.super-links-sponge');
+    var sponge_mode = await setting.getValue('ext.osds.super-links-sponge-mode');
+    var links_timeout = parseInt(await setting.getValue("ext.osds.super_links.timeout"), 10);
     var url_sponge;
   
     if (sponge_type) {
@@ -142,7 +273,7 @@ class SuperLinks {
         this.messages.snackbar_show("Sponge error:"+e.statusCode,"Trying Relogin and execute sponge again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
-        this.messages.snackbar_show("Sponge error:"+e.toString, null); 
+        this.messages.snackbar_show("Sponge error:"+e.toString(), null); 
       }
       console.log(e);
     }
@@ -158,8 +289,8 @@ class SuperLinks {
     var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
 
     var setting = new Settings();
-    var links_query = setting.getValue("ext.osds.super_links.query");
-    var links_timeout = parseInt(setting.getValue("ext.osds.super_links.timeout"), 10);
+    var links_query = await setting.getValue("ext.osds.super_links.query");
+    var links_timeout = parseInt(await setting.getValue("ext.osds.super_links.timeout"), 10);
 
     
     var url = new URL(this.doc_url);
@@ -176,7 +307,7 @@ class SuperLinks {
       br_lang = 'en';
     }
   
-    var links_sparql_query = (new Settings()).createSuperLinksQuery(links_query, iri, br_lang);
+    var links_sparql_query = await setting.createSuperLinksQuery(links_query, iri, br_lang);
   
     this.messages.throbber_show("&nbsp;Preparing&nbsp;Super&nbsp;Links&nbsp;"+iter);
   
@@ -245,7 +376,7 @@ class SuperLinks {
         this.messages.snackbar_show("Fetch SuperLinks error:"+e.statusCode,"Trying Relogin and call SupeLinks again"); 
         this.check_login(true); // Browser.openTab(REDIR_URL);
       } else {
-        this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString);
+        this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString());
       }
       return null;
     } finally {
@@ -282,8 +413,8 @@ class SuperLinks {
   async mexec()
   {
     var setting = new Settings();
-    var retries = setting.getValue("ext.osds.super_links.retries");
-    var rtimeout = setting.getValue("ext.osds.super_links.retries_timeout");
+    var retries = await setting.getValue("ext.osds.super_links.retries");
+    var rtimeout = await setting.getValue("ext.osds.super_links.retries_timeout");
 
     if (retries < 3)
       retries = 3;
@@ -300,7 +431,7 @@ class SuperLinks {
       else
          data = await this.exec_super_links_query(i+1);
 
-      if (this.state === 'login')
+      if (this.state === 'login' || this.state === 'init')
         break;
 
       if (data) {
@@ -323,8 +454,8 @@ class SuperLinks {
   async mexec_query()
   {
     var setting = new Settings();
-    var retries = setting.getValue("ext.osds.super_links.retries");
-    var rtimeout = setting.getValue("ext.osds.super_links.retries_timeout");
+    var retries = await setting.getValue("ext.osds.super_links.retries");
+    var rtimeout = await setting.getValue("ext.osds.super_links.retries_timeout");
 
     if (retries < 3)
       retries = 3;

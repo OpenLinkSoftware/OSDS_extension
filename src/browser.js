@@ -19,9 +19,10 @@
  */
 
 var Browser = {
-    isChromeWebExt: true,
-    isFirefoxWebExt: false,
+    is_chrome: true,
+    is_ff: false,
     isEdgeWebExt: false,
+    is_safari: false,
 
     api: null,
 
@@ -47,5 +48,5 @@ var Browser = {
 }
 
 try {
-  Browser.api = (Browser.isChromeWebExt) ? chrome : browser;
+  Browser.api = (Browser.is_chrome) ? chrome : browser;
 } catch(e) {}

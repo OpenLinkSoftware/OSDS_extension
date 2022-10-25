@@ -121,7 +121,7 @@ Namespace = function() {
         "dbr": "http://dbpedia.org/resource/",
         "air": "http://dig.csail.mit.edu/TAMI/2007/amord/air#",
         "vs": "http://www.w3.org/2003/06/sw-vocab-status/ns#",
-        "media": "http://purl.org/media#",
+        "media": ["http://purl.org/media#", "http://search.yahoo.com/mrss/"] ,
         "oo": "http://purl.org/openorg/",
         "log": "http://www.w3.org/2000/10/swap/log#",
         "daia": "http://purl.org/ontology/daia/",
