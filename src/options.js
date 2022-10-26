@@ -278,6 +278,9 @@ async function loadPref()
     var chk_a_discovery = await gPref.getValue("ext.osds.auto_discovery");
     DOM.iSel("chk_auto_discovery").checked = (chk_a_discovery==="1");
 
+    var chk_jsonld_compact_rel = await gPref.getValue("ext.osds.jsonld_compact_rel");
+    DOM.iSel("chk_jsonld_compact_rel").checked = (chk_jsonld_compact_rel==="1");
+
     var chk_xml = await gPref.getValue("ext.osds.handle_xml");
     DOM.iSel("chk_try_handle_xml").checked = (chk_xml==="1");
 
@@ -370,6 +373,9 @@ async function savePref()
 
    await gPref.setValue("ext.osds.pref.show_action", DOM.iSel('chk_show_action_for_url_with_params').checked?"1":"0");
    await gPref.setValue("ext.osds.auto_discovery", DOM.iSel('chk_auto_discovery').checked?"1":"0");
+
+   await gPref.setValue("ext.osds.jsonld_compact_rel", DOM.iSel('chk_jsonld_compact_rel').checked?"1":"0");
+
 
    await gPref.setValue("ext.osds.handle_xml", DOM.iSel('chk_try_handle_xml').checked?"1":"0");
    await gPref.setValue("ext.osds.handle_csv", DOM.iSel('chk_try_handle_csv').checked?"1":"0");

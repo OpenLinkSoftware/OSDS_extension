@@ -19,9 +19,10 @@
  */
   
 
-  TTL_Gen = function(_docURI, for_query, bnode_types, skip_docpref) {
+  TTL_Gen = function(_docURI, for_query, bnode_types, skip_docpref, _add_base) {
     this.ns = new Namespace();
     this.docURI = _docURI;
+    this.add_base = _add_base || false;
 
     this.skip_docpref = skip_docpref;
 
@@ -107,7 +108,9 @@
       if (this.for_query) {
         var pref = "";
 
-        pref += "base <"+this.docURI+"> \n";
+        if (this.add_base)
+          pref += "base <"+this.docURI+"> \n";
+
         pref += "prefix : <#> \n";
 
         $.each(this.prefixes, function(key, val){
@@ -120,7 +123,9 @@
       else {
         var pref = "";
 
-        pref += "@base <"+this.docURI+"> .\n";
+        if (this.add_base)
+          pref += "@base <"+this.docURI+"> .\n";
+
         if (!this.skip_docpref)
           pref += "@prefix : <#> .\n";
 
@@ -174,7 +179,7 @@
             if (!data)
               data = "b";
           }
-          return fixedEncodeURIComponent(this.pre(data+sid));
+          return this.pre(data+sid);
         }
         else {
           var u = new URL(value);
@@ -252,7 +257,7 @@
              return ":"+id;      
            }
            else
-             return "<"+encodeURI(this.pre(value))+">";      
+             return "<"+this.pre(value)+">";      
          }
        }
     },
@@ -261,9 +266,9 @@
     {
       val = String(val);
       if ( val.match(/^http(s)?:\/\//) ) {
-        val = "<"+encodeURI(this.pre(val))+">";
+        val = "<"+this.pre(val)+">";
       } else if ( val.match(/^mailto:/) ) {
-        val = "<"+encodeURI(this.pre(val))+">";
+        val = "<"+this.pre(val)+">";
       } else {
         val = '"'+this.pre(val)+'"';
       }
@@ -297,9 +302,9 @@
         data = data.substring(0, data.length-1);
 
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))
-        return "<"+encodeURI(this.pre(val))+">";
+        return "<"+this.pre(val)+">";
       else
-        return pref.ns+":"+fixedEncodeURIComponent(this.pre(data));
+        return pref.ns+":"+this.pre(data);
     },
 
     pre : function (value) 

@@ -357,6 +357,9 @@ var POSH = (function () {
 
       function url_hash(href, hash)
       {
+        if (href == baseURI)
+          return hash;
+
         var u = new URL(href);
         u.hash = hash;
         return u.toString();
@@ -379,9 +382,9 @@ var POSH = (function () {
            }
 
            if (rel && href) {
-             href = encodeURI(fix_href(href));
+             href = fix_href(href);
              var title = el.getAttribute("title");
-             addTriple("#this", encodeURI(rel), href);   
+             addTriple("#this", rel, href);   
              addTriple(url_hash(href,"#this"), "rdf:type", "schema:CreativeWork");
              if (title)
                addTriple(url_hash(href,"#this"), "schema:name", title);   
@@ -389,8 +392,8 @@ var POSH = (function () {
                addTriple(url_hash(href,"#this"), "schema:fileFormat", type);   
            }
            else if(rev && href) {
-             href = encodeURI(fix_href(href));
-             addTriple(href, encodeURI(rev), "<#this>")
+             href = fix_href(href);
+             addTriple(href, rev, "<#this>")
            }
          }
          else if (el.localName==="meta") {

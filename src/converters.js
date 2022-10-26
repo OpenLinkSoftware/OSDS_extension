@@ -133,6 +133,9 @@ class Convert_Turtle{
   {
     this.baseURI = baseURL;
     var self = this;
+    var setting = new Settings();
+    var compact_relative = await setting.getValue("ext.osds.jsonld_compact_rel");
+
 
     return new Promise(function (resolve, reject) {
       try {
@@ -154,12 +157,13 @@ class Convert_Turtle{
             }
             else {
               var context = prefixes;
-              var base = context[""];
+              var base = baseURL;
 
-              if (base) {
-                context[""] = undefined;
-                //context["@base"] = base;
-              }
+              if (context[""])
+                delete context[""];
+
+              if (compact_relative === '1')
+                context["@base"] = baseURL;
 
               store.end(async function (error, ttl_text) {
 
@@ -172,7 +176,12 @@ class Convert_Turtle{
                   var doc = await jsonld.fromRDF(ttl_text, {format: 'application/nquads'});
                
                   try {
-                    var compacted = await jsonld.compact(doc, context);
+                    var compacted;
+                    if (compact_relative === '1')
+                      compacted = await jsonld.compact(doc, context, {base, compactToRelative: true});
+                    else
+                      compacted = await jsonld.compact(doc, context, {compactToRelative: false});
+
                     resolve(JSON.stringify(compacted, null, 2));
 
                   } catch (ex) {
@@ -816,7 +825,7 @@ class Convert_RSS {
         var feed = await parser.parseString(text);
 
         var channel_link = feed.link ? this.getVal_or_Attr(feed.link, 'href') : baseURL;
-        channel_link = this.fix_uri(channel_link);
+        channel_link = this.fix_uri((new URL(channel_link)).toString());
 
         ttl +=  `:this schema:mainEntity <${channel_link}> .\n\n`
                +`<${channel_link}> a schema:DataFeed`;
