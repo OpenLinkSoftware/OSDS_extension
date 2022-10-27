@@ -62,6 +62,15 @@ To install this extension manually use the following steps:
 - Navigate to the folder containing the extracted source code
 - Press the **Select** button
 
+### Install the extension in Microsoft Edge
+To install this extension manually, take the following steps:
+
+1. Open the Edge browser
+1. Select from menu: **Edge** -> **Preferences** -> **Extensions**
+1. Check the [X] **Developer mode** box
+1. Choose the option **Load unpacked extension...**
+1. Navigate to the folder containing the extracted source code
+1. Press the **Select** button
 
 ### Install the extension in Opera
 To install this extension manually use the following steps:
