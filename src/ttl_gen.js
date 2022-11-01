@@ -245,6 +245,10 @@
                                   : ":"+s;
        }
        else {
+         value = String(value);
+         if ( value.match(/^http(s)?:\/\//) ) 
+           value = (new URL(value)).href;
+
          var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
          if (pref!=null) {
            this.prefixes[pref.ns]=pref.link;
@@ -266,6 +270,7 @@
     {
       val = String(val);
       if ( val.match(/^http(s)?:\/\//) ) {
+        val = (new URL(val)).href;
         val = "<"+this.pre(val)+">";
       } else if ( val.match(/^mailto:/) ) {
         val = "<"+this.pre(val)+">";
@@ -295,6 +300,10 @@
 
     pref_link : function (val, pref) 
     {
+      val = String(val);
+      if ( val.match(/^http(s)?:\/\//) ) 
+        val = (new URL(val)).href;
+
       var data = val.substring(pref.link.length);
       var len = data.length;
 
