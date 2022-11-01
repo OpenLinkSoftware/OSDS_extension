@@ -79,7 +79,7 @@ class Fix_Nano {
 
     return new Promise(function (resolve, reject) {
       try {
-        var lexer = N3.Lexer({ lineMode: false });
+        var lexer = new N3.Lexer({ lineMode: false });
         var ttl_data = textData;
         var tok0;
         var tok1;
@@ -290,7 +290,7 @@ class Handle_Turtle {
     return new Promise(function (resolve, reject) {
       try {
         var store = new N3DataConverter();
-        var parser = N3.Parser({baseIRI:self.baseURI, format:'text/n3'});
+        var parser = new N3.Parser({baseIRI:self.baseURI, format:'text/n3'});
         var ttl_data = textData;
 
         if (self.ns_pref!==null)
@@ -406,7 +406,7 @@ class Handle_Quads {
     return new Promise(function (resolve, reject) {
       try {
         var stores = {};
-        var parser = N3.Parser({baseIRI:self.baseURI, format:'N-Quads'});
+        var parser = new N3.Parser({baseIRI:self.baseURI, format:'N-Quads'});
         var ttl_data = textData;
 
         parser.parse(ttl_data,
@@ -494,6 +494,35 @@ class Handle_JSONLD {
       this._make_ttl = make_ttl;
   }
 
+
+  fix_json(v)
+  {
+    var ret = [];
+    var inStr = false;
+    for(var i=0; i < v.length; i++) {
+      var ch = v[i];
+      if (inStr) {
+        switch(ch) {
+          case '"': inStr = false; break;
+          case '\n': ch = '\\n'; break;
+          case '\t': ch = '    '; break;
+          case '\r': ch = '\\r'; break;
+          case '\f': ch = '\\f'; break;
+          case '\b': ch = '\\b'; break;
+        }
+        if (ch === '"') 
+          inStr = false;
+        
+      } else {
+        if (ch === '"')
+          inStr = true;
+      }
+      ret.push(ch);
+    }
+    return ret.join('');
+  }
+
+
   async parse(textData, docURL, bnode_types)
   {
     var output = this._make_ttl ? [] : '';
@@ -501,7 +530,15 @@ class Handle_JSONLD {
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var jsonld_data = JSON.parse( textData[i].trim() );
+        var json_str = textData[i].trim();
+        var jsonld_data = null;
+        try {
+          jsonld_data = JSON.parse(json_str);
+        } catch (ex) {
+          json_str = this.fix_json(json_str);
+          jsonld_data = JSON.parse(json_str);
+        }
+
         if (jsonld_data != null) {
           try {
             var txt = JSON.stringify(jsonld_data, null, 2);

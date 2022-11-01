@@ -33,8 +33,6 @@ class SPARQL_Upload {
     this.oidc = new OidcWeb();
     var u = new URL(this.sparql_ep);
     this.idp_url = u.origin;
-
-    this.save2sparql = new Save2Sparql(this.sparql_ep, this.sparql_graph, this.baseURI, this.oidc, this.messages);
   }
 
 
@@ -110,7 +108,7 @@ class SPARQL_Upload {
           var ttl_data = await handler.prepare_query(v.txt, this.baseURI);
           for(var i=0; i < ttl_data.length; i++) {
 
-            var ret = await this.save2sparql.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
+            var ret = await this.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
 
             this.messages.throbber_hide();
 
@@ -145,6 +143,115 @@ class SPARQL_Upload {
   
     return true;
   }
+
+
+  async exec_sparql(prefixes, triples)
+  {
+    var pref = "";
+    var max_bytes = 30000;
+    var pref_len = 10;
+    var pref_sz;
+    var insert_cmd = this.sparql_graph.length > 1
+                 ? 'INSERT INTO GRAPH <' + this.sparql_graph + '> {\n'
+                 : 'INSERT DATA { \n';
+
+    pref += "base <"+this.baseURI+"> \n";
+    pref += "prefix : <#> \n";
+
+    prefixes = prefixes || {};
+    triples = triples || "";
+
+    pref_sz = pref.length;
+
+    for(var key in prefixes) {
+      var item = "prefix "+key+": <"+prefixes[key]+"> \n";
+      pref += item;
+      pref_len++;
+      pref_sz += item.length;
+    }
+  
+    var max_count = 1000 - pref_len;
+    var count = 0;
+    var data = [];
+    var qry_sz = pref_sz;
+    var z = 1;
+    for(var i=0; i < triples.length; i++) 
+    {
+      if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
+        this.messages.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+
+        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+        if (!ret.rc)
+          return ret;
+
+        count = 0;
+        data = [];
+        qry_sz = pref_sz;
+      }
+
+      data.push(triples[i]);
+      count++;
+      qry_sz += triples[i].length + 1;
+
+    }
+
+    if (count > 0) 
+    {
+      this.messages.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
+
+      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+      if (!ret.rc)
+        return ret;
+    }
+
+    return {rc: true};
+  }
+
+
+  async send_sparql(query)
+  {
+    var contentType = "application/sparql-update;utf-8";
+    var ret;
+    var options = {
+      method: 'POST',
+      headers: {
+        'Content-type': 'application/sparql-update;utf-8'
+      },
+      credentials: 'include',
+      body: query
+    }
+
+    try {
+      ret = await this.oidc.fetch(this.sparql_ep, options);
+
+      if (!ret.ok) {
+        var message = this.create_error(ret.status, ret.statusText);
+        return {rc:false, error: message, status: ret.status} ;
+      }
+    } catch (e) {
+      var message = this.create_error(e.statusCode, e.message);
+      return {rc:false, error:message, status: e.statusCode };
+    }
+
+    return {rc: true};
+  }
+
+
+  create_error(status, statusText)
+  {
+    switch(status) {
+      case 0:
+      case 405: 
+        return 'HTTP Error: '+status +' \nThis location is not writable';
+      case 401:
+      case 403:
+        return 'HTTP Error: '+status +' \nYou do not have permission to execute SPARQL Insert query';
+      case 406:
+        return 'HTTP Error: '+status +' \nEnter a name for your resource';
+    }
+    return statusText;
+  }
+
 
 }
 
