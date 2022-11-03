@@ -179,7 +179,7 @@
             if (!data)
               data = "b";
           }
-          return this.pre(data+sid);
+          return fixedEncodeURIComponent(this.pre(decodeURIComponent(data)+sid));
         }
         else {
           var u = new URL(value);
@@ -258,7 +258,7 @@
          {
            if (!this.skip_docpref && value.startsWith(this.docURI_pref)) {
              var id = this.pre(value.substring(this.docURI_pref.length));
-             return ":"+id;      
+             return ":"+fixedEncodeURIComponent(decodeURIComponent(id));      
            }
            else
              return "<"+this.pre(value)+">";      
@@ -313,7 +313,7 @@
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))
         return "<"+this.pre(val)+">";
       else
-        return pref.ns+":"+this.pre(data);
+        return pref.ns+":"+fixedEncodeURIComponent(this.pre(decodeURIComponent(data)));
     },
 
     pre : function (value) 
