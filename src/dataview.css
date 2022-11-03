@@ -103,7 +103,7 @@ table.wait {
 
 table.docdata {
   border: 1px solid #000;
-  width:735px;
+  width:100%;
   table-layout: fixed;
   font-size: 12px;
   word-wrap:break-word;
@@ -138,20 +138,6 @@ table.docdata > tbody > tr > td.typeid {
 }
 
 
-/***
-body.sniffer {
-    width: 760px;
-    height: 580px;
-}
-
-
-div.content {
-    overflow: auto;
-    width: 755px;
-    height: 530px;
-    border: 1px solid lightgray;
-}
-***/
 
 div#header {
     height: 15px;
@@ -175,14 +161,15 @@ div#header {
 }
 
 
-
 .bottom_block {
+    position: absolute;
     display: flex;
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
     flex-shrink: 0;
-    margin-top: 5px;
+    bottom: 5px;
+    width: 95vw;
     color: gray;
     font-size: 10px;
 
@@ -194,36 +181,6 @@ div#header {
 }
 
 
-ul#tabs {
-    font-size: 12px;
-    list-style-type: none;
-    margin: 10px 0 0 0;
-    padding: 0 0 0.3em 0;
-}
-
-ul#tabs li {
-    display: inline;
-}
-
-ul#tabs li a {
-    color: #42454a;
-    background-color: #dedbde;
-    border: 1px solid #c9c3ba;
-    border-bottom: none;
-    padding: 0.5em 0.5em 0 0.5em;
-    text-decoration: none;
-}
-
-ul#tabs li a:hover {
-    background-color: #f1f0ee;
-}
-
-ul#tabs li a.selected {
-    color: blue;
-    background-color: #f1f0ee;
-    font-weight: bold;
-    padding: 0.7em 0.5em 0 0.5em;
-}
 
 .rest_path {
     display:flex; 

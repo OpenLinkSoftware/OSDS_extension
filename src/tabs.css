@@ -1,0 +1,68 @@
+
+.tabs {
+  float: none;
+  list-style: none;
+  position: relative;
+  text-align: left;
+  padding: 0 0 0.3em 0;
+  margin-top: -5px;
+}
+
+.tabs li {
+  float: left;
+  display: block;
+  margin-right: 3px;
+}
+
+
+.tabs input[type="radio"] {
+  position: absolute;
+  top: 0;
+  left: -9999px;
+}
+
+.tabs label {
+  display: block;
+  padding: 4px 4px 6px 4px;
+  border-radius: 4px 4px 0 0;
+  font-size: 13px;
+  font-weight: normal;
+  background: lightgray;
+  cursor: pointer;
+  position: relative;
+  top: 4px;
+  -moz-transition: all 0.1s ease-in-out;
+  -o-transition: all 0.1s ease-in-out;
+  -webkit-transition: all 0.1s ease-in-out;
+  transition: all 0.1s ease-in-out;
+}
+
+.tabs label:hover {
+  background: lightgray;
+}
+
+.tabs .tab-content {
+  z-index: 2;
+  display: none;
+  overflow: auto;
+  width: calc(100% - 5px);
+  height: calc(100vh - 70px);
+  position: absolute;
+  top: 33px;
+  left: 0;
+  border: 1px solid #c9c3ba;
+  font-size: 13px;
+}
+
+.tabs [id^="itab"]:checked + label {
+  top: 0;
+  padding: 9px 4px 6px 4px;
+  background: #f1f0ee;
+  color: blue;
+  font-weight: bold;
+  border: 1px solid #c9c3ba;
+}
+
+.tabs [id^="itab"]:checked ~ [role^="tabpanel"] {
+  display: block;
+}

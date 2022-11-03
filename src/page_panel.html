@@ -55,6 +55,7 @@
         <script type="text/javascript" src="html_gen.js"></script>
 
         <link rel="stylesheet" href="dataview.css" />
+        <link rel="stylesheet" href="tabs.css" />
 
         <style type="text/css">
           :root {
@@ -65,14 +66,12 @@
 
           body.sniffer {
             width: 99%;
-            height: 96%;
+            height: 97%;
           }
 
           div.content {
-            overflow: auto;
-            width: 99%;
-            height: 96%;
-            border: 1px solid lightgray;
+            width: 100%;
+            height: calc(100% - 20px);
           }
 
           table.docdata {
@@ -88,10 +87,8 @@
           }
 
           div.content_sf {
-            overflow: auto;
             width: 755px;
             height: 530px;
-            border: 1px solid lightgray;
           }
 
         </style>
@@ -221,181 +218,232 @@
        </tr>
       </table>
 
-      <div id="header">
-        <ul id="tabs">
-          <li><a href="#src"  title="Close tab">X</a></li>
-          <li><a href="#cons" title="Close tab">X</a></li>
-          <li><a href="#micro" title="Structured Data encoded using HTML5 Microdata Notation">Microdata</a></li>
-          <li><a href="#jsonld" title="Metadata encoded using JSON-LD Notation">JSON-LD</a></li>
-          <li><a href="#turtle" title="Metadata encoded using RDF-Turtle Notation">Turtle</a></li>
-          <li><a href="#rdfa" title="Metadata  encoded using RDFa Notation">RDFa</a></li>
-          <li><a href="#rdf" title="Metadata  encoded using RDF/XML Notation">RDF/XML</a></li>
-          <li><a href="#posh" title="Metadata encoded using Plain Old Semantic HTML Notation">POSH</a></li>
-          <li><a href="#json" title="Metadata encoded using JSON Notation">JSON</a></li>
-          <li><a href="#csv" title="Metadata encoded using CSV Notation">CSV</a></li>
-          <li><a href="#rss" title="Metadata encoded using RSS Notation">RSS</a></li>
-          <li><a href="#atom" title="Metadata encoded using Atom Notation">Atom</a></li>
-        </ul>
-      </div>
-
       <div class="content">
+      <ul class="tabs" role="tablist">
+        <li id="tab-micro" >
+          <input type="radio" name="tabs" id="itab-micro" checked />
+          <label for="itab-micro" role="tab" aria-selected="true" tabindex="0">
+            Microdata
+          </label>
+          <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="false">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
 
-        <div id="src_items" style="font-size: 13px;">
-          <table style="width: 100%;height:40px;">
-            <tr>
-              <td>
-                <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
-              </td>
-            </tr>
-          </table>
-          <div style="width: 100%; height: calc(100% - 40px);">
+        <li id="tab-jsonld" >
+          <input type="radio" name="tabs" id="itab-jsonld" />
+          <label for="itab-jsonld" role="tab" aria-selected="false" tabindex="0">
+            JSON-LD
+          </label>
+          <div id="jsonld_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-turtle" >
+          <input type="radio" name="tabs" id="itab-turtle" />
+          <label for="itab-turtle" role="tab" aria-selected="false" tabindex="0">
+            Turtle
+          </label>
+          <div id="turtle_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-rdfa" >
+          <input type="radio" name="tabs" id="itab-rdfa" />
+          <label for="itab-rdfa" role="tab" aria-selected="false" tabindex="0">
+            RDFa
+          </label>
+          <div id="rdfa_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-rdf" >
+          <input type="radio" name="tabs" id="itab-rdf" />
+          <label for="itab-rdf" role="tab" aria-selected="false" tabindex="0">
+            RDF/XML
+          </label>
+          <div id="rdf_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-posh" >
+          <input type="radio" name="tabs" id="itab-posh" />
+          <label for="itab-posh" role="tab" aria-selected="false" tabindex="0">
+            POSH
+          </label>
+          <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-json" >
+          <input type="radio" name="tabs" id="itab-json" />
+          <label for="itab-json" role="tab" aria-selected="false" tabindex="0">
+            JSON
+          </label>
+          <div id="json_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-csv" >
+          <input type="radio" name="tabs" id="itab-csv" />
+          <label for="itab-csv" role="tab" aria-selected="false" tabindex="0">
+            CSV
+          </label>
+          <div id="csv_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-rss" >
+          <input type="radio" name="tabs" id="itab-rss" />
+          <label for="itab-rss" role="tab" aria-selected="false" tabindex="0">
+            RSS
+          </label>
+          <div id="rss_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-atom" >
+          <input type="radio" name="tabs" id="itab-atom" />
+          <label for="itab-atom" role="tab" aria-selected="false" tabindex="0">
+            Atom
+          </label>
+          <div id="atom_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-src" >
+          <input type="radio" name="tabs" id="itab-src" />
+          <div id="src_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+            <table style="width: 100%;height:40px;">
+              <tr>
+                <td>
+                  <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
+                </td>
+              </tr>
+            </table>
+            <div style="width: 100%; height: calc(100% - 40px);">
                 <textarea id="src_place" style="white-space:nowrap">
                 </textarea>
-          </div>
-        </div>
-
-        <div id="cons_items" style="font-size: 13px;">
-          <div style="display:flex; flex-direction:row; align-items:baseline;">
-            <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
-            <button id="rest_exit" >Exit</button>
-          </div>
-          <div class="rest_path">
-            <span style="margin:5px;margin-right:10px; width:3em">URL</span>
-            <input id="rest_url" style="WIDTH: 100%; background-color: #dce9f9; " readonly >
-          </div>
-          <p/>
-          <div class="rest_path">
-            <span style="margin:5px;margin-right:10px; width:5em">Scheme</span>
-            <input id="rest_scheme" style="WIDTH: 100%; " >
-          </div>
-          <div class="rest_path">
-            <span style="margin:5px;margin-right:10px; width:5em">Authority</span>
-            <input id="rest_auth" style="WIDTH: 100%; " >
-          </div>
-          <div class="rest_path">
-            <span style="margin:5px;margin-right:10px; width:5em">Path</span>
-            <input id="rest_path" style="WIDTH: 100%; " >
-          </div>
-          <p/>
-          <div id="rest_query">
-            <div class="rest_query_title" >
-              <span style="margin:5px;margin-right:10px; width:9em">Query&nbsp;Parameter</span>
-              <input id="query_id" style="WIDTH: 100%;" >
             </div>
-            <textarea id="query_place" style="width: 100%; height: 100px">
-            </textarea>
           </div>
+        </li>
 
-          <table id="rest_params" class="footable">
-            <thead>
-              <tr>
-                <th width="12px"></th>
-                <th width="40%">Parameter</th>
-                <th width="auto">Value</th>
-              </tr>
-            </thead>
-            <tbody id="restData">
-            </tbody>
-          </table>
-          <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
-          <p/>
-          <div class="rest_path">
-            <span style="margin:5px;margin-right:10px; width:5em">Fragment</span>
-            <input id="rest_hash" style="WIDTH: 100%; " >
+        <li id="tab-cons" >
+          <input type="radio" name="tabs" id="itab-cons" />
+          <div id="cons_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+            <div style="display:flex; flex-direction:row; align-items:baseline;">
+              <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
+              <button id="rest_exit" >Exit</button>
+            </div>
+            <div class="rest_path">
+              <span style="margin:5px;margin-right:10px; width:3em">URL</span>
+              <input id="rest_url" style="WIDTH: 100%; background-color: #dce9f9; " readonly >
+            </div>
+            <p/>
+            <div class="rest_path">
+              <span style="margin:5px;margin-right:10px; width:5em">Scheme</span>
+              <input id="rest_scheme" style="WIDTH: 100%; " >
+            </div>
+            <div class="rest_path">
+              <span style="margin:5px;margin-right:10px; width:5em">Authority</span>
+              <input id="rest_auth" style="WIDTH: 100%; " >
+            </div>
+            <div class="rest_path">
+              <span style="margin:5px;margin-right:10px; width:5em">Path</span>
+              <input id="rest_path" style="WIDTH: 100%; " >
+            </div>
+            <p/>
+            <div id="rest_query">
+              <div class="rest_query_title" >
+                <span style="margin:5px;margin-right:10px; width:9em">Query&nbsp;Parameter</span>
+                <input id="query_id" style="WIDTH: 100%;" >
+              </div>
+              <textarea id="query_place" style="width: 100%; height: 100px">
+              </textarea>
+            </div>
+
+            <table id="rest_params" class="footable">
+              <thead>
+                <tr>
+                  <th width="12px"></th>
+                  <th width="40%">Parameter</th>
+                  <th width="auto">Value</th>
+                </tr>
+              </thead>
+              <tbody id="restData">
+              </tbody>
+            </table>
+            <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
+            <p/>
+            <div class="rest_path">
+              <span style="margin:5px;margin-right:10px; width:5em">Fragment</span>
+              <input id="rest_hash" style="WIDTH: 100%; " >
+            </div>
           </div>
-        </div>
+        </li>
 
-        <div id="micro_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="jsonld_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="turtle_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="rdfa_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="rdf_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="posh_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="json_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="csv_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="rss_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
-        <div id="atom_items">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-        </div>
-
+      </ul>
       </div>
+
 
       <div class="bottom_block">
         <div class="bottom_block_left">
