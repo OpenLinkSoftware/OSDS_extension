@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		855CC5D92913179800F4F450 /* tabs.css in Resources */ = {isa = PBXBuildFile; fileRef = 855CC5D82913179800F4F450 /* tabs.css */; };
+		855CC5DA2913179800F4F450 /* tabs.css in Resources */ = {isa = PBXBuildFile; fileRef = 855CC5D82913179800F4F450 /* tabs.css */; };
 		85B1CBBA27B70B1A0031698A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B1CBB927B70B1A0031698A /* AppDelegate.swift */; };
 		85B1CBBC27B70B1A0031698A /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B1CBBB27B70B1A0031698A /* SceneDelegate.swift */; };
 		85B1CBBF27B70B1A0031698A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CBBD27B70B1A0031698A /* LaunchScreen.storyboard */; };
@@ -134,6 +136,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		855CC5D82913179800F4F450 /* tabs.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = tabs.css; path = Resources/tabs.css; sourceTree = "<group>"; };
 		859E4F8A27E6A01900A84BB4 /* OSDS (macOS)Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "OSDS (macOS)Release.entitlements"; sourceTree = "<group>"; };
 		85B1CBAA27B70B180031698A /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = ../Base.lproj/Main.html; sourceTree = "<group>"; };
 		85B1CBAB27B70B180031698A /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
@@ -320,6 +323,7 @@
 		85B1CC0427B70B1B0031698A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				855CC5D82913179800F4F450 /* tabs.css */,
 				85B1CC0527B70B1B0031698A /* dataview.css */,
 				85B1CC0627B70B1B0031698A /* html_gen.js */,
 				85B1CC0727B70B1B0031698A /* content.css */,
@@ -534,6 +538,7 @@
 				85B1CC5527B70B1B0031698A /* helpers.js in Resources */,
 				85B1CC4927B70B1B0031698A /* helpers_ui.js in Resources */,
 				85B1CC5E27B70B1B0031698A /* frame.js in Resources */,
+				855CC5D92913179800F4F450 /* tabs.css in Resources */,
 				85B1CC4A27B70B1B0031698A /* OidcWebid.js in Resources */,
 				85B1CC5427B70B1B0031698A /* ttl_gen.js in Resources */,
 				85B1CC4D27B70B1B0031698A /* panel.js in Resources */,
@@ -571,6 +576,7 @@
 				85B1CC3727B70B1B0031698A /* helpers.js in Resources */,
 				85B1CC2B27B70B1B0031698A /* helpers_ui.js in Resources */,
 				85B1CC4027B70B1B0031698A /* frame.js in Resources */,
+				855CC5DA2913179800F4F450 /* tabs.css in Resources */,
 				85B1CC2C27B70B1B0031698A /* OidcWebid.js in Resources */,
 				85B1CC3627B70B1B0031698A /* ttl_gen.js in Resources */,
 				85B1CC2F27B70B1B0031698A /* panel.js in Resources */,
