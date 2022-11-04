@@ -147,6 +147,9 @@ class SPARQL_Upload {
 
   async exec_sparql(prefixes, triples)
   {
+    var setting = new Settings();
+    var timeout = parseInt(await setting.getValue('upload_sparql_timeout'), 10);
+    
     var pref = "";
     var max_bytes = 30000;
     var pref_len = 10;
@@ -180,7 +183,7 @@ class SPARQL_Upload {
       if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
         this.messages.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
-        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }', timeout);
         if (!ret.rc)
           return ret;
 
@@ -208,7 +211,7 @@ class SPARQL_Upload {
   }
 
 
-  async send_sparql(query)
+  async send_sparql(query, timeout)
   {
     var contentType = "application/sparql-update;utf-8";
     var ret;
@@ -221,8 +224,11 @@ class SPARQL_Upload {
       body: query
     }
 
+    if (timeout < 1)
+      timeout = 5;
+
     try {
-      ret = await this.oidc.fetch(this.sparql_ep, options);
+      ret = await this.fetchWithTimeout(this.sparql_ep, options, timeout * 1000);
 
       if (!ret.ok) {
         var message = this.create_error(ret.status, ret.statusText);
@@ -235,6 +241,18 @@ class SPARQL_Upload {
 
     return {rc: true};
   }
+
+
+  fetchWithTimeout(url, options, timeout) 
+  {
+    return Promise.race([
+      this.oidc.fetch(url, options),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query execution timeout')), timeout)
+      )
+    ]);
+  }
+
 
 
   create_error(status, statusText)

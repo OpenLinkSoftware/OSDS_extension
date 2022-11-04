@@ -312,10 +312,20 @@ async function loadPref()
       DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
     }
 
+    var rww_edit_url = await gPref.getValue("ext.osds.rww.edit.url");
+
+    
+    
     changeHandleAll();
 
-    var import_url = await gPref.getValue("ext.osds.import.url");
-    var import_srv = await gPref.getValue("ext.osds.import.srv");
+    var sparql_ep = await gPref.getValue("upload_sparql_endpoint");
+    if (sparql_ep)
+      DOM.iSel('upload_sparql_endpoint').value = sparql_ep;
+
+    var sparql_tm = await gPref.getValue("upload_sparql_timeout");
+    if (sparql_tm)
+      DOM.iSel('upload_sparql_timeout').value = sparql_tm;
+
 
     DOM.qSel('#import-srv #'+import_srv).selected=true;
     DOM.iSel('import-url').value = import_url;
@@ -389,6 +399,9 @@ async function savePref()
    var import_srv = DOM.qSel('#import-srv option:checked').id;
    await gPref.setValue("ext.osds.import.srv", import_srv);
    await gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
+
+   await gPref.setValue("upload_sparql_endpoint", DOM.iSel('upload_sparql_endpoint').value.trim());
+   await gPref.setValue("upload_sparql_timeout", DOM.iSel('upload_sparql_timeout').value.trim());
 
 
    await gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());

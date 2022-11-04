@@ -953,6 +953,8 @@ async function Download_exec()
     $('#'+cur_fmt,'#save-fmt').removeProp('selected');
     $('#'+fmt,'#save-fmt').prop('selected',true);
 
+    DOM.iSel('save-sparql-endpoint').value = await settings.getValue('upload_sparql_endpoint');
+
     var dlg = $( "#save-confirm" ).dialog({
       resizable: true,
       width:520,
