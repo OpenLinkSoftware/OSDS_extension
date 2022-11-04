@@ -304,6 +304,9 @@
        {
          // for scroll between entities on page
          var uri = String(value);
+         if ( uri.match(/^http(s)?:\/\//) ) 
+           uri = (new URL(uri)).href;
+
          var anc = "";
          if (this.docURI && this.check_URI(uri)) {
            var hashPos = uri.lastIndexOf("#");
@@ -336,41 +339,46 @@
     check_link : function (val, is_key, sid, is_iri) 
     {
       var s_val = String(val);
-      var t_val = val;
 
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
+        s_val = (new URL(s_val)).href;
         if ( s_val.match(/\.(jpg|png|gif|svg)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
         if ( s_val.match(/\.(jpg|png|gif|svg)[?#].*/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
-        return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
+        return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       } 
       else if ( s_val.match(/^data:image\/(png|gif|jpg)/) ) 
       {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${val}" title="${val}"><img src="${val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
       }
       else if ( s_val.match(/^mailto:/) ) 
       {
-        return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
+        return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       }
       else if (is_iri)
       {
-        return `<a ${sid} href="${val}"> ${this.decodeURI(val)} </a>`;
+        return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       }
-      return this.pre(val);
+      return this.pre(s_val);
     },
 
 
     pref_link : function (val, pref, sid) 
     {
-      var data = val.substring(pref.link.length);
-      return `<a ${sid} href="${val}" title="${val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
+      var s_val = String(val);
+
+      if ( s_val.match(/^http(s)?:\/\//) ) 
+        s_val = (new URL(s_val)).href;
+
+      var data = s_val.substring(pref.link.length);
+      return `<a ${sid} href="${s_val}" title="${s_val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
     },
 
     pre : function (text) 

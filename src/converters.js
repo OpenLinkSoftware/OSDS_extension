@@ -139,8 +139,8 @@ class Convert_Turtle{
 
     return new Promise(function (resolve, reject) {
       try {
-        var store = N3.Writer({ format: 'N-Triples' });
-        var parser = N3.Parser({baseIRI:self.baseURI});
+        var store = new N3.Writer({ format: 'N-Triples' });
+        var parser = new N3.Parser({baseIRI:self.baseURI});
 
         parser.parse(ttl_data,
           function (error, tr, prefixes) {

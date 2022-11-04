@@ -179,7 +179,7 @@
             if (!data)
               data = "b";
           }
-          return this.pre(data+sid);
+          return fixedEncodeURIComponent(this.pre(decodeURIComponent(data)+sid));
         }
         else {
           var u = new URL(value);
@@ -245,6 +245,10 @@
                                   : ":"+s;
        }
        else {
+         value = String(value);
+         if ( value.match(/^http(s)?:\/\//) ) 
+           value = (new URL(value)).href;
+
          var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
          if (pref!=null) {
            this.prefixes[pref.ns]=pref.link;
@@ -254,7 +258,7 @@
          {
            if (!this.skip_docpref && value.startsWith(this.docURI_pref)) {
              var id = this.pre(value.substring(this.docURI_pref.length));
-             return ":"+id;      
+             return ":"+fixedEncodeURIComponent(decodeURIComponent(id));      
            }
            else
              return "<"+this.pre(value)+">";      
@@ -266,6 +270,7 @@
     {
       val = String(val);
       if ( val.match(/^http(s)?:\/\//) ) {
+        val = (new URL(val)).href;
         val = "<"+this.pre(val)+">";
       } else if ( val.match(/^mailto:/) ) {
         val = "<"+this.pre(val)+">";
@@ -295,6 +300,10 @@
 
     pref_link : function (val, pref) 
     {
+      val = String(val);
+      if ( val.match(/^http(s)?:\/\//) ) 
+        val = (new URL(val)).href;
+
       var data = val.substring(pref.link.length);
       var len = data.length;
 
@@ -304,7 +313,7 @@
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))
         return "<"+this.pre(val)+">";
       else
-        return pref.ns+":"+this.pre(data);
+        return pref.ns+":"+fixedEncodeURIComponent(this.pre(decodeURIComponent(data)));
     },
 
     pre : function (value) 

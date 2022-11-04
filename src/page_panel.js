@@ -26,7 +26,6 @@ var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
-var selectedTab = null;
 var gOidc = new OidcWeb();
 
 var gData = {
@@ -45,7 +44,6 @@ var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.upd
 
 $(document).ready(function()
 {
-  
   if (Browser.is_safari) {
       var el = DOM.qSel("body.sniffer");
       el.classList.add("sniffer_sf");
@@ -56,7 +54,7 @@ $(document).ready(function()
       el.classList.remove("content");
   }
 
-  document.getElementById("c_year").innerText = new Date().getFullYear();
+  DOM.iSel("c_year").innerText = new Date().getFullYear();
 
   async function click_login() {
      if (gOidc.webid) {
@@ -67,10 +65,10 @@ $(document).ready(function()
      }
   } 
 
-  var oidc_login_btn = document.getElementById('oidc-login-btn');
+  var oidc_login_btn = DOM.iSel('oidc-login-btn');
   oidc_login_btn.addEventListener('click', click_login);
 
-  var oidc_login_btn1 = document.getElementById('oidc-login-btn1');
+  var oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
   oidc_login_btn1.addEventListener('click', click_login);
 
   
@@ -85,7 +83,7 @@ $(document).ready(function()
   $('#sparql_btn').click(Sparql_exec);
 
   $('#rest_btn').click(function() {
-    selectTab('#cons');
+    selectTab('cons');
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
     gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
@@ -93,54 +91,6 @@ $(document).ready(function()
 
   $('#download_btn').click(Download_exec);
 
-  $('#tabs a[href="#src"]').click(function(){
-      selectTab(prevSelectedTab);
-      return false;
-  });
-  $('#tabs a[href="#cons"]').click(function(){
-      selectTab(prevSelectedTab);
-      return false;
-  });
-  $('#tabs a[href="#micro"]').click(function(){
-      selectTab('#micro');
-      return false;
-  });
-  $('#tabs a[href="#jsonld"]').click(function(){
-      selectTab('#jsonld');
-      return false;
-  });
-  $('#tabs a[href="#turtle"]').click(function(){
-      selectTab('#turtle');
-      return false;
-  });
-  $('#tabs a[href="#rdfa"]').click(function(){
-      selectTab('#rdfa');
-      return false;
-  });
-  $('#tabs a[href="#rdf"]').click(function(){
-      selectTab('#rdf');
-      return false;
-  });
-  $('#tabs a[href="#posh"]').click(function(){
-      selectTab('#posh');
-      return false;
-  });
-  $('#tabs a[href="#json"]').click(function(){
-      selectTab('#json');
-      return false;
-  });
-  $('#tabs a[href="#csv"]').click(function(){
-      selectTab('#csv');
-      return false;
-  });
-  $('#tabs a[href="#rss"]').click(function(){
-      selectTab('#rss');
-      return false;
-  });
-  $('#tabs a[href="#atom"]').click(function(){
-      selectTab('#atom');
-      return false;
-  });
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
@@ -179,7 +129,6 @@ $(document).ready(function()
       return false;
   });
 
-  selectTab('#micro');
 
   load_data_from_url(document.location);
 
@@ -218,7 +167,7 @@ $(document).on('click', 'a', function(e) {
       return uri.startsWith(gData.baseURL+'#');
   }
 
-  var tab_data = DOM.qSel(`${selectedTab}_items`);
+  var tab_data = DOM.qSel(`#${getSelectedTab()}_items`);
 
   var hashName = null;
   var href = e.currentTarget.href;
@@ -435,39 +384,28 @@ async function start_parse_data(data_text, data_type, data_url, ext)
 
 function selectTab(tab)
 {
-  prevSelectedTab = selectedTab;
-  selectedTab = tab;
-
-  function updateTab(tab, selTab)
-  {
-    var tab_data = $(tab+'_items');
-    var tab_id = $('#tabs a[href="'+tab+'"]');
-
-    if (selTab===tab) {
-      tab_data.show()
-      tab_id.addClass('selected');
-    } else {
-      tab_data.hide()
-      tab_id.removeClass('selected');
-    }
-  }
-
-  updateTab('#src', selectedTab);
-  updateTab('#cons', selectedTab);
-  updateTab('#micro', selectedTab);
-  updateTab('#jsonld', selectedTab);
-  updateTab('#turtle', selectedTab);
-  updateTab('#rdfa', selectedTab);
-  updateTab('#rdf', selectedTab);
-  updateTab('#posh', selectedTab);
-  updateTab('#json', selectedTab);
-  updateTab('#csv', selectedTab);
-  updateTab('#rss', selectedTab);
-  updateTab('#atom', selectedTab);
-  $('#tabs a[href="#src"]').hide();
-  $('#tabs a[href="#cons"]').hide();
+  prevSelectedTab = getSelectedTab();
+  var el = DOM.qSel(`#tab-${tab} input`);
+  el.checked = true;
+  $(el).parent().show();
 }
 
+function getSelectedTab()
+{
+  var el = DOM.qSel('.tabs input:checked');
+  if (el)
+    return el.parentNode.id.substring(4);
+  else
+    return null;
+}
+
+function hideDataTabs()
+{
+  var lst = DOM.qSelAll('.tabs li[id^="tab"]');
+  for(var v of lst) {
+    $(v).hide();
+  }
+}
 
 
 function show_Data(data_error, html_data)
@@ -524,21 +462,11 @@ function show_Data(data_error, html_data)
       if (html.length > 0)
           $(`#${tabname}_items #docdata_view`).append(html);
 
-      $(`#tabs a[href="#${tabname}"]`).show();
-      selectTab(`#${tabname}`);
+      $(`#tab-${tabname}`).parent().show();
+      selectTab(`${tabname}`);
   }
 
-  $('#tabs a[href="#micro"]').hide();
-  $('#tabs a[href="#jsonld"]').hide();
-  $('#tabs a[href="#turtle"]').hide();
-  $('#tabs a[href="#rdfa"]').hide();
-  $('#tabs a[href="#rdf"]').hide();
-  $('#tabs a[href="#posh"]').hide();
-  $('#tabs a[href="#json"]').hide();
-  $('#tabs a[href="#csv"]').hide();
-  $('#tabs a[href="#rss"]').hide();
-  $('#tabs a[href="#atom"]').hide();
-
+  hideDataTabs();
 
   if (gData.type === "turtle")
     show_item('turtle', 'Turtle');
@@ -844,7 +772,7 @@ async function save_data(action, fname, fmt, callback)
       return;
     }
     
-    var dt = await prepare_data(true, selectedTab, fmt);
+    var dt = await prepare_data(true, getSelectedTab(), fmt);
     if (dt)
       exec_cmd.data.push(dt);
 
@@ -858,7 +786,7 @@ async function save_data(action, fname, fmt, callback)
   } 
   else 
   {
-    var retdata = await prepare_data(false, selectedTab, fmt);
+    var retdata = await prepare_data(false, getSelectedTab(), fmt);
     if (!retdata)
       return;
 
@@ -918,7 +846,7 @@ async function save_data(action, fname, fmt, callback)
         })
     }
     else {
-      selectTab("#src");
+      selectTab("src");
       src_view.setValue(retdata.txt + retdata.error+"\n");
     }
 

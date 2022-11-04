@@ -8333,6 +8333,7 @@ const escapeReplacements = {
   '\b': '\\b',
   '\f': '\\f'
 };
+const test_uri = /^http(s)?:\/\//;
 function _characterReplacer(character) {
   // Replace a single character by its escaped version
   var result = escapeReplacements[character];
@@ -8355,7 +8356,7 @@ function _escapeVal(value) {
   return value;
 }
 function _escapeIri(value) {
-  return _escapeVal(value).replaceAll(' ', '%20').replaceAll(',', '%2C');
+  if (test_uri.test(value)) return encodeURI(value);else return _escapeVal(value).replaceAll(' ', '%20').replaceAll(',', '%2C');
 }
 
 /***/ }),

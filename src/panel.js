@@ -26,7 +26,6 @@ var gData_exists = false;
 var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
-var selectedTab = null;
 var gData = {
         baseURL: null,
         tab_index: null,
@@ -63,15 +62,13 @@ function showPopup(tabId)
         .then(response => {
           if (!response || !response.ping) {
             hideDataTabs();
-            selectedTab = null;
-            selectTab('#cons');
+            selectTab('cons');
             g_RestCons.show();
           }
         })
         .catch(err => {
           hideDataTabs();
-          selectedTab = null;
-          selectTab('#cons');
+          selectTab('cons');
           g_RestCons.show();
         });
     } else {
@@ -79,16 +76,14 @@ function showPopup(tabId)
         function(response) { 
           if (!response || !response.ping) {
             hideDataTabs();
-            selectedTab = null;
-            selectTab('#cons');
+            selectTab('cons');
             g_RestCons.show();
           }
         });
     }
   } catch(e) {
     hideDataTabs();
-    selectedTab = null;
-    selectTab('#cons');
+    selectTab('cons');
     g_RestCons.show();
   }
 
@@ -103,10 +98,10 @@ function showPopup(tabId)
      }
   } 
 
-  var oidc_login_btn = document.getElementById('oidc-login-btn');
+  var oidc_login_btn = DOM.iSel('oidc-login-btn');
   oidc_login_btn.addEventListener('click', click_login);
 
-  var oidc_login_btn1 = document.getElementById('oidc-login-btn1');
+  var oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
   oidc_login_btn1.addEventListener('click', click_login);
 
 
@@ -121,7 +116,7 @@ function showPopup(tabId)
   $('#sparql_btn').click(Sparql_exec);
 
   $('#rest_btn').click(function() {
-    selectTab('#cons');
+    selectTab('cons');
     g_RestCons.load(doc_URL);
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
@@ -132,57 +127,6 @@ function showPopup(tabId)
 
   $('#prefs_btn').click(Prefs_exec);
 
-  $('#tabs a[href="#src"]').click(function(){
-      selectTab(prevSelectedTab);
-      return false;
-  });
-  $('#tabs a[href="#cons"]').click(function(){
-    selectTab(prevSelectedTab);
-    return false;
-  });
-  $('#tabs a[href="#micro"]').click(function(){
-    selectTab('#micro');
-    return false;
-  });
-  $('#tabs a[href="#jsonld"]').click(function(){
-    selectTab('#jsonld');
-    return false;
-  });
-  $('#tabs a[href="#turtle"]').click(function(){
-    selectTab('#turtle');
-    return false;
-  });
-  $('#tabs a[href="#rdfa"]').click(function(){
-    selectTab('#rdfa');
-    return false;
-  });
-  $('#tabs a[href="#rdf"]').click(function(){
-    selectTab('#rdf');
-    return false;
-  });
-  $('#tabs a[href="#posh"]').click(function(){
-    selectTab('#posh');
-    return false;
-  });
-  $('#tabs a[href="#json"]').click(function(){
-    selectTab('#json');
-    return false;
-  });
-
-  $('#tabs a[href="#csv"]').click(function(){
-    selectTab('#csv');
-    return false;
-  });
-
-  $('#tabs a[href="#rss"]').click(function(){
-    selectTab('#rss');
-    return false;
-  });
-
-  $('#tabs a[href="#atom"]').click(function(){
-    selectTab('#atom');
-    return false;
-  });
 
   $('#load_rss').click(function() {
         if (gData.links.rss)
@@ -195,8 +139,8 @@ function showPopup(tabId)
   });
 
 
-  $('#tabs a[href="#rss"]').hide();
-  $('#tabs a[href="#atom"]').hide();
+  $('#tab-rss').hide();
+  $('#tab-atom').hide();
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
@@ -247,7 +191,6 @@ async function loadPopup()
   $("#alert-dlg").hide();
   $("#login-dlg").hide();
   $("#query_place").hide();
-  selectTab('#micro');
 
   jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
 
@@ -288,7 +231,7 @@ async function loadPopup()
 
 $(document).ready(function ()
 { 
-  document.getElementById("c_year").innerText = new Date().getFullYear();
+  DOM.iSel("c_year").innerText = new Date().getFullYear();
 
   loadPopup()
 });
@@ -303,7 +246,7 @@ $(document).on('click', 'a', function(e) {
       return uri.startsWith(gData.baseURL+'#');
   }
 
-  var tab_data = DOM.qSel(`${selectedTab}_items`);
+  var tab_data = DOM.qSel(`#${getSelectedTab()}_items`);
 
   var hashName = null;
   var href = e.currentTarget.href;
@@ -344,52 +287,28 @@ $(document).on('click', 'a', function(e) {
 
 function selectTab(tab)
 {
-  prevSelectedTab = selectedTab;
-  selectedTab = tab;
+  prevSelectedTab = getSelectedTab();
+  var el = DOM.qSel(`#tab-${tab} input`);
+  el.checked = true;
+  $(el).parent().show();
+}
 
-  function updateTab(tab, selTab)
-  {
-    var tab_data = $(tab+'_items');
-    var tab_id = $('#tabs a[href="'+tab+'"]');
-
-    if (selTab===tab) {
-      tab_data.show()
-      tab_id.addClass('selected');
-    } else {
-      tab_data.hide()
-      tab_id.removeClass('selected');
-    }
-  }
-
-  updateTab('#src', selectedTab);
-  updateTab('#cons', selectedTab);
-  updateTab('#micro', selectedTab);
-  updateTab('#jsonld', selectedTab);
-  updateTab('#turtle', selectedTab);
-  updateTab('#rdfa', selectedTab);
-  updateTab('#rdf', selectedTab);
-  updateTab('#posh', selectedTab);
-  updateTab('#json', selectedTab);
-  updateTab('#csv', selectedTab);
-  updateTab('#rss', selectedTab);
-  updateTab('#atom', selectedTab);
-  $('#tabs a[href="#src"]').hide();
-  $('#tabs a[href="#cons"]').hide();
+function getSelectedTab()
+{
+  var el = DOM.qSel('.tabs input:checked');
+  if (el)
+    return el.parentNode.id.substring(4);
+  else
+    return null;
 }
 
 
 function hideDataTabs()
 {
-  $('#tabs a[href="#micro"]').hide();
-  $('#tabs a[href="#jsonld"]').hide();
-  $('#tabs a[href="#turtle"]').hide();
-  $('#tabs a[href="#rdfa"]').hide();
-  $('#tabs a[href="#rdf"]').hide();
-  $('#tabs a[href="#posh"]').hide();
-  $('#tabs a[href="#json"]').hide();
-  $('#tabs a[href="#csv"]').hide();
-  $('#tabs a[href="#rss"]').hide();
-  $('#tabs a[href="#atom"]').hide();
+  var lst = DOM.qSelAll('.tabs li[id^="tab"]');
+  for(var v of lst) {
+    $(v).hide();
+  }
 }
 
 
@@ -437,21 +356,21 @@ function update_tab(tabname, title, val, err_tabs)
 
   if (val.html && val.html.trim().length > 0) {
       html += val.html;
-      gData.tabs.push(`#${tabname}`);
+      gData.tabs.push(`${tabname}`);
   }
   if (val.error) {
       var err_msg = create_err_msg(title, val.error);
       if (err_msg) {
         html += err_msg;
         if (err_tabs)
-          err_tabs.push(`#${tabname}`);
+          err_tabs.push(`${tabname}`);
       }
   }
   if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
       $(`#${tabname}_items #docdata_view`).append(html);
       return true;
   } else {
-    $(`#tabs a[href="#${tabname}"]`).hide();
+    $(`#tab-${tabname}`).hide();
     $(`#${tabname}-save`).hide();
     return false;
   }
@@ -484,7 +403,6 @@ async function show_Data()
   var bnode_types = {};
 
   gData.tabs = [];
-//  $('table.wait').hide();
   $('#rss-save').hide();
   $('#atom-save').hide();
 
@@ -524,42 +442,42 @@ async function show_Data()
 
 
   if (!micro) {
-    $('#tabs a[href="#micro"]').hide();
+    $('#tab-micro').hide();
     $('#micro-save').hide();
   }
   if (!jsonld) {
-    $('#tabs a[href="#jsonld"]').hide();
+    $('#tab-jsonld').hide();
     $('#jsonld-save').hide();
   }
   if (!turtle) {
-    $('#tabs a[href="#turtle"]').hide();
+    $('#tab-turtle').hide();
     $('#turtle-save').hide();
   }
   if (!rdfa) {
-    $('#tabs a[href="#rdfa"]').hide();
+    $('#tab-rdfa').hide();
     $('#rdfa-save').hide();
   }
   if (!rdf) {
-    $('#tabs a[href="#rdf"]').hide();
+    $('#tab-rdf').hide();
     $('#rdf-save').hide();
   }
   if (!posh) {
-    $('#tabs a[href="#posh"]').hide();
+    $('#tab-posh').hide();
     $('#posh-save').hide();
   }
   if (!json) {
-    $('#tabs a[href="#json"]').hide();
+    $('#tab-json').hide();
     $('#json-save').hide();
   }
   if (!csv) {
-    $('#tabs a[href="#csv"]').hide();
+    $('#tab-csv').hide();
     $('#csv-save').hide();
   }
   if (rss) {
-    $('#tabs a[href="#rss"]').show();
+    $('#tab-rss').show();
   } 
   if (atom) {
-    $('#tabs a[href="#atom"]').show();
+    $('#tab-atom').show();
   }
 
   gData_showed = true;
@@ -584,7 +502,7 @@ function links_cb_success(tab, tabName, rc)
     update_tab(tab, tabName, rc);
     $(`#${tab}_items table.loader`).hide();
 
-    $(`#tabs a[href="#${tab}"]`).show();
+    $(`#tab-${tab}`).show();
     $(`#${tab}-save`).show();
   } 
 }
@@ -743,15 +661,13 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         } catch(ex) {
           console.log("OSDS: Error="+ex);
           hideDataTabs();
-          selectedTab = null;
         }
       }
       else
       {
         hideDataTabs();
-        selectedTab = null;
 
-        selectTab('#cons');
+        selectTab('cons');
         g_RestCons.show();
       } 
     }
@@ -946,6 +862,7 @@ function Download_exec_update_state()
 async function Download_exec()
 {
   var settings = new Settings();
+  var selectedTab = getSelectedTab();
   await settings._syncAll();
 
   var _url = new URL(doc_URL);
@@ -981,49 +898,49 @@ async function Download_exec()
   $('#save-fmt #json').prop('disabled', true);
 
   for(var v of gData.tabs) {
-    DOM.qSel(`${v}-chk`).checked = false;
+    DOM.qSel(`#${v}-chk`).checked = false;
   }
-  DOM.qSel(`${selectedTab}-chk`).checked = true;
+  DOM.qSel(`#${selectedTab}-chk`).checked = true;
 
 
-  if (selectedTab==="#jsonld") {
+  if (selectedTab==="jsonld") {
     filename = "jsonld_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="#turtle") {
+  else if (selectedTab==="turtle") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#micro") {
+  else if (selectedTab==="micro") {
     filename = "microdata_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="#rdfa") {
+  else if (selectedTab==="rdfa") {
     filename = "rdfa_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#rdf") {
+  else if (selectedTab==="rdf") {
     filename = "rdf_xml_data.txt";
     fmt = "rdf";
   }
-  else if (selectedTab==="#posh") {
+  else if (selectedTab==="posh") {
     filename = "posh_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#json") {
+  else if (selectedTab==="json") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
   }
-  else if (selectedTab==="#csv") {
+  else if (selectedTab==="csv") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#rss") {
+  else if (selectedTab==="rss") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="#atom") {
+  else if (selectedTab==="atom") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
@@ -1084,7 +1001,7 @@ async function save_data(action, fname, fmt, callback)
     }
     
     for(var v of gData.tabs) {
-      if (DOM.qSel(`${v}-chk`).checked) {
+      if (DOM.qSel(`#${v}-chk`).checked) {
         var dt = await prepare_data(true, v, fmt);
         if (dt)
           exec_cmd.data.push(dt);
@@ -1101,13 +1018,12 @@ async function save_data(action, fname, fmt, callback)
   } 
   else 
   {
-    var retdata = await prepare_data(false, selectedTab, fmt);
+    var retdata = await prepare_data(false, getSelectedTab(), fmt);
     if (!retdata)
       return;
 
     if (retdata && retdata.error.length > 0) {
       showInfo(retdata.error);
-//??--      return;
     }
     
     if (action==="export-rww") {
@@ -1178,7 +1094,7 @@ async function save_data(action, fname, fmt, callback)
         })
     }
     else {
-      selectTab("#src");
+      selectTab("src");
       src_view.setValue(retdata.txt + retdata.error+"\n");
     }
 
@@ -1192,25 +1108,25 @@ async function prepare_data(for_query, curTab, fmt)
   try{
     var block = null;
 
-    if (curTab==="#jsonld")
+    if (curTab==="jsonld")
       block = gData.jsonld;
-    else if (curTab==="#json")
+    else if (curTab==="json")
       block = gData.json;
-    else if (curTab==="#turtle")
+    else if (curTab==="turtle")
       block = gData.turtle;
-    else if (curTab==="#micro")
+    else if (curTab==="micro")
       block = gData.micro;
-    else if (curTab==="#rdfa")
+    else if (curTab==="rdfa")
       block = gData.rdfa;
-    else if (curTab==="#rdf")
+    else if (curTab==="rdf")
       block = gData.rdf;
-    else if (curTab==="#posh")
+    else if (curTab==="posh")
       block = gData.posh;
-    else if (curTab==="#csv")
+    else if (curTab==="csv")
       block = gData.csv;
-    else if (curTab==="#rss" && gData.links.rss && gData.links.rss.loaded())
+    else if (curTab==="rss" && gData.links.rss && gData.links.rss.loaded())
       block = gData.links.rss.block;
-    else if (curTab==="#atom" && gData.links.atom && gData.links.atom.loaded())
+    else if (curTab==="atom" && gData.links.atom && gData.links.atom.loaded())
       block = gData.links.atom.block;
     else
       return null;

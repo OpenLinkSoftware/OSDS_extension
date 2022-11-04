@@ -156,7 +156,7 @@ var POSH = (function () {
           var arr = n.split(":");
           var pref_link = self.namespace.has_known_prefix(arr[0]);
           if (!pref_link) //unknown prefix
-             return "xhv:"+fixedEncodeURIComponent(n);
+             return "xhv:"+fixedEncodeURIComponent(decodeURIComponent(n));
           else {
              var p = self.prefixes[arr[0]];
              if (!p)
@@ -168,7 +168,7 @@ var POSH = (function () {
           var s = self.terms[n];
           if (s)
             return s;
-          return "xhv:"+fixedEncodeURIComponent(n);
+          return "xhv:"+fixedEncodeURIComponent(decodeURIComponent(n));
         }
       }
 
@@ -209,7 +209,7 @@ var POSH = (function () {
               var p = self.prefixes[arr[0]];
               if (!p)
                 self.prefixes[arr[0]] = pref_link;
-              ttl += arr[0]+":"+fixedEncodeURIComponent(o.substring(arr[0].length+1));
+              ttl += arr[0]+":"+fixedEncodeURIComponent(decodeURIComponent(o.substring(arr[0].length+1)));
             }
           }
           else
