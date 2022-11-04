@@ -202,7 +202,7 @@ class SPARQL_Upload {
     {
       this.messages.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
-      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }', timeout);
       if (!ret.rc)
         return ret;
     }
@@ -224,7 +224,7 @@ class SPARQL_Upload {
       body: query
     }
 
-    if (timeout < 1)
+    if (!timeout || timeout < 1)
       timeout = 5;
 
     try {
