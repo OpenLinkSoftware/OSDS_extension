@@ -312,10 +312,6 @@ async function loadPref()
       DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
     }
 
-    var rww_edit_url = await gPref.getValue("ext.osds.rww.edit.url");
-
-    
-    
     changeHandleAll();
 
     var sparql_ep = await gPref.getValue("upload_sparql_endpoint");
@@ -326,6 +322,9 @@ async function loadPref()
     if (sparql_tm)
       DOM.iSel('upload_sparql_timeout').value = sparql_tm;
 
+
+    var import_url = await gPref.getValue("ext.osds.import.url");
+    var import_srv = await gPref.getValue("ext.osds.import.srv");
 
     DOM.qSel('#import-srv #'+import_srv).selected=true;
     DOM.iSel('import-url').value = import_url;
