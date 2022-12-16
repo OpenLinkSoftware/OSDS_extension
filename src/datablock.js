@@ -1,11 +1,12 @@
 class DataLinks {
-  constructor(_tab, _tabName, _baseURL, _links, _block, hdr, cb_start, cb_error, cb_success)
+  constructor(_tab, _tabName, _baseURL, _links, _block, hdr, hdr_alter, cb_start, cb_error, cb_success)
   {
     this.tab = _tab;
     this.tabName = _tabName;
     this.baseURL = _baseURL;
     this.links = _links;
     this.hdr = hdr;
+    this.hdr_alter = hdr_alter;
     this.block = _block;
     this._loaded = false;
     this.cb_start = cb_start;
@@ -13,12 +14,14 @@ class DataLinks {
     this.cb_success = cb_success;
   }
 
-  async _Fetch(url)
+  async _Fetch(url, type)
   {
+   var hdr = this.hdr_alter[type] ? this.hdr_alter[type] : this.hdr;
+
     try {
       var options = {
             headers: {
-              'Accept': this.hdr,
+              'Accept': hdr,
               'Cache-control': 'no-cache'
             },
           };
@@ -51,9 +54,10 @@ class DataLinks {
     if (this.cb_start)
       this.cb_start(this.tab);
 
-    for(var url of this.links) {
+    for(var url in this.links) {
+      var type = this.links[url];
       for(var i=0; i < 3; i++) {
-        rc = await this._Fetch(url);
+        rc = await this._Fetch(url, type);
         if (!rc.error)
           break;
       }
@@ -96,7 +100,7 @@ class RSS_Links extends DataLinks {
   {
     var hdr = 'application/rss+xml, application/rdf+xml;q=0.8, application/atom+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4';
     var block = new RSS_Block(_baseURL, [], false);
-    super(_tab, _tabName, _baseURL, _links, block, hdr, cb_start, cb_error, cb_success);
+    super(_tab, _tabName, _baseURL, _links, block, hdr, {}, cb_start, cb_error, cb_success);
   }
 }
 
@@ -106,7 +110,7 @@ class Atom_Links extends DataLinks {
   {
     var hdr = 'application/atom+xml, application/rdf+xml;q=0.8, application/rss+xml;q=0.6, application/xml;q=0.4, text/xml;q=0.4'
     var block = new RSS_Block(_baseURL, [], true);
-    super(_tab, _tabName, _baseURL, _links, block, hdr, cb_start, cb_error, cb_success);
+    super(_tab, _tabName, _baseURL, _links, block, hdr, {}, cb_start, cb_error, cb_success);
   }
 }
 
@@ -114,8 +118,10 @@ class Atom_Links extends DataLinks {
 class JSONLD_Links extends DataLinks {
   constructor(_tab, _tabName, _baseURL, _links, _block, cb_start, cb_error, cb_success)
   {
+    var hdr_alter = {};
+    hdr_alter['application/activity+json'] = 'application/activity+json';
     var hdr = 'application/ld+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
-    super(_tab, _tabName, _baseURL, _links, _block, hdr, cb_start, cb_error, cb_success);
+    super(_tab, _tabName, _baseURL, _links, _block, hdr, hdr_alter, cb_start, cb_error, cb_success);
   }
 }
 
@@ -123,7 +129,7 @@ class RDF_Links extends DataLinks {
   constructor(_tab, _tabName, _baseURL, _links, _block, cb_start, cb_error, cb_success)
   {
     var hdr = 'application/rdf+xml;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
-    super(_tab, _tabName, _baseURL, _links, _block, hdr, cb_start, cb_error, cb_success);
+    super(_tab, _tabName, _baseURL, _links, _block, hdr, {}, cb_start, cb_error, cb_success);
   }
 }
 
@@ -131,7 +137,7 @@ class TTL_Links extends DataLinks {
   constructor(_tab, _tabName, _baseURL, _links, _block, cb_start, cb_error, cb_success)
   {
     var hdr = 'text/turtle,text/n3;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
-    super(_tab, _tabName, _baseURL, _links, _block, hdr, cb_start, cb_error, cb_success);
+    super(_tab, _tabName, _baseURL, _links, _block, hdr, {}, cb_start, cb_error, cb_success);
   }
 }
 

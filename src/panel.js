@@ -551,48 +551,39 @@ async function parse_Data(dData)
     {
       var setting = new Settings();
       var chk_discovery = await setting.getValue("ext.osds.auto_discovery");
-      var atom_links = [];
-      var rss_links = [];
-      var jsonld_links = []
-      var rdf_links = []
-      var ttl_links = []
+      var atom_links = {};
+      var rss_links = {};
+      var jsonld_links = {};
+      var rdf_links = {};
+      var ttl_links = {};
 
       for(var href in val.d.posh.links) {
         var type = val.d.posh.links[href];
         if (type === 'application/atom+xml')
-           atom_links.push(href);
+           atom_links[href] = type;
         else if (type === 'application/rss+xml')
-          rss_links.push(href);
-        else if (type === 'application/json+ld' || type === 'application/ld+json')
-          jsonld_links.push(href);
+          rss_links[href] = type;
+        else if (type === 'application/json+ld' || type === 'application/ld+json' || type === 'application/activity+json')
+          jsonld_links[href] = type;
         else if (type === 'application/rdf+xml')
-          rdf_links.push(href);
+          rdf_links[href] = type;
         else if (type === 'text/turtle' || type === 'text/n3')
-          ttl_links.push(href);
+          ttl_links[href] = type;
       }
-
 
       if (dData.posh.dlinks.rss.length > 0) {
-        var list = dData.posh.dlinks.rss;
-        var dlinks = []
 
-        for(var v of list) {
-          var found = false;
-  
-          for(var rss of rss_links)
-            found = (rss === v);
-
-          if (!found)
-            dlinks.push(v);
+        for(var v of dData.posh.dlinks.rss) {
+          if (!rss_links[v])
+            rss_links[v] = 'application/rss+xml'; 
         }
-        rss_links = rss_links.concat(dlinks);
       }
 
 
-      if (rss_links.length > 0) 
+      if (Object.keys(rss_links).length > 0) 
         gData.links.rss = new RSS_Links("rss", "RSS", gData.baseURL, rss_links, links_cb_start, links_cb_error, links_cb_success);
 
-      if (atom_links.length > 0)
+      if (Object.keys(atom_links).length > 0)
         gData.links.atom = new Atom_Links("atom", "Atom", gData.baseURL, atom_links, links_cb_start, links_cb_error, links_cb_success);
 
       if (chk_discovery === "1") {
@@ -608,7 +599,7 @@ async function parse_Data(dData)
           gData.links.atom.loadData({}, 0);
       }
 
-      if (jsonld_links.length > 0) {
+      if (Object.keys(jsonld_links).length > 0) {
         $('#jsonld_items #throbber').show();
         $('#jsonld_items #load_jsonld').hide();
         $(`#jsonld_items table.loader`).show();
@@ -616,7 +607,7 @@ async function parse_Data(dData)
         gData.links.jsonld.loadData({}, 0); 
       }
 
-      if (rdf_links.length > 0) {
+      if (Object.keys(rdf_links).length > 0) {
         $('#rdf_items #throbber').show();
         $('#rdf_items #load_jsonld').hide();
         $(`#rdf_items table.loader`).show();
@@ -624,7 +615,7 @@ async function parse_Data(dData)
         gData.links.rdf.loadData({}, 0); 
       }
 
-      if (ttl_links.length > 0) {
+      if (Object.keys(ttl_links).length > 0) {
         $('#ttl_items #throbber').show();
         $('#ttl_items #load_jsonld').hide();
         $(`#ttl_items table.loader`).show();
