@@ -823,6 +823,8 @@ class Convert_RSS {
           });
 
         var feed = await parser.parseString(text);
+        if (!feed) 
+          continue;
 
         var channel_link = feed.link ? this.getVal_or_Attr(feed.link, 'href') : baseURL;
         channel_link = this.fix_uri((new URL(channel_link)).toString());

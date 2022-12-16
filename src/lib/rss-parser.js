@@ -330,6 +330,9 @@ var Parser = function () {
   }, {
     key: 'buildRSS0_9',
     value: function buildRSS0_9(xmlObj) {
+      if (!xmlObj.rss || !xmlObj.rss.channel)
+        return null;
+
       var channel = xmlObj.rss.channel[0];
       var items = channel.item;
       return this.buildRSS(channel, items);
@@ -338,6 +341,9 @@ var Parser = function () {
     key: 'buildRSS1',
     value: function buildRSS1(xmlObj) {
       xmlObj = xmlObj['rdf:RDF'];
+      if (!xmlObj.channel)
+        return null;
+
       var channel = xmlObj.channel[0];
       var items = xmlObj.item;
       return this.buildRSS(channel, items);
@@ -345,6 +351,9 @@ var Parser = function () {
   }, {
     key: 'buildRSS2',
     value: function buildRSS2(xmlObj) {
+      if (!xmlObj.rss || !xmlObj.rss.channel)
+        return null;
+
       var channel = xmlObj.rss.channel[0];
       var items = channel.item;
       var feed = this.buildRSS(channel, items);
