@@ -181,20 +181,23 @@ function setRWWDefaults()
     });
 };
 
-function setSparqlDefaults()
+async function setSparqlDefaults()
 {
+    async function revert(_this) {
+          DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
+          DOM.iSel('sparql-url').value = gPref.def_sparql_url;
+          yasqe_srv.setValue(await createSparqlQuery(gPref.def_sparql_cmd));
+
+          $(_this).dialog( "close" );
+    }
+
     $( "#revert-confirm" ).dialog({
       resizable: false,
       height:160,
       modal: true,
       buttons: {
         "OK": function() {
-
-          DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
-          DOM.iSel('sparql-url').value = gPref.def_sparql_url;
-	  yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
-
-          $(this).dialog( "close" );
+            revert(this);
         },
         Cancel: function() {
           $(this).dialog( "close" );

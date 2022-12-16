@@ -187,7 +187,7 @@ class Settings {
       console.log(e);
     }
 
-    if (val!==null && String(val).trim().length > 0)
+    if (val!==null)
       return val;
 
     switch(id) {

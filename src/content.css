@@ -128,8 +128,8 @@
 
 #super_links_snackbar.show {
   visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s !important;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s !important;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 5s !important;
+  animation: fadein 0.5s, fadeout 0.5s 5s !important;
 }
 
 
