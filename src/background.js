@@ -246,12 +246,11 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         header.value = "text/plain";
         could_handle = true;
       }
-      else if (headerContent.value.match(/\/(json\+ld)/)) {
-        handle = true;
-        type = "jsonld";
-        could_handle = true;
-      }
-      else if (headerContent.value.match(/\/(ld\+json)/)) {
+      else if (headerContent.value.match(/\/(json\+ld)/)
+               || headerContent.value.match(/(application\/activity\+json)/)       
+               || headerContent.value.match(/\/(ld\+json)/)
+              ) 
+      {
         handle = true;
         type = "jsonld";
         could_handle = true;
@@ -283,7 +282,6 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       }
       else if (headerContent.value.match(/\/(sparql\-results\+json)/) 
                || headerContent.value.match(/(application\/rdf\+json)/) 
-               || headerContent.value.match(/(application\/activity\+json)/) 
                || headerContent.value.match(/(application\/json)/) 
                || headerContent.value.match(/(application\/odata\+json)/) 
                || headerContent.value.match(/(application\/microdata\+json)/) 
