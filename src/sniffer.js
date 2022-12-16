@@ -1023,8 +1023,21 @@
 
                 docData.posh.dlinks = {rss:[]};
 
-                for(var v of list)
-                  docData.posh.dlinks.rss.push(v.href);
+                for(var v of list) {
+                  var uri = decodeURIComponent(v.href);
+                  var i = 0;
+                  var p;
+
+                  if ((p = uri.lastIndexOf('https://')) > i)
+                    i = p;
+                  if ((p = uri.lastIndexOf('http://')) > i)
+                    i = p;
+
+                  if (i > 0)
+                    uri = uri.substring(i);
+
+                  docData.posh.dlinks.rss.push(uri);
+                }
 
 
                 if ((microdata.items && microdata.items.length > 0)
