@@ -24,6 +24,7 @@ class NChatUI {
     this.last_sid = null;
     this.chat_lst = _chat_lst;
     this.id = 1;
+    const self = this;
     this.md = markdownit({
       html:         true,
       xhtmlOut:     true,
@@ -54,7 +55,7 @@ class NChatUI {
            } catch (__) {}
          }
 
-         return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+         return '<pre class="hljs"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
        }
      });
   }
@@ -66,8 +67,16 @@ class NChatUI {
      `<div class="chat_code">
         <div class="code_header">
            <span id="copied" class="hidden">Copied!&nbsp;&nbsp;</span>
-           <button id="copy_code"><img class="img20" src="images/copy-icon.svg"/>Copy code</button> 
-           <input id="edit_code" type="image" class="img20" src="images/chat.png">
+           <button id="copy_code"><img class="img20" src="images/copy-icon.svg"/>Copy code</button>
+           <SELECT id="code_type" style="WIDTH: 100px" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+               </SELECT>
+           <span>Data type:&nbsp;</span>
         </div>
         <div class="code_block">${str}</div>
       </div>`
@@ -218,7 +227,7 @@ class NChatUI {
         }
       }
     }
-
+/**
     lst = DOM.qSelAll('.chat_item_ai input#edit_code');
     for(var el of lst) {
       el.onclick = (e) => {
@@ -227,7 +236,7 @@ class NChatUI {
         const editor = new MediumEditor(code);
       }
     }
-
+**/
     lst = DOM.qSelAll('.chat_item_ai input#thumb_up');
     for(var el of lst) {
       el.onclick = (e) => {
@@ -257,6 +266,7 @@ class ChatUI {
     this.last_sid = null;
     this.chat_lst = _chat_lst;
     this.id = 1;
+    const self = this;
     this.md = markdownit({
       html:         true,
       xhtmlOut:     true,
@@ -287,7 +297,7 @@ class ChatUI {
            } catch (__) {}
          }
 
-         return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+         return '<pre class="hljs"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
        }
      });
   }
@@ -536,6 +546,10 @@ class ChatUI {
       const s = e.message;
       this.end_ai();
       this.append_msg(" "+s+"\n");
+      if (s.startsWith("HTTP: 403"))  {
+         this.append_msg(" --- Send query againg after the Relogin --- \n");
+         Browser.openTab("https://chat.openai.com/auth/login");
+      }
     }
     this.end_ai();
     $("#chat_throbber").hide();
