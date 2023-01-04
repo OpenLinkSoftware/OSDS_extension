@@ -40,6 +40,7 @@ var gData = {
 var src_view = null;
 var g_RestCons = new Rest_Cons();
 var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
+var chatUI;
 
 
 $(document).ready(function()
@@ -65,31 +66,27 @@ $(document).ready(function()
      }
   } 
 
-  var oidc_login_btn = DOM.iSel('oidc-login-btn');
-  oidc_login_btn.addEventListener('click', click_login);
+  DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
+  DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
 
-  var oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
-  oidc_login_btn1.addEventListener('click', click_login);
-
-  
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
   $("#login-dlg").hide();
 
-  $('#import_btn').click(Import_doc);
+  DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
 
-  $('#rww_btn').click(Rww_exec);
+  DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
 
-  $('#sparql_btn').click(Sparql_exec);
+  DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
 
-  $('#rest_btn').click(function() {
+  DOM.iSel("rest_btn").onclick = (e) => { 
     selectTab('cons');
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
     gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
-  });
+  }
 
-  $('#download_btn').click(Download_exec);
+  DOM.iSel("download_btn").onclick = (e) => { Download_exec() }
 
 
   try {
@@ -98,6 +95,21 @@ $(document).ready(function()
       });
     src_view.setSize("100%", "100%");
   } catch(e) { }
+
+  var chat_view;
+  try {
+    chat_view = CodeMirror.fromTextArea(document.getElementById('chat_place'), {
+        mode: 'markdown',
+        lineNumbers: true,
+        lineWrapping: true,
+        readOnly: true,
+        theme: "default",
+        value: " \n"
+      });
+    chat_view.setSize("100%", "100%");
+  } catch(e) { }
+
+  chatUI = new ChatUI(chat_view);
 
   try{
     g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
@@ -109,30 +121,33 @@ $(document).ready(function()
 	      persistent: null,
     });
     g_RestCons.yasqe.obj.setSize("100%", 300);
-  } catch(e) {
-  }
+  } catch(e) { }
+
   $("#query_place").hide();
 
-  $('#login_btn').click(Login_exec);
+  DOM.iSel("chat_btn").onclick = (e) =>{ chatUI.open(); }; 
 
-  $('#rest_exec').click(function() {
-    g_RestCons.exec();
-  });
-  $('#rest_exit').click(function(){
+  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
+
+  DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(); }
+  DOM.iSel("rest_exit").onclick = (e) => { 
       gMutationObserver.disconnect();
       selectTab(prevSelectedTab);
       return false;
-  });
+  }
 
-  $('#src_exit').click(function(){
-      selectTab(prevSelectedTab);
-      return false;
-  });
+  DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
+
+  DOM.iSel("chat_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
+
+  DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
+
+  $("#chat_throbber").hide();
 
 
   load_data_from_url(document.location);
 
-  jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
+  DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
 
   Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -153,7 +168,6 @@ $(document).ready(function()
 
       sendResponse({});  // stop
   });
-
 
 });
 
@@ -485,9 +499,6 @@ function show_Data(data_error, html_data)
 
   gData_showed = true;
 }
-
-
-
 
 
 

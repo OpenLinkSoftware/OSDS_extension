@@ -1,0 +1,128 @@
+<html>
+<!--
+    This file is part of the OpenLink Structured Data Sniffer
+
+    Copyright (C) 2015-2021 OpenLink Software
+
+    This project is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; only version 2 of the License, dated June 1991.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+-->
+    <head>
+	<meta charset="UTF-8">
+        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
+
+        <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
+        <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
+
+        <script type="text/javascript" src="lib/codemirror.js"></script>
+        <script type="text/javascript" src="lib/mode/markdown.js"></script>
+        <script type="text/javascript" src="lib/fetch-sse.js"></script>
+        <script type="text/javascript" src="lib/chat-gpt.js"></script>
+
+
+        <script type="text/javascript" src="browser.js"></script>
+        <script type="text/javascript" src="utils.js"></script>
+        <script type="text/javascript" src="settings.js"></script>
+        <script type="text/javascript" src="chat_page.js"></script>
+
+        <link rel="stylesheet" href="dataview.css" />
+
+        <style type="text/css">
+          :root {
+              color-schema: light dark;
+          }
+
+          .popup { font: 70% "Trebuchet MS", sans-serif; }
+
+          body.sniffer {
+            width: 99%;
+            height: 97%;
+          }
+
+          div.content {
+            width: 100%;
+            height: calc(100% - 20px);
+          }
+
+          table.docdata {
+            width: 100%;
+          }
+
+ 	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
+
+
+          body.sniffer_sf {
+            width: 760px;
+            height: 580px;
+          }
+
+          div.content_sf {
+            width: 755px;
+            height: 530px;
+          }
+
+        </style>
+
+    </head>
+    <body class="sniffer">
+
+      <div class="popup" id="alert-dlg" title="Info">
+        <p id="alert-msg" style="font-size: 14px;">
+        </p>
+      </div>
+
+
+
+      <div class="top"></div>
+
+      <div class="content">
+
+          <div id="chat_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+            <table style="width: 100%;height:40px;">
+              <tr>
+               <td>
+                 <div style="display:flex;">
+                   <div style="width:50px"> 
+                     <img id="chat_throbber" src="images/throbber.gif" style="margin: 7 10 7 25;">
+                   </div>
+                   <input id="chat_req" style="WIDTH: calc(100% - 100px)">
+                   <button id="chat_send" style="margin:5px; margin-left:10px;">Send</button>
+                 </div>
+               </td>
+              </tr>
+            </table>
+            <div style="width: 100%; height: calc(100% - 40px);">
+                <textarea id="chat_place" style="white-space:nowrap">
+                </textarea>
+            </div>
+          </div>
+
+      </div>
+
+
+      <div class="bottom_block">
+        <div class="bottom_block_left">
+          <a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a>
+          <div id="ext_ver" style="width:50px">ver:0.0.0</div>
+        </div>
+
+        <div>
+          Copyright&nbsp;&copy;&nbsp;2015-<span id="c_year">2021</span> 
+          <a href="http://www.openlinksw.com"> OpenLink&nbsp;Software </a>
+        </div>
+      </div>
+
+    </body>
+</html>

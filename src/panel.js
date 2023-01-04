@@ -98,46 +98,35 @@ function showPopup(tabId)
      }
   } 
 
-  var oidc_login_btn = DOM.iSel('oidc-login-btn');
-  oidc_login_btn.addEventListener('click', click_login);
+  DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
+  DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
 
-  var oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
-  oidc_login_btn1.addEventListener('click', click_login);
+  DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
+  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
+  DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
+  DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
+  DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
 
-
-  $('#slink_btn').click(SuperLinks_exec);
-
-  $('#login_btn').click(Login_exec);
-
-  $('#import_btn').click(Import_doc);
-
-  $('#rww_btn').click(Rww_exec);
-
-  $('#sparql_btn').click(Sparql_exec);
-
-  $('#rest_btn').click(function() {
+  DOM.iSel("rest_btn").onclick = (e) => { 
     selectTab('cons');
     g_RestCons.load(doc_URL);
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
     gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
-  });
+  }
 
-  $('#download_btn').click(Download_exec);
+  DOM.iSel("download_btn").onclick = (e) => { Download_exec() }
+  DOM.iSel("prefs_btn").onclick = (e) => { Prefs_exec() }
 
-  $('#prefs_btn').click(Prefs_exec);
-
-
-  $('#load_rss').click(function() {
+  DOM.iSel("load_rss").onclick = (e) => {
         if (gData.links.rss)
           gData.links.rss.loadData({}, 0);
-  });
+  }
 
-  $('#load_atom').click(function() {
+  DOM.iSel("load_atom").onclick = (e) => {
         if (gData.links.atom)
           gData.links.atom.loadData({}, 0);
-  });
-
+  }
 
   $('#tab-rss').hide();
   $('#tab-atom').hide();
@@ -166,20 +155,17 @@ function showPopup(tabId)
   if (doc_URL)
     g_RestCons.load(doc_URL);
 
-  $('#rest_exec').click(function() {
-    g_RestCons.exec(gData.tab_index);
-  });
-  $('#rest_exit').click(function(){
+  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
+
+  DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(gData.tab_index); }
+  DOM.iSel("rest_exit").onclick = (e) => { 
     gMutationObserver.disconnect();
     if (prevSelectedTab)
       selectTab(prevSelectedTab);
     return false;
-  });
+  }
 
-  $('#src_exit').click(function(){
-    selectTab(prevSelectedTab);
-    return false;
-  });
+  DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
 
   gData_showed = false;
 }
@@ -192,7 +178,7 @@ async function loadPopup()
   $("#login-dlg").hide();
   $("#query_place").hide();
 
-  jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
+  DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
   var curTabs = await getCurTab();
   var tabId = null;
@@ -671,8 +657,8 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 });
 
 
-
 ////////////////////////////////////////////////////
+
 async function SuperLinks_exec()
 {
   var settings = new Settings();

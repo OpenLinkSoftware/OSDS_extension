@@ -36,11 +36,14 @@
         <script type="text/javascript" src="lib/FileSaver.js"></script>
         <script type="text/javascript" src="lib/namespace.js"></script>
         <script type="text/javascript" src="lib/codemirror.js"></script>
+        <script type="text/javascript" src="lib/mode/markdown.js"></script>
         <script type="text/javascript" src="lib/yasqe.js"></script>
         <script type="text/javascript" src="lib/oidc-web.min.js"></script>
         <script type="text/javascript" src="lib/papaparse.js"></script>
         <script type="text/javascript" src="lib/rss-parser.js"></script>
         <script type="text/javascript" src="lib/tidy.js"></script>
+        <script type="text/javascript" src="lib/fetch-sse.js"></script>
+        <script type="text/javascript" src="lib/chat-gpt.js"></script>
 
 
         <script type="text/javascript" src="browser.js"></script>
@@ -197,6 +200,9 @@
 
       <table class="btn_block">
        <tr>
+        <td class="action_btn">
+         <input type="image" id="chat_btn" src="images/chat.png" width="24" height="24" title="ChatGPT">
+        </td>
         <td class="action_btn">
          <input type="image" id="login_btn" src="images/slogin24.png" width="24" height="24" title="Solid Login">
         </td>
@@ -437,6 +443,34 @@
             <div class="rest_path">
               <span style="margin:5px;margin-right:10px; width:5em">Fragment</span>
               <input id="rest_hash" style="WIDTH: 100%; " >
+            </div>
+          </div>
+        </li>
+
+        <li id="tab-chat" >
+          <input type="radio" name="tabs" id="itab-chat" />
+          <div id="chat_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+            <table style="width: 100%;height:40px;">
+              <tr>
+                <td>
+                  <button id="chat_exit" style="margin:5px; margin-left:10px;">Exit</button>
+                </td>
+              </tr>
+              <tr>
+               <td>
+                 <div style="display:flex;">
+                   <div style="width:50px"> 
+                     <img id="chat_throbber" src="images/throbber.gif" style="margin: 7 10 7 25;">
+                   </div>
+                   <input id="chat_req" style="WIDTH: calc(100% - 100px)">
+                   <button id="chat_send" style="margin:5px; margin-left:10px;">Send</button>
+                 </div>
+               </td>
+              </tr>
+            </table>
+            <div style="width: 100%; height: calc(100% - 80px);">
+                <textarea id="chat_place" style="white-space:nowrap">
+                </textarea>
             </div>
           </div>
         </li>
