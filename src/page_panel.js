@@ -44,7 +44,6 @@ var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.upd
 
 $(document).ready(function()
 {
-/**
   if (Browser.is_safari) {
       var el = DOM.qSel("body.sniffer");
       el.classList.add("sniffer_sf");
@@ -54,7 +53,7 @@ $(document).ready(function()
       el.classList.add("content_sf");
       el.classList.remove("content");
   }
-**/
+
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
   async function click_login() {
