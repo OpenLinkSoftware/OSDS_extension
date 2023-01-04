@@ -18,90 +18,6 @@
  *
  */
 
-//  req = "how to create blink animation css ?";
-class ChatUI {
-  constructor(_chat_view) 
-  {
-    this.chat_view = _chat_view;
-    this.str = this.chat_view.getValue();
-    this.chat = new chat_gpt();
-  }
-
-  add_msg(msg)
-  {
-    this.prev_str = this.str;
-    this.str+= "\n" + msg;
-    this.chat_view.setValue(this.str);
-    this.update_scroll();
-  }
-
-  update_msg(msg)
-  {
-    this.str = this.prev_str;
-    this.str+= "\n" + msg;
-    this.chat_view.setValue(this.str);
-    this.update_scroll();
-  }
-
-  update_scroll()
-  {
-    const v = this.chat_view.getScrollInfo()
-    this.chat_view.scrollTo(1,v.height);
-  }
-
-  open() 
-  {
-    selectTab("chat");
-    $("#chat_throbber").hide();
-    this.prev_str = this.str;
-  }
-
-  async exec()
-  {
-    var accessToken, ok;
-
-    $("#chat_throbber").show();
-
-    try {
-      ({accessToken, ok} = await this.chat.getAccessToken());
-    } catch(e) {
-      $("#chat_throbber").hide();
-      console.log(e);
-    }
-
-    if (!ok || !accessToken) {
-      $("#chat_throbber").hide();
-      this.add_msg(" --- Send query againg after the Relogin --- \n");
-      Browser.openTab("https://chat.openai.com/auth/login");
-      return;
-    }
-
-    var req = DOM.iSel('chat_req').value ;
-    if (!req) {
-      $("#chat_throbber").hide();
-      return;
-    }
-
-    this.add_msg("Q> "+req+"\n");
-    this.add_msg("\n");
-    try {
-      var answer = await this.chat.getAnswer(req, (data) => {
-        if (data.message)
-          this.update_msg("AI> \n"+data.message.content.parts[0]);
-      });
-
-      this.update_msg("AI> \n"+answer+"\n");
-    } catch(e) {
-      const s = e.message;
-      this.update_msg(" "+s+"\n");
-    }
-    $("#chat_throbber").hide();
-   }
-}
-
-
-
-
 class Rest_Cons {
   constructor()
   {
@@ -426,3 +342,19 @@ var DOM = {};
 DOM.qSel = (sel) => { return document.querySelector(sel); };
 DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
 DOM.iSel = (id) => { return document.getElementById(id); };
+DOM.htmlToElement = (html) => {
+    var template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
+  }
+
+DOM.htmlToElements = (html) => {
+    var template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content.childNodes;
+  }
+DOM.qShow = (sel) => { DOM.qSel(sel).classList.remove('hidden'); };
+DOM.qHide = (sel) => { DOM.qSel(sel).classList.add('hidden'); };
+DOM.Show = (el) => { el.classList.remove('hidden'); };
+DOM.Hide = (el) => { el.classList.add('hidden'); };

@@ -40,11 +40,11 @@ var gData = {
 var src_view = null;
 var g_RestCons = new Rest_Cons();
 var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
-var chatUI;
 
 
 $(document).ready(function()
 {
+/**
   if (Browser.is_safari) {
       var el = DOM.qSel("body.sniffer");
       el.classList.add("sniffer_sf");
@@ -54,7 +54,7 @@ $(document).ready(function()
       el.classList.add("content_sf");
       el.classList.remove("content");
   }
-
+**/
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
   async function click_login() {
@@ -96,21 +96,6 @@ $(document).ready(function()
     src_view.setSize("100%", "100%");
   } catch(e) { }
 
-  var chat_view;
-  try {
-    chat_view = CodeMirror.fromTextArea(document.getElementById('chat_place'), {
-        mode: 'markdown',
-        lineNumbers: true,
-        lineWrapping: true,
-        readOnly: true,
-        theme: "default",
-        value: " \n"
-      });
-    chat_view.setSize("100%", "100%");
-  } catch(e) { }
-
-  chatUI = new ChatUI(chat_view);
-
   try{
     g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
         lineNumbers: true,
@@ -125,8 +110,7 @@ $(document).ready(function()
 
   $("#query_place").hide();
 
-  DOM.iSel("chat_btn").onclick = (e) =>{ chatUI.open(); }; 
-
+  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
   DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
 
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(); }
@@ -137,13 +121,6 @@ $(document).ready(function()
   }
 
   DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
-
-  DOM.iSel("chat_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
-
-  DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
-
-  $("#chat_throbber").hide();
-
 
   load_data_from_url(document.location);
 

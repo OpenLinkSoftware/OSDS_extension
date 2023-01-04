@@ -78,7 +78,7 @@ class chat_gpt {
       return;
 
     const payload = {
-      action: "next",
+      action: "next",   //variant
       messages: [
         {
           id: fetchSse.uuidv4(),
@@ -125,7 +125,7 @@ class chat_gpt {
             } else {
               this.chat_uuid = data.conversation_id;
               this.parentID = data.message.id;
-              // console.log(data);
+              //console.log(data);
               resolve(data.message);
             }
           } else {
