@@ -329,6 +329,7 @@
                 data_found = true;
 
             if (!data_found) {
+                //?? document.querySelector('script[type="application/ld+json"]');
                 var all = document.getElementsByTagName("script");
                 for (var i = 0; i < all.length; i++) {
                     if (all[i].hasAttribute('type')

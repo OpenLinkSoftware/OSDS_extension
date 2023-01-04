@@ -47,8 +47,9 @@ const KEY_ACCESS_TOKEN = "accessToken";
 
 class chat_gpt {
   constructor() {
-    this.chat_uuid = null
+    this.conversation_id = null
     this.parentID = fetchSse.uuidv4()
+    this.user_id = null
   }
 
   async getAccessToken() {
@@ -66,12 +67,17 @@ class chat_gpt {
       }
 
       cache.set(KEY_ACCESS_TOKEN, data.accessToken);
+      this.user_id = data.user.id;
       return {accessToken: data.accessToken, ok: true};
     } catch(e) {
       return {ok:false, message:e.message};
     }
   }
 
+  getUserId() {
+    return this.user_id;
+  }
+  
   async send(content, callback) {
     const {accessToken, ok} = await this.getAccessToken();
     if (!ok || !accessToken)
@@ -92,8 +98,8 @@ class chat_gpt {
       model: "text-davinci-002-render",
       parent_message_id: this.parentID  
     };
-    if (this.chat_uuid)
-      payload.conversation_id = this.chat_uuid
+    if (this.conversation_id)
+      payload.conversation_id = this.conversation_id
 
     try {
       await fetchSse.fetchSSE("https://chat.openai.com/backend-api/conversation", {
@@ -123,17 +129,23 @@ class chat_gpt {
             if (data.error) {
               reject(new Error(data.error));
             } else {
-              this.chat_uuid = data.conversation_id;
+              this.conversation_id = data.conversation_id;
               this.parentID = data.message.id;
+              var message_id = data.message.id;
               //console.log(data);
-              resolve(data.message);
+              resolve({conversation_id: this.conversation_id, message_id, text: data.message.content.parts[0]});
             }
           } else {
             messages.push(message);
             if (callback) {
               try {
                 const data = JSON.parse(message);
-                callback(data);
+                this.conversation_id = data.conversation_id || '';
+                var message_id = data.message.id || '';
+                if (!data.error)
+                  callback({conversation_id: this.conversation_id, message_id, text: data.message.content.parts[0]})
+                else
+                  callback({conversation_id: this.conversation_id, message_id, error: data.error});
               } catch(e) {}
             }
           }
@@ -143,7 +155,7 @@ class chat_gpt {
 
   async getAnswer(question, callback) {
     const response = await this.sendMessage(question, callback);
-    return response.content.parts[0];
+    return response;
   }
 
 }

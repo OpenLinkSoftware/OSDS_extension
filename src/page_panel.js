@@ -98,14 +98,15 @@ $(document).ready(function()
 
   try{
     g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
-        lineNumbers: true,
+        lineNumbers: false,
         lineWrapping: false,
-	      sparql: { showQueryButton: false },
+        foldGutter: false,
+   	      sparql: { showQueryButton: false },
 	     createShortLink : null,
 	     createShareLink : null,
 	      persistent: null,
     });
-    g_RestCons.yasqe.obj.setSize("100%", 300);
+    g_RestCons.yasqe.obj.setSize("98%", 300);
   } catch(e) { }
 
   $("#query_place").hide();

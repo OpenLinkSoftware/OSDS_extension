@@ -20,58 +20,15 @@
 
 // React when the browser action's icon is clicked.
 
+(function () {
 
-var $ = jQuery;
-var chatUI;
-var mchatUI;
+  var g_super_links = null;
 
+  var $ = jQuery;
+  var chatUI;
 
-var cdata = 
- "To create a blink animation using CSS, you can use the `@keyframes` rule to define the animation and set the `animation` property on the element you want to animate.\n"
-+"\n"
-+"Here's an example of how you might create a blink animation that alternates the visibility of an element every half second:\n"
-+"\n"
-+"```css\n"
-+"@keyframes blink {\n"
-+"  50% {\n"
-+"    visibility: hidden;\n"
-+"  }\n"
-+"}\n"
-+"\n"
-+".blink {\n"
-+"  animation: blink 1s linear infinite;\n"
-+"}\n"
-+"```\n"
-+"\n"
-+"You can then apply the `blink` class to any element you want to animate:\n"
-+"\n"
-+"```html\n"
-+'<p class="blink">This text will blink</p>\n'
-+"```\n"
-+"\n"
-+"You can customize the duration and timing of the animation by adjusting the values for the `animation` property. For example, you can use the `animation-duration` property to control the length of the animation, and the `animation-timing-function` property to control the speed of the animation.\n"
-+"\n"
-+"Here's an example of a blink animation that lasts for 2 seconds and uses a ease-in-out timing function:\n"
-+"\n"
-+"```css\n"
-+"@keyframes blink {\n"
-+"  50% {\n"
-+"    visibility: hidden;\n"
-+"  }\n"
-+"}\n"
-+"\n"
-+".blink {\n"
-+"  animation: blink 2s ease-in-out infinite;\n"
-+"}\n"
-+"```\n"
-+"\n"
-+"I hope this helps! Let me know if you have any questions.\n"
-+"\n";
-
-
-
-$(document).ready(function()
-{
+    $(document).ready(function()
+    {
 /**
   if (Browser.is_safari) {
       var el = DOM.qSel("body.sniffer");
@@ -83,64 +40,174 @@ $(document).ready(function()
       el.classList.remove("content");
   }
 **/
+      if ($(".osds_popup").length == 0) {
+         $('body').append(
+           `<div class="osds_popup">
+              <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
+              <div class="osds_popup-content">
+                <p id="osds_popup_msg">  </p>
+                <div class="osds_popup_btns">
+                  <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
+                  <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
+                <div>
+              </div>
+            </div>`
+         );
 
-  DOM.iSel("c_year").innerText = new Date().getFullYear();
+         DOM.qSel('.osds_popup').style.display = 'none';
 
-  chatUI = new ChatUI(DOM.qSel('div.chat'));
-
-  mchatUI = new NChatUI(DOM.qSel('div.chat'));
-
-  DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
-
-  $("#chat_throbber").hide();
-
-  DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
-
-//??  update_view();
-});
-
-
-
-async function update_view() 
-{
-  var id = 1;
-
-  var lst = DOM.qSel('div.chat');
-  lst.innerHTML = '';
-
-  mchatUI.append_question('My question');
-
-  var l = cdata.split("\n");
-
-  var text = l[0]+"\n";
-  mchatUI.append_ai(text);
-
-  for(var i=1; i < l.length; i++) 
-  {
-    text += l[i]+"\n";
-    await sleep(100);
-    mchatUI.update_ai(text);
-  }
-
-  mchatUI.end_ai();
-//  mchatUI.append_question('My question 11');
-//  mchatUI.append_ai(cdata);
-}
-
-
-
-function showInfo(msg)
-{
-  $('#alert-msg').prop('textContent',msg);
-  $('#alert-dlg').dialog({
-    resizable: true,
-    height:180,
-    modal: true,
-    buttons: {
-      "OK": function() {
-        $(this).dialog('destroy');
+         DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+             DOM.qSel('.osds_popup').style.display = 'none';
+             Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+             return false;
+         };
+         DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+             DOM.qSel('.osds_popup').style.display = 'none';
+             Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+             return false;
+         };
       }
-    }
+      
+      
+      DOM.iSel("c_year").innerText = new Date().getFullYear();
+
+      chatUI = new ChatUI(DOM.qSel('div.chat'));
+
+      DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
+
+      $("#chat_throbber").hide();
+      $("#thumb_up").hide();
+      $("#thumb_down").hide();
+      $("#alert-dlg").hide();
+
+      DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
+
+
+      try {
+
+          Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) 
+          {
+                if (request.property == "req_doc_data") {
+                    request_doc_data();
+                    sendResponse({ping:1});
+                    return;
+                 }
+                else if (request.property == "open_tab") {
+                    request_open_tab(request.url, sender);
+                }
+                else if (request.property == "osds_msg_show") {
+                    if (request.message) {
+                      DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
+                      DOM.qSel('.osds_popup').style.display = 'block';
+                    }
+                }
+                else if (request.property == "osds_msg_hide") {
+                    DOM.qSel('.osds_popup').style.display = 'none';
+                }
+
+                sendResponse({});  // stop
+          });
+
+
+      } catch (e) {
+         console.log("OSDS:" + e);
+      }
+
   });
-}
+
+
+
+    function showInfo(msg)
+    {
+      $('#alert-msg').prop('textContent',msg);
+      $('#alert-dlg').dialog({
+        resizable: true,
+        height:180,
+        modal: true,
+        buttons: {
+          "OK": function() {
+            $(this).dialog('destroy');
+          }
+        }
+      });
+    }
+
+
+    function request_open_tab(url, sender) {
+        if (url)
+          window.open(url);
+    }
+
+    function request_doc_data() 
+    {
+        var data_exists = false;
+        var docData = {
+            doc_URL: document.location.href,
+            micro: {data: null},
+            jsonld: {text: null},
+            json: {text: null},
+            rdfa: {data: null, ttl: null},
+            rdf: {text: null},
+            turtle: {text: null},
+            ttl_nano: {text: null},
+            ttl_curly_nano: {text: null},
+            jsonld_nano: {text: null},
+            json_nano: {text: null},
+            rdf_nano: {text: null},
+            csv_nano: {text: null},
+            posh: {text: ''}
+        };
+
+        var lst = DOM.qSelAll('.chat_code');
+        for (var el of lst) {
+          var el_type = el.querySelector('.code_header select#code_type option:checked').id;
+
+          if (el_type === 'turtle') {
+            data_exists = true;
+            if (!docData.ttl_nano.text)
+              docData.ttl_nano.text = [];
+
+            docData.ttl_nano.text.push( el.querySelector('.code_block').textContent );
+          }
+          else if (el_type === 'jsonld') {
+            data_exists = true;
+            if (!docData.jsonld_nano.text)
+              docData.jsonld_nano.text = [];
+
+            docData.jsonld_nano.text.push( el.querySelector('.code_block').textContent );
+          }
+          else if (el_type === 'json') {
+            data_exists = true;
+            if (!docData.json_nano.text)
+              docData.json_nano.text = [];
+
+            docData.json_nano.text.push( el.querySelector('.code_block').textContent );
+          }
+          else if (el_type === 'csv') {
+            data_exists = true;
+            if (!docData.csv_nano.text)
+              docData.csv_nano.text = [];
+
+            docData.csv_nano.text.push( el.querySelector('.code_block').textContent );
+          }
+          else if (el_type === 'rdfxml') {
+            data_exists = true;
+            if (!docData.rdf_nano.text)
+              docData.rdf_nano.text = [];
+
+            docData.rdf_nano.text.push( el.querySelector('.code_block').textContent );
+          }
+        }
+
+        Browser.api.runtime.sendMessage(
+            {
+                property: "doc_data",
+                data: JSON.stringify(docData, undefined, 2),
+                is_data_exists: data_exists
+            });
+    }
+
+
+
+})();
 
