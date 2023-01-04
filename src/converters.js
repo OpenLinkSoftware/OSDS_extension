@@ -935,66 +935,87 @@ class Convert_CSV {
         var col = res.data[0];
         var col_type = [];
         var found = 0;
+        var has_headers = true;
+        var row0 = 1;
 
-        for (var i=0; i < col.length; i++){
-          if (!col[i])
-            col[i] = 'Unnamed'+i;
-          var lst = col[i].split(':');
-          if (lst.length > 1) {
-            col[i] = lst.length > 2 ? lst[2] : lst[0];
-            found++;
-            switch(lst[1]) {
-              case 'int':
-                col_type[i] = 'integer';
-                break;
-              case 'long':
-                col_type[i] = 'long';
-                break;
-              case 'float':
-                col_type[i] = 'float';
-                break;
-              case 'double':
-                col_type[i] = 'double';
-                break;
-              case 'boolean':
-                col_type[i] = 'boolean';
-                break;
-              case 'byte':
-                col_type[i] = 'byte';
-                break;
-              case 'short':
-                col_type[i] = 'short';
-                break;
-              case 'datetime':
-                col_type[i] = 'dateTime';
-                break;
-              case 'date':
-                col_type[i] = 'date';
-                break;
-              case 'time':
-                col_type[i] = 'time';
-                break;
-              case 'decimal':
-                col_type[i] = 'decimal';
-                break;
-              case 'uuid':
-              case 'string': 
-              default:
-                col_type[i] = 'string';
-                break;
-            }
-          } else {
-            col_type[i] = 'string';
+        //check, if first row is column headers
+        for (var i=0; i < col.length; i++) {
+          var v = col[i];
+          if (typeof v === 'number')
+            has_headers = false;
+          else if (typeof v === 'boolean')
+            has_headers = false;
+          else if (typeof v === 'string') {
+            if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('mailto:') || v.startsWith('urn:') || v.startsWith('../'))
+              has_headers = false;
           }
-        }  
-        if (!found) {
-          col_type = [];
         }
 
-        if (res.data.length > 1) {
+        if (has_headers) {
+          for (var i=0; i < col.length; i++){
+            if (!col[i])
+              col[i] = 'COL_'+i;
+            var lst = col[i].split(':');
+            if (lst.length > 1) {
+              col[i] = lst.length > 2 ? lst[2] : lst[0];
+              found++;
+              switch(lst[1]) {
+                case 'int':
+                  col_type[i] = 'integer';
+                  break;
+                case 'long':
+                  col_type[i] = 'long';
+                  break;
+                case 'float':
+                  col_type[i] = 'float';
+                  break;
+                case 'double':
+                  col_type[i] = 'double';
+                  break;
+                case 'boolean':
+                  col_type[i] = 'boolean';
+                  break;
+                case 'byte':
+                  col_type[i] = 'byte';
+                  break;
+                case 'short':
+                  col_type[i] = 'short';
+                  break;
+                case 'datetime':
+                  col_type[i] = 'dateTime';
+                  break;
+                case 'date':
+                  col_type[i] = 'date';
+                  break;
+                case 'time':
+                  col_type[i] = 'time';
+                  break;
+                case 'decimal':
+                  col_type[i] = 'decimal';
+                  break;
+                case 'uuid':
+                case 'string': 
+                default:
+                  col_type[i] = 'string';
+                  break;
+              }
+            } else {
+              col_type[i] = 'string';
+            }
+          }  
+
+        } else { // without headers
+          row0 = 0;
+          for (var i=0; i < col.length; i++){
+            col[i] = 'COL_'+i;
+          }
+        }
+
+
+        if (res.data.length > row0) {
           if (col_type.length === 0)
-            for (var i=0; i < res.data[1].length; i++) {
-              var v = res.data[1][i];
+            for (var i=0; i < res.data[row0].length; i++) {
+              var v = res.data[row0][i];
               if (typeof v === 'number') {
                 var is_int = 1;
                 var v_type = 'integer';
@@ -1047,7 +1068,7 @@ class Convert_CSV {
 
         ttl += '\n';
 
-        for(var i=1; i < res.data.length; i++) {
+        for(var i=row0; i < res.data.length; i++) {
           var d = res.data[i];
           var s = '[\n';
 
