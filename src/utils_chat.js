@@ -45,9 +45,6 @@ class ChatUI {
   // and ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'] for French (including nbsp).
       quotes: '“”‘’',
 
-  // Highlighter function. Should return escaped HTML,
-  // or '' if the source string is not changed and should be escaped externally.
-  // If result starts with <pre... internal wrapper is skipped.
       highlight: function (str, lang) {
          if (lang && hljs.getLanguage(lang)) {
            try {
@@ -170,6 +167,7 @@ class ChatUI {
     return v;
   }
 
+  
   #create_ai_html(str)
   {
     var block = [];
@@ -185,7 +183,8 @@ class ChatUI {
     return block.join('\n');
   }
 
-  append_question(str)
+  
+  append_question(str, disable_scroll)
   {
     var sid = 'ch_q_'+this.id++;
     var s = this.#create_question_html(str, sid);
@@ -195,6 +194,7 @@ class ChatUI {
     this.#update_scroll();
   }
 
+  
   append_msg(str)
   {
     var sid = 'ch_q_'+this.id++;
@@ -205,7 +205,8 @@ class ChatUI {
     this.#update_scroll();
   }
 
-  append_ai(str)
+  
+  append_ai(str, disable_scroll)
   {
     var sid = 'ch_ai_'+this.id++;
     var s = this.#create_answer_html(str, sid);
@@ -213,10 +214,11 @@ class ChatUI {
 
     this.chat_lst.appendChild(el); 
     this.last_sid = sid;
-    this.#update_scroll();
+    this.#update_scroll(disable_scroll);
   }
 
-  update_ai(str, conversation_id, message_id)
+  
+  update_ai(str, conversation_id, message_id, disable_scroll)
   {
     if (this.last_sid) {
       var el = DOM.qSel("div#"+this.last_sid+".chat_center");
@@ -226,10 +228,11 @@ class ChatUI {
         el.innerHTML = this.#create_ai_html(str, conversation_id, message_id);
       }
     }
-    this.#update_scroll();
+    this.#update_scroll(disable_scroll);
   }
 
-  end_ai()
+  
+  end_ai(is_new)
   {
     const self = this;
     this.last_sid = null;
@@ -268,8 +271,12 @@ class ChatUI {
         self.#feedback_down(e.target);
       }
     }
+
+    if (is_new)
+      this.reqNewTitle();
   }
 
+  
   #feedback_up(v) 
   {
     const chat_item = v.closest('div.chat_item_ai');
@@ -292,6 +299,7 @@ class ChatUI {
     });
   } 
 
+  
   #feedback_down(v) 
   {
     const chat_item = v.closest('div.chat_item_ai');
@@ -322,6 +330,7 @@ class ChatUI {
     });
   } 
                                                                                         
+  
   async #send_feedback(el, message_id, conversation_id, rating, msg, tags)
   {
     const {accessToken, ok} = await this.chat.getAccessToken();
@@ -361,10 +370,232 @@ class ChatUI {
   }
 
   
-  #update_scroll()
+  #update_scroll(disable_scroll)
   {
+    if (disable_scroll)
+      return;
+
     const v = this.chat_lst.scrollHeight
     this.chat_lst.scrollTo(1,v);
+  }
+
+
+  #create_chat_title_html(id, title)
+  {
+    return `<td cid="${id}" class="btn_msg_chat"><input type="image" class="image_btn" src="images/message.svg"> ${title}</td>`
+  }
+
+
+  #update_hist_list(v)
+  {
+    var self = this;
+    var tbody = DOM.qSel('tbody#history_list');
+    tbody.innerHTML = '';
+
+    for(var i of v.items) {
+      var row = tbody.insertRow(-1);
+      const sel = (i.id === this.chat.getConversationId()); 
+      row.innerHTML = this.#create_chat_title_html(i.id, i.title);
+      row.onclick = (e) => { self.#load_conversation(e.target); }
+      if (sel)
+        row.classList.add('hrow_selected');
+    }
+  }
+
+  #add_new_title2list(id, title)
+  {
+    var self = this;
+    var tbody = DOM.qSel('tbody#history_list');
+
+    for(var i of tbody.rows)
+      i.classList.remove('hrow_selected');
+
+    var row = tbody.insertRow(0);
+    row.innerHTML = this.#create_chat_title_html(id, title);
+    row.onclick = (e) => { self.#load_conversation(e.target); }
+    row.classList.add('hrow_selected');
+  }
+
+  #mark_cur_title(id)
+  {
+    var tbody = DOM.qSel('tbody#history_list');
+
+    for(var row of tbody.rows) {
+      var cid = row.querySelector('td').attributes.cid;
+      if (cid && cid.value === id)
+        row.classList.add('hrow_selected');
+      else
+        row.classList.remove('hrow_selected');
+    }
+  }
+
+
+  #startThrobber()
+  {
+    $("#chat_throbber").show();
+    DOM.iSel('chat_send').disabled = true
+  }
+  #endThrobber()
+  {
+    $("#chat_throbber").hide();
+    DOM.iSel('chat_send').disabled = false
+  }
+
+
+  async #load_conversation(el) 
+  {
+    this.#startThrobber()
+    DOM.iSel('chat_req').value = '';
+
+    try {
+      const cid = el.attributes.cid.value;
+      if (!cid)
+        return;
+
+      var rc = await this.chat.loadConversation(cid);
+      if (rc.ok) {
+        const last = rc.data.current_node;
+        const lst = rc.data.mapping;
+
+        var cur_id;
+        for(var key in lst) {
+          var v = lst[key];
+          if (!v.parent && !v.message && v.children.length > 0) 
+            cur_id = v.id;
+        }
+
+        if (cur_id) {
+          // start
+          this.chat_lst.innerHTML = '';
+          this.chat.setConversationId(cid);
+          this.chat.setParentId(null);
+
+          while(cur_id && lst[cur_id] !== null) 
+          {
+            var v = lst[cur_id];
+
+            if (v.id)
+              this.chat.setParentId(v.id);
+
+            if (v.message) 
+            {
+              const m = v.message;
+              if (m.content.content_type === 'text' && m.content.parts.length > 0) 
+              {
+                if (m.role === 'user') 
+                  this.append_question(m.content.parts[0], true);
+                else if (m.role === 'assistant') {
+                  this.append_ai(m.content.parts[0], true);
+                  this.update_ai(m.content.parts[0], cid, m.id, true);
+                }
+              }
+            }
+
+            if (!v.children || v.children.length < 1)
+              break;
+            if (v.id === last)
+              break;
+            cur_id = v.children[0];
+          }
+        }
+
+        this.#mark_cur_title(cid);
+        this.chat_lst.scrollTo(1,1);
+      }
+    } catch(e) {
+      console.log('ERR==>'+e);
+    } finally {
+      this.#endThrobber();
+    }
+  }
+
+
+  async load_history(s, e)
+  {
+    var accessToken, ok;
+    var offset = s || 0;
+    var limit = e || 20;
+
+    this.#startThrobber()
+
+    try {
+      ({accessToken, ok} = await this.chat.getAccessToken());
+    } catch(e) {
+      console.log(e);
+    }
+
+    if (!ok || !accessToken) {
+      this.#endThrobber();
+      this.append_msg(" --- Send query againg after the Relogin --- \n");
+      Browser.openTab("https://chat.openai.com/auth/login");
+      this.end_ai();
+      return;
+    }
+
+    try {
+      var options = {
+        headers: {
+          'Content-Type': 'application/json',
+           Authorization: `Bearer ${accessToken}`,
+        }
+      }
+
+      var rc = await fetch(`https://chat.openai.com/backend-api/conversations?offset=${offset}&limit=${limit}`, options);
+      if (rc.ok) {
+        var data = await rc.json();
+        this.#update_hist_list(data);
+      }
+
+    } catch(e) {
+      console.log(e);
+    } finally {
+      this.#endThrobber()
+    }
+  }
+
+
+  async reqNewTitle()
+  {
+    var accessToken, ok;
+    const conversation_id = this.chat.getConversationId();
+    const message_id = this.chat.getParentId();
+
+    this.#startThrobber()
+
+    try {
+      ({accessToken, ok} = await this.chat.getAccessToken());
+    } catch(e) {
+      console.log(e);
+    }
+
+    if (!ok || !accessToken)
+      return;
+
+    const payload = {
+      message_id,
+      model: "text-davinci-002-render"
+    };
+
+    try {
+      var options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+           Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload)
+      }
+
+      var rc = await fetch(`https://chat.openai.com/backend-api/conversation/gen_title/${conversation_id}`, options);
+      if (rc.ok) {
+        var data = await rc.json();
+        this.#add_new_title2list(conversation_id, data.title);
+      }
+    } catch(e) {
+      console.log(e);
+    } finally {
+      this.#endThrobber();
+    }
   }
 
 
@@ -372,17 +603,17 @@ class ChatUI {
   {
     var accessToken, ok;
 
-    $("#chat_throbber").show();
+    this.#startThrobber();
 
     try {
       ({accessToken, ok} = await this.chat.getAccessToken());
     } catch(e) {
-      $("#chat_throbber").hide();
+      this.#endThrobber()
       console.log(e);
     }
 
     if (!ok || !accessToken) {
-      $("#chat_throbber").hide();
+      this.#endThrobber()
       this.append_msg(" --- Send query againg after the Relogin --- \n");
       Browser.openTab("https://chat.openai.com/auth/login");
       this.end_ai();
@@ -391,13 +622,14 @@ class ChatUI {
 
     var req = DOM.iSel('chat_req').value ;
     if (!req) {
-      $("#chat_throbber").hide();
-      this.end_ai();
+      this.#endThrobber()
       return;
     }
 
     this.append_question(req);
     this.append_ai("\n");
+    const new_chat = !this.chat.getConversationId();
+
     try {
       var answer = await this.chat.getAnswer(req, (data) => {
         if (data.text)
@@ -407,15 +639,26 @@ class ChatUI {
       this.update_ai(answer.text, answer.conversation_id, answer.message_id);
     } catch(e) {
       const s = e.message;
-      this.end_ai();
+      this.end_ai(new_chat);
       this.append_msg(" "+s+"\n");
       if (s.startsWith("HTTP: 403"))  {
          this.append_msg(" --- Send query againg after the Relogin --- \n");
          Browser.openTab("https://chat.openai.com/auth/login");
       }
     }
-    this.end_ai();
-    $("#chat_throbber").hide();
-   }
+    DOM.iSel('chat_req').value = '';
+    this.end_ai(new_chat);
+    this.#endThrobber()
+  }
+
+  
+  new_chat()
+  {
+    this.chat_lst.innerHTML = '';
+    this.chat.newChat();
+  }
+
+
+
 }
 

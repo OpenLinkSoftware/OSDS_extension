@@ -74,6 +74,7 @@
       chatUI = new ChatUI(DOM.qSel('div.chat'));
 
       DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
+      DOM.iSel("new_chat").onclick = (e) =>{ chatUI.new_chat(); }; 
 
       $("#chat_throbber").hide();
       $("#thumb_up").hide();
@@ -113,6 +114,7 @@
          console.log("OSDS:" + e);
       }
 
+      chatUI.load_history();
   });
 
 

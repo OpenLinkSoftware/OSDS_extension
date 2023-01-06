@@ -52,6 +52,12 @@ class chat_gpt {
     this.user_id = null
   }
 
+  newChat() {
+    this.conversation_id = null
+    this.parentID = fetchSse.uuidv4()
+  }
+
+
   async getAccessToken() {
     if (cache.get(KEY_ACCESS_TOKEN)) {
       return {accessToken:cache.get(KEY_ACCESS_TOKEN), ok:true};
@@ -74,10 +80,32 @@ class chat_gpt {
     }
   }
 
-  getUserId() {
+  getUserId() 
+  {
     return this.user_id;
   }
   
+  setParentId(v) 
+  {
+    if (!v)
+      this.parentID = fetchSse.uuidv4();
+    else
+      this.parentID = v;
+  }
+  getParentId() 
+  {
+    return this.parentID;
+  }
+
+  setConversationId(v) 
+  {
+    this.conversation_id = v;
+  }
+  getConversationId() 
+  {
+    return this.conversation_id;
+  }
+
   async send(content, callback) {
     const {accessToken, ok} = await this.getAccessToken();
     if (!ok || !accessToken)
@@ -156,6 +184,30 @@ class chat_gpt {
   async getAnswer(question, callback) {
     const response = await this.sendMessage(question, callback);
     return response;
+  }
+
+
+
+  async loadConversation(cid, callback) {
+    const {accessToken, ok} = await this.getAccessToken();
+    if (!ok || !accessToken)
+      return;
+
+    try {
+      var rc = await fetch(`https://chat.openai.com/backend-api/conversation/${cid}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      if (rc.ok) 
+        return {ok:1, data: await rc.json() };
+      else
+        return {error:rc.status};
+    } catch (e) {
+      return {error: e.message};
+    }
   }
 
 }

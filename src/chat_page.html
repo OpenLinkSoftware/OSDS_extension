@@ -21,6 +21,7 @@
 	<meta charset="UTF-8">
         <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />
         <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
+        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
 
         <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
         <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
@@ -157,6 +158,50 @@
          }
 
 
+         .htable {
+           border-collapse: separate;
+           border-spacing: 0;
+           width: 100%;
+           border: solid gray 1px;
+           font-size: 14px;
+           color: white;
+         }
+
+         .htable > tbody > tr:hover {
+           background: gray;
+         }
+
+         tr.selected {
+           background: gray;
+         }
+
+         .hrow_selected {
+           background: gray;
+         }
+
+         .htable > tbody > tr > td {
+           border-top: 1px solid gray;
+           padding: 10px;
+           text-align: left;
+         }
+
+         .btn_new_chat {
+           color: lightgray; 
+           display:flex; 
+           align-items:center;
+           padding: 10px
+         }
+         .btn_msg_chat {
+           color: lightgray; 
+           display:flex; 
+           align-items:center;
+           padding: 10px
+         }
+         .btn_new_chat:hover {
+           background: gray;
+         }
+
+         
         </style>
 
     </head>
@@ -211,9 +256,20 @@
 <!---------END POPUP --------------------->
 
 
-      <div class="content" style="font-size: 14px;">
+    <div class="content" style="font-size: 14px;display:flex; flex-direction:row">
+      <div style="width:250px;background: black; overflow:auto; display:flex; flex-direction:column">
+        <div class="btn_new_chat" id="new_chat">
+          <input type="image" class="image_btn" src="images/plus.svg"> New Chat
+        </div>
 
-        <table style="width: 100%;min-height:40px;">
+        <table class="htable" style="width:calc100%">
+          <tbody id="history_list">
+          </tbody>
+        </table>
+      </div>
+      
+      <div style="width:calc(100% - 260px)">
+        <table style="width: 100%;min-height:60px;">
           <tr>
            <td>
              <div style="display:flex;">
@@ -253,9 +309,10 @@
               <input type="image"src="images/chat.png" width="24" height="24" > 
             </div>
           </div>
-        </div>
 -->
+        </div>
       </div>
+    </div>
 
 
       <div class="bottom_block">
