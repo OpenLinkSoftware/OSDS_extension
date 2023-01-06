@@ -48,13 +48,13 @@ class ChatUI {
       highlight: function (str, lang) {
          if (lang && hljs.getLanguage(lang)) {
            try {
-             return '<pre class="hljs" style="overflow:auto;"><code>' +
+             return '<pre class="hljs"><code>' +
                      hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
                    '</code></pre>';
            } catch (__) {}
          }
 
-         return '<pre class="hljs" style="overflow:auto;"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
+         return '<pre class="hljs"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
        }
      });
   }
@@ -507,6 +507,7 @@ class ChatUI {
       console.log('ERR==>'+e);
     } finally {
       this.#endThrobber();
+      this.end_ai();
     }
   }
 
@@ -515,7 +516,7 @@ class ChatUI {
   {
     var accessToken, ok;
     var offset = s || 0;
-    var limit = e || 20;
+    var limit = e || 100;
 
     this.#startThrobber()
 
