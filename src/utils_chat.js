@@ -48,13 +48,13 @@ class ChatUI {
       highlight: function (str, lang) {
          if (lang && hljs.getLanguage(lang)) {
            try {
-             return '<pre class="hljs"><code>' +
+             return '<pre class="hljs" style="overflow:auto;"><code>' +
                      hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
                    '</code></pre>';
            } catch (__) {}
          }
 
-         return '<pre class="hljs"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
+         return '<pre class="hljs" style="overflow:auto;"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
        }
      });
   }
@@ -131,16 +131,14 @@ class ChatUI {
     return v;
   }
 
-  #create_question_html(query, id) 
+  #create_question_html(text, id) 
   {
     var v = 
      `<div class="chat_item">
         <div class="chat_left"> 
           <input type="image"src="images/person-icon.svg" width="20" height="20" > 
         </div> 
-        <div id="${id}" class="chat_center">
-         <p> ${DOMPurify.sanitize(query)}
-         </p>
+        <div id="${id}" class="chat_center"> ${text}
         </div>
         <div class="chat_right"> 
         </div>
@@ -187,7 +185,8 @@ class ChatUI {
   append_question(str, disable_scroll)
   {
     var sid = 'ch_q_'+this.id++;
-    var s = this.#create_question_html(str, sid);
+
+    var s = this.#create_question_html(this.md.render(str), sid);
     var el = DOM.htmlToElement(s);
 
     this.chat_lst.appendChild(el); 
@@ -382,7 +381,7 @@ class ChatUI {
 
   #create_chat_title_html(id, title)
   {
-    return `<td cid="${id}" class="btn_msg_chat"><input type="image" class="image_btn" src="images/message.svg"> ${title}</td>`
+    return `<td><span cid="${id}" class="btn_msg_chat"><input type="image" class="image_btn" src="images/message.svg"> ${title}</span></td>`
   }
 
 
@@ -395,10 +394,12 @@ class ChatUI {
     for(var i of v.items) {
       var row = tbody.insertRow(-1);
       const sel = (i.id === this.chat.getConversationId()); 
+
       row.innerHTML = this.#create_chat_title_html(i.id, i.title);
       row.onclick = (e) => { self.#load_conversation(e.target); }
+
       if (sel)
-        row.classList.add('hrow_selected');
+        row.querySelector('td > span').classList.add('btn_selected');
     }
   }
 
@@ -407,25 +408,25 @@ class ChatUI {
     var self = this;
     var tbody = DOM.qSel('tbody#history_list');
 
-    for(var i of tbody.rows)
-      i.classList.remove('hrow_selected');
+    for(var i of tbody.querySelectorAll('tr > td > span'))
+      i.classList.remove('btn_selected');
 
     var row = tbody.insertRow(0);
     row.innerHTML = this.#create_chat_title_html(id, title);
     row.onclick = (e) => { self.#load_conversation(e.target); }
-    row.classList.add('hrow_selected');
+    row.querySelector('td > span').classList.add('btn_selected');
   }
 
   #mark_cur_title(id)
   {
-    var tbody = DOM.qSel('tbody#history_list');
+    var lst = DOM.qSelAll('tbody#history_list > tr > td > span');
 
-    for(var row of tbody.rows) {
-      var cid = row.querySelector('td').attributes.cid;
+    for(var i of lst) {
+      var cid = i.attributes.cid;
       if (cid && cid.value === id)
-        row.classList.add('hrow_selected');
+        i.classList.add('btn_selected');
       else
-        row.classList.remove('hrow_selected');
+        i.classList.remove('btn_selected');
     }
   }
 

@@ -167,21 +167,11 @@
            color: white;
          }
 
-         .htable > tbody > tr:hover {
-           background: gray;
-         }
-
-         tr.selected {
-           background: gray;
-         }
-
          .hrow_selected {
            background: gray;
          }
 
          .htable > tbody > tr > td {
-           border-top: 1px solid gray;
-           padding: 10px;
            text-align: left;
          }
 
@@ -189,15 +179,24 @@
            color: lightgray; 
            display:flex; 
            align-items:center;
-           padding: 10px
+           margin: 5px;
+           padding: 5px;
+           border-radius: 3px;
          }
+
          .btn_msg_chat {
            color: lightgray; 
            display:flex; 
            align-items:center;
-           padding: 10px
+           margin: 5px;
+           padding: 5px;
+           border-radius: 3px;
          }
-         .btn_new_chat:hover {
+         .btn_selected {
+           background: gray; 
+         }
+
+         .btn_new_chat:hover, .btn_msg_chat:hover {
            background: gray;
          }
 
