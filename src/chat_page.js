@@ -114,7 +114,15 @@
          console.log("OSDS:" + e);
       }
 
-      chatUI.load_history();
+
+      DOM.iSel('conversations').onscroll = (e)=> {
+        if (e.target.scrollTop + e.target.clientHeight >= e.target.scrollHeight) {
+          chatUI.load_history_more();
+        }
+      }
+
+      
+      chatUI.load_history(true, 0);
   });
 
 

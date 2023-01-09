@@ -23,6 +23,8 @@
 class ChatUI {
   constructor(_chat_lst) 
   {
+    this.history_offset = 0;
+    this.history_len = 0;
     this.chat = new chat_gpt();
     this.last_sid = null;
     this.chat_lst = _chat_lst;
@@ -231,7 +233,7 @@ class ChatUI {
   }
 
   
-  end_ai(is_new)
+  async end_ai(is_new)
   {
     const self = this;
     this.last_sid = null;
@@ -271,8 +273,12 @@ class ChatUI {
       }
     }
 
-    if (is_new)
-      this.reqNewTitle();
+    if (is_new) {
+      await this.reqNewTitle();
+      await this.load_history(false, 0);
+      this.#mark_cur_title(this.chat.getConversationId());
+      DOM.iSel('conversations').scrollTo(1,1);
+    }
   }
 
   
@@ -385,11 +391,13 @@ class ChatUI {
   }
 
 
-  #update_hist_list(v)
+  #update_hist_list(v, offset)
   {
     var self = this;
     var tbody = DOM.qSel('tbody#history_list');
-    tbody.innerHTML = '';
+
+    if (offset === 0)
+      tbody.innerHTML = '';
 
     for(var i of v.items) {
       var row = tbody.insertRow(-1);
@@ -512,13 +520,14 @@ class ChatUI {
   }
 
 
-  async load_history(s, e)
+  async load_history(show_throbber, s, e)
   {
     var accessToken, ok;
     var offset = s || 0;
     var limit = e || 100;
 
-    this.#startThrobber()
+    if (show_throbber)
+       this.#startThrobber()
 
     try {
       ({accessToken, ok} = await this.chat.getAccessToken());
@@ -545,16 +554,24 @@ class ChatUI {
       var rc = await fetch(`https://chat.openai.com/backend-api/conversations?offset=${offset}&limit=${limit}`, options);
       if (rc.ok) {
         var data = await rc.json();
-        this.#update_hist_list(data);
+        this.#update_hist_list(data, offset);
+        this.history_offset = data.offset;
+        this.history_len = data.items.length;
       }
 
     } catch(e) {
       console.log(e);
     } finally {
-      this.#endThrobber()
+      if (show_throbber)
+        this.#endThrobber()
     }
   }
 
+
+  async load_history_more()
+  {
+     await this.load_history(true, this.history_offset+this.history_len);
+  }
 
   async reqNewTitle()
   {
@@ -639,6 +656,7 @@ class ChatUI {
       });
 
       this.update_ai(answer.text, answer.conversation_id, answer.message_id);
+
     } catch(e) {
       const s = e.message;
       this.end_ai(new_chat);
@@ -649,7 +667,7 @@ class ChatUI {
       }
     }
     DOM.iSel('chat_req').value = '';
-    this.end_ai(new_chat);
+    await this.end_ai(new_chat);
     this.#endThrobber()
   }
 

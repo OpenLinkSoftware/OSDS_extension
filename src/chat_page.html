@@ -202,6 +202,12 @@
            background: gray;
          }
 
+         .image_btn {
+           width: 22px;
+           height: 22px;
+           padding: 2;
+         }
+
          
         </style>
 
@@ -257,13 +263,13 @@
 <!---------END POPUP --------------------->
 
 
-    <div class="content" style="font-size: 14px;display:flex; flex-direction:row">
-      <div style="width:250px;background: black; overflow:auto; display:flex; flex-direction:column">
+    <div class="content" style="font-size: 14px;display:flex; flex-direction:row;">
+      <div id="conversations" style="width:250px;background: black; overflow:auto; display:flex; flex-direction:column;">
         <div class="btn_new_chat" id="new_chat">
           <input type="image" class="image_btn" src="images/plus.svg"> New Chat
         </div>
 
-        <table class="htable" style="width:calc100%">
+        <table class="htable">
           <tbody id="history_list">
           </tbody>
         </table>
@@ -286,31 +292,6 @@
         <hr style="width:100%;">
 
         <div class="chat">
-<!-- 
-          <div class="chat_item_q">
-            <div class="chat_left"> 
-              <input type="image"src="images/person-icon.svg" width="20" height="20" > 
-            </div> 
-            <div id="ch1-q" class="chat_center">
-             <p>
-              My question
-             </p>
-            </div>
-            <div class="chat_right"> 
-            </div>
-          </div>
-
-          <div class="chat_item">
-            <div class="chat_left"> 
-              <input type="image"src="images/chat.png" width="24" height="24" > 
-            </div> 
-            <div id="ch1" class="chat_center">
-            </div>
-            <div class="chat_right"> 
-              <input type="image"src="images/chat.png" width="24" height="24" > 
-            </div>
-          </div>
--->
         </div>
       </div>
     </div>

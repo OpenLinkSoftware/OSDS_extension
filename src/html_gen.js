@@ -345,17 +345,17 @@
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
         s_val = (new URL(s_val)).href;
-        if ( s_val.match(/\.(jpg|png|gif|svg)$/) ) {
+        if ( s_val.match(/\.(jpg|png|gif|svg|webp)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
-        if ( s_val.match(/\.(jpg|png|gif|svg)[?#].*/) ) {
+        if ( s_val.match(/\.(jpg|png|gif|svg|webp)[?#].*/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
         return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       } 
-      else if ( s_val.match(/^data:image\/(png|gif|jpg)/) ) 
+      else if ( s_val.match(/^data:image\/(png|gif|jpg|webp)/) ) 
       {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;

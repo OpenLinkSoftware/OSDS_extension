@@ -1020,7 +1020,8 @@
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
 
-                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
+//??--                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
+                var list = document.querySelectorAll('a[href$=".rss"]');
 
                 docData.posh.dlinks = {rss:[]};
 
