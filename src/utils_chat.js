@@ -292,7 +292,7 @@ class ChatUI {
       ans = chat_item.querySelector('div.chat_center');
 
     $( "#thumb_up-dlg" ).dialog({
-      resizable: true, width:380, height:280, modal: true,
+      resizable: true, width:380, height:330, modal: true,
       buttons: {
         "Submit feedback": function() {
             var _text = DOM.qSel('#thumb_up-dlg #msg').value;
@@ -315,7 +315,7 @@ class ChatUI {
       ans = chat_item.querySelector('div.chat_center');
 
     $( "#thumb_down-dlg" ).dialog({
-      resizable: true, width:380, height:350, modal: true,
+      resizable: true, width:380, height:380, modal: true,
       buttons: {
         "Submit feedback": function() {
             var _text = DOM.qSel('#thumb_down-dlg #msg').value;

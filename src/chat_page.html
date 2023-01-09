@@ -49,15 +49,23 @@
 
           div.content {
             width: 100%;
-            height: calc(100% - 16px);
+            height: calc(100% - 20px);
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+          }
+
+          div#conversations {
+            width:250px;
+            background: black; 
+            overflow:auto; 
+            display:flex; 
+            flex-direction:column
           }
 
 
          div.chat {
            overflow: auto;
-           height: calc(100% - 60px);
+           height: calc(100% - 76px);
          }
 
          div.chat_item{
@@ -262,9 +270,9 @@
 
 <!---------END POPUP --------------------->
 
-
-    <div class="content" style="font-size: 14px;display:flex; flex-direction:row;">
-      <div id="conversations" style="width:250px;background: black; overflow:auto; display:flex; flex-direction:column;">
+    <div style="width:100%; height:100%">
+    <div class="content">
+      <div id="conversations">
         <div class="btn_new_chat" id="new_chat">
           <input type="image" class="image_btn" src="images/plus.svg"> New Chat
         </div>
@@ -294,6 +302,7 @@
         <div class="chat">
         </div>
       </div>
+    </div>
     </div>
 
 
