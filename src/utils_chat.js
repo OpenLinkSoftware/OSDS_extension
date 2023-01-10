@@ -61,7 +61,7 @@ class ChatUI {
      });
   }
 
-  #create_code_block_html(str)
+  _create_code_block_html(str)
   {
     var v = 
      `<div class="chat_code">
@@ -84,13 +84,13 @@ class ChatUI {
   }
 
   
-  #create_text_block_html(str)
+  _create_text_block_html(str)
   {
     var v = `<div class="chat_text">${str}</div>`;
     return v;                              
   }
 
-  #parse_answer(str) 
+  _parse_answer(str) 
   {
     var ret = [];
     var pos = 0;
@@ -117,7 +117,7 @@ class ChatUI {
     return ret;
   }
 
-  #create_msg_html(text, id) 
+  _create_msg_html(text, id) 
   {
     var v = 
      `<div class="chat_item">
@@ -133,7 +133,7 @@ class ChatUI {
     return v;
   }
 
-  #create_question_html(text, id) 
+  _create_question_html(text, id) 
   {
     var v = 
      `<div class="chat_item">
@@ -148,9 +148,9 @@ class ChatUI {
     return v;
   }
 
-  #create_answer_html(text, id) 
+  _create_answer_html(text, id) 
   {
-    var text = this.#create_ai_html(text);
+    var text = this._create_ai_html(text);
     var v = 
      `<div class="chat_item chat_item_ai">
         <div class="chat_left"> 
@@ -168,16 +168,16 @@ class ChatUI {
   }
 
   
-  #create_ai_html(str)
+  _create_ai_html(str)
   {
     var block = [];
-    var lst = this.#parse_answer(str);
+    var lst = this._parse_answer(str);
 
     for(const i of lst) {
       if (i.type === 'c') // text
-        block.push( this.#create_code_block_html(this.md.render(i.str)) ) 
+        block.push( this._create_code_block_html(this.md.render(i.str)) ) 
       else
-        block.push( this.#create_text_block_html(this.md.render(i.str)) ) 
+        block.push( this._create_text_block_html(this.md.render(i.str)) ) 
     }
   
     return block.join('\n');
@@ -188,34 +188,34 @@ class ChatUI {
   {
     var sid = 'ch_q_'+this.id++;
 
-    var s = this.#create_question_html(this.md.render(str), sid);
+    var s = this._create_question_html(this.md.render(str), sid);
     var el = DOM.htmlToElement(s);
 
     this.chat_lst.appendChild(el); 
-    this.#update_scroll();
+    this._update_scroll();
   }
 
   
   append_msg(str)
   {
     var sid = 'ch_q_'+this.id++;
-    var s = this.#create_msg_html(str, sid);
+    var s = this._create_msg_html(str, sid);
     var el = DOM.htmlToElement(s);
 
     this.chat_lst.appendChild(el); 
-    this.#update_scroll();
+    this._update_scroll();
   }
 
   
   append_ai(str, disable_scroll)
   {
     var sid = 'ch_ai_'+this.id++;
-    var s = this.#create_answer_html(str, sid);
+    var s = this._create_answer_html(str, sid);
     var el = DOM.htmlToElement(s);
 
     this.chat_lst.appendChild(el); 
     this.last_sid = sid;
-    this.#update_scroll(disable_scroll);
+    this._update_scroll(disable_scroll);
   }
 
   
@@ -226,10 +226,10 @@ class ChatUI {
       el.conversation_id = conversation_id;
       el.message_id = message_id;
       if (el) {
-        el.innerHTML = this.#create_ai_html(str, conversation_id, message_id);
+        el.innerHTML = this._create_ai_html(str, conversation_id, message_id);
       }
     }
-    this.#update_scroll(disable_scroll);
+    this._update_scroll(disable_scroll);
   }
 
   
@@ -262,27 +262,27 @@ class ChatUI {
     lst = DOM.qSelAll('.chat_item_ai input#thumb_up');
     for(var el of lst) {
       el.onclick = (e) => {
-        self.#feedback_up(e.target);
+        self._feedback_up(e.target);
       }
     }
 
     lst = DOM.qSelAll('.chat_item_ai input#thumb_down');
     for(var el of lst) {
       el.onclick = (e) => {
-        self.#feedback_down(e.target);
+        self._feedback_down(e.target);
       }
     }
 
     if (is_new) {
       await this.reqNewTitle();
       await this.load_history(false, 0);
-      this.#mark_cur_title(this.chat.getConversationId());
+      this._mark_cur_title(this.chat.getConversationId());
       DOM.iSel('conversations').scrollTo(1,1);
     }
   }
 
   
-  #feedback_up(v) 
+  _feedback_up(v) 
   {
     const chat_item = v.closest('div.chat_item_ai');
     var ans;
@@ -297,7 +297,7 @@ class ChatUI {
         "Submit feedback": function() {
             var _text = DOM.qSel('#thumb_up-dlg #msg').value;
 
-            self.#send_feedback(v, ans.message_id || '', ans.conversation_id || '', 'thumbsUp', _text, []);
+            self._send_feedback(v, ans.message_id || '', ans.conversation_id || '', 'thumbsUp', _text, []);
             $(this).dialog('destroy');
         }
       }
@@ -305,7 +305,7 @@ class ChatUI {
   } 
 
   
-  #feedback_down(v) 
+  _feedback_down(v) 
   {
     const chat_item = v.closest('div.chat_item_ai');
     var ans;
@@ -328,7 +328,7 @@ class ChatUI {
             if (DOM.qSel('#thumb_down-dlg #down_not_helpful').checked)
                _tags.push('not-helpful');
 
-            self.#send_feedback(v, ans.message_id || '', ans.conversation_id || '', 'thumbsDown', _text, _tags);
+            self._send_feedback(v, ans.message_id || '', ans.conversation_id || '', 'thumbsDown', _text, _tags);
             $(this).dialog('destroy');
          }
       }
@@ -336,7 +336,7 @@ class ChatUI {
   } 
                                                                                         
   
-  async #send_feedback(el, message_id, conversation_id, rating, msg, tags)
+  async _send_feedback(el, message_id, conversation_id, rating, msg, tags)
   {
     const {accessToken, ok} = await this.chat.getAccessToken();
     if (!ok || !accessToken)
@@ -375,7 +375,7 @@ class ChatUI {
   }
 
   
-  #update_scroll(disable_scroll)
+  _update_scroll(disable_scroll)
   {
     if (disable_scroll)
       return;
@@ -385,13 +385,13 @@ class ChatUI {
   }
 
 
-  #create_chat_title_html(id, title)
+  _create_chat_title_html(id, title)
   {
     return `<td><span cid="${id}" class="btn_msg_chat"><input type="image" class="image_btn" src="images/message.svg"> ${title}</span></td>`
   }
 
 
-  #update_hist_list(v, offset)
+  _update_hist_list(v, offset)
   {
     var self = this;
     var tbody = DOM.qSel('tbody#history_list');
@@ -403,15 +403,15 @@ class ChatUI {
       var row = tbody.insertRow(-1);
       const sel = (i.id === this.chat.getConversationId()); 
 
-      row.innerHTML = this.#create_chat_title_html(i.id, i.title);
-      row.onclick = (e) => { self.#load_conversation(e.target); }
+      row.innerHTML = this._create_chat_title_html(i.id, i.title);
+      row.onclick = (e) => { self._load_conversation(e.target); }
 
       if (sel)
         row.querySelector('td > span').classList.add('btn_selected');
     }
   }
 
-  #add_new_title2list(id, title)
+  _add_new_title2list(id, title)
   {
     var self = this;
     var tbody = DOM.qSel('tbody#history_list');
@@ -420,12 +420,12 @@ class ChatUI {
       i.classList.remove('btn_selected');
 
     var row = tbody.insertRow(0);
-    row.innerHTML = this.#create_chat_title_html(id, title);
-    row.onclick = (e) => { self.#load_conversation(e.target); }
+    row.innerHTML = this._create_chat_title_html(id, title);
+    row.onclick = (e) => { self._load_conversation(e.target); }
     row.querySelector('td > span').classList.add('btn_selected');
   }
 
-  #mark_cur_title(id)
+  _mark_cur_title(id)
   {
     var lst = DOM.qSelAll('tbody#history_list > tr > td > span');
 
@@ -439,21 +439,21 @@ class ChatUI {
   }
 
 
-  #startThrobber()
+  _startThrobber()
   {
     $("#chat_throbber").show();
     DOM.iSel('chat_send').disabled = true
   }
-  #endThrobber()
+  _endThrobber()
   {
     $("#chat_throbber").hide();
     DOM.iSel('chat_send').disabled = false
   }
 
 
-  async #load_conversation(el) 
+  async _load_conversation(el) 
   {
-    this.#startThrobber()
+    this._startThrobber()
     DOM.iSel('chat_req').value = '';
 
     try {
@@ -508,13 +508,13 @@ class ChatUI {
           }
         }
 
-        this.#mark_cur_title(cid);
+        this._mark_cur_title(cid);
         this.chat_lst.scrollTo(1,1);
       }
     } catch(e) {
       console.log('ERR==>'+e);
     } finally {
-      this.#endThrobber();
+      this._endThrobber();
       this.end_ai();
     }
   }
@@ -527,7 +527,7 @@ class ChatUI {
     var limit = e || 100;
 
     if (show_throbber)
-       this.#startThrobber()
+       this._startThrobber()
 
     try {
       ({accessToken, ok} = await this.chat.getAccessToken());
@@ -536,7 +536,7 @@ class ChatUI {
     }
 
     if (!ok || !accessToken) {
-      this.#endThrobber();
+      this._endThrobber();
       this.append_msg(" --- Send query againg after the Relogin --- \n");
       Browser.openTab("https://chat.openai.com/auth/login");
       this.end_ai();
@@ -554,7 +554,7 @@ class ChatUI {
       var rc = await fetch(`https://chat.openai.com/backend-api/conversations?offset=${offset}&limit=${limit}`, options);
       if (rc.ok) {
         var data = await rc.json();
-        this.#update_hist_list(data, offset);
+        this._update_hist_list(data, offset);
         this.history_offset = data.offset;
         this.history_len = data.items.length;
       }
@@ -563,7 +563,7 @@ class ChatUI {
       console.log(e);
     } finally {
       if (show_throbber)
-        this.#endThrobber()
+        this._endThrobber()
     }
   }
 
@@ -579,7 +579,7 @@ class ChatUI {
     const conversation_id = this.chat.getConversationId();
     const message_id = this.chat.getParentId();
 
-    this.#startThrobber()
+    this._startThrobber()
 
     try {
       ({accessToken, ok} = await this.chat.getAccessToken());
@@ -608,12 +608,12 @@ class ChatUI {
       var rc = await fetch(`https://chat.openai.com/backend-api/conversation/gen_title/${conversation_id}`, options);
       if (rc.ok) {
         var data = await rc.json();
-        this.#add_new_title2list(conversation_id, data.title);
+        this._add_new_title2list(conversation_id, data.title);
       }
     } catch(e) {
       console.log(e);
     } finally {
-      this.#endThrobber();
+      this._endThrobber();
     }
   }
 
@@ -622,17 +622,17 @@ class ChatUI {
   {
     var accessToken, ok;
 
-    this.#startThrobber();
+    this._startThrobber();
 
     try {
       ({accessToken, ok} = await this.chat.getAccessToken());
     } catch(e) {
-      this.#endThrobber()
+      this._endThrobber()
       console.log(e);
     }
 
     if (!ok || !accessToken) {
-      this.#endThrobber()
+      this._endThrobber()
       this.append_msg(" --- Send query againg after the Relogin --- \n");
       Browser.openTab("https://chat.openai.com/auth/login");
       this.end_ai();
@@ -641,7 +641,7 @@ class ChatUI {
 
     var req = DOM.iSel('chat_req').value ;
     if (!req) {
-      this.#endThrobber()
+      this._endThrobber()
       return;
     }
 
@@ -668,7 +668,7 @@ class ChatUI {
     }
     DOM.iSel('chat_req').value = '';
     await this.end_ai(new_chat);
-    this.#endThrobber()
+    this._endThrobber()
   }
 
   

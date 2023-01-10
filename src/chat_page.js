@@ -29,17 +29,6 @@
 
     $(document).ready(function()
     {
-/**
-  if (Browser.is_safari) {
-      var el = DOM.qSel("body.sniffer");
-      el.classList.add("sniffer_sf");
-      el.classList.remove("sniffer");
-
-      el = DOM.qSel("div.content");
-      el.classList.add("content_sf");
-      el.classList.remove("content");
-  }
-**/
       if ($(".osds_popup").length == 0) {
          $('body').append(
            `<div class="osds_popup">
