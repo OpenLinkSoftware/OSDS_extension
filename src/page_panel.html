@@ -53,7 +53,6 @@
         <script type="text/javascript" src="datablock.js"></script>
         <script type="text/javascript" src="ttl_gen.js"></script>
         <script type="text/javascript" src="html_gen.js"></script>
-
         <link rel="stylesheet" href="dataview.css" />
         <link rel="stylesheet" href="tabs.css" />
 
@@ -62,11 +61,9 @@
               color-schema: light dark;
           }
 
-          .popup { font: 70% "Trebuchet MS", sans-serif; }
 
-          body.sniffer {
-            width: 99%;
-            height: 97%;
+          div#rest_query .CodeMirror-gutters {
+            display: none;
           }
 
           div.content {
@@ -80,7 +77,6 @@
 
  	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
 
-
           body.sniffer_sf {
             width: 760px;
             height: 580px;
@@ -90,7 +86,6 @@
             width: 755px;
             height: 530px;
           }
-
         </style>
 
     </head>
@@ -108,118 +103,91 @@
       </div>
 
 
-
+<!-- POPUP & MESSAGES -->
       <div class="popup" id="alert-dlg" title="Info">
-        <p id="alert-msg" style="font-size: 14px;">
+        <p id="alert-msg">
         </p>
       </div>
 
-      <div class="popup" id="save-confirm" title="Data Source">
+
+      <div class="popup popup_flex_cols" id="save-confirm" title="Data Source" >
         <p/>
-        <table style="font-size: 14px;">
-         <tr>
-          <td>Action:</td>
-          <td>
+        <div class="popup_frm_row" >
+          <div class="popup_frm_label4">Action:</div>
             <SELECT id="save-action" style="WIDTH: 300px" >
               <OPTION id="view" selected>View Raw Data</OPTION>
               <OPTION id="filesave">Download Raw Data</OPTION>
-              <OPTION id="fileupload">Upload to Data Space</OPTION>
+              <OPTION id="fileupload">Upload to Data Space or Pod</OPTION>
               <OPTION id="sparqlupload">Upload to SPARQL endpoint</OPTION>
             </SELECT>
-          </td>
-         </tr>
+        </div>
 
-         <tr id="save-file">
-          <td> Save&nbsp;As: </td>
-          <td> <input id="save-filename" style="WIDTH: 300px"> </td>
-         </tr>
+        <div id="save-file" class="popup_frm_row">
+          <div class="popup_frm_label4">Save&nbsp;As:</div>
+          <input id="save-filename" style="WIDTH: 300px">
+        </div>
 
-         <tr id="save-fmt-item">
-          <td>Format:</td>
-          <td>
+        <div id="save-fmt-item" class="popup_frm_row">
+          <div class="popup_frm_label4">Format:</div>
             <SELECT id="save-fmt" style="WIDTH: 100px" >
               <OPTION id="ttl" selected>Turtle</OPTION>
               <OPTION id="jsonld">JSON-LD</OPTION>
               <OPTION id="rdf">RDF/XML</OPTION>
               <OPTION id="json">JSON</OPTION>
             </SELECT>
-          </td>
-         </tr>
-        </table>
-
-        <table id="oidc-login" style="font-size: 14px;">
-         <tr >
-          <td> <button id="oidc-login-btn">Login</button> </td>
-          <td> <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
-         </tr>
-        </table>
-
-        <div id="save-sparql-item" style="font-size: 14px;">
-         <table style="font-size: 14px;">
-          <tr>
-           <td> Endpoint&nbsp;URL: </td>
-           <td> <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql"> </td>
-          </tr>
-          <tr>
-           <td> Graph&nbsp;Name: </td>
-           <td> <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test"> </td>
-          </tr>
-         </table>
-         <p/>
-         <div class="ritems" style="font-size: 14px;" >
-           <input id="save-sparql-check-res" type="checkbox" checked >
-           Execute&nbsp;Sample&nbsp;SPARQL&nbsp;Query&nbsp;after&nbsp;upload
-         </div>
         </div>
 
-        <table id="oidc-upload" style="font-size: 14px;">
-         <tr >
-          <td> Save&nbsp;To&nbsp;URL: </td>
-          <td> <input id="oidc-url" style="WIDTH: 380px"> </td>
-         </tr>
-        </table>
+        <div id="oidc-login" class="popup_frm_row">
+          <button id="oidc-login-btn">Login</button>
+          <a id="oidc-webid" href="" title="" style="display:none;"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a>
+        </div>
+
+        <div id="save-sparql-item" style="display:flex; flex-direction:column">
+          <div class="popup_frm_row">
+            <div class="popup_frm_label6">Endpoint&nbsp;URL:</div>
+            <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql">
+          </div>
+          <div class="popup_frm_row">
+            <div class="popup_frm_label6">Graph&nbsp;Name:</div>
+            <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test">
+          </div>
+          <p/>
+          <div class="popup_frm_row">
+            <input id="save-sparql-check-res" type="checkbox" checked >
+            <div>Execute&nbsp;Sample&nbsp;SPARQL&nbsp;Query&nbsp;after&nbsp;upload</div>
+          </div>
+        </div>
+
+        <div id="oidc-upload" class="popup_frm_row">
+          <div class="popup_frm_label6">Save&nbsp;To&nbsp;URL:</div>
+          <input id="oidc-url" style="WIDTH: 380px">
+        </div>
       </div>
 
-      <div class="popup" id="login-dlg" title="Login via Solid provider">
+
+      <div class="popup popup_flex_cols" id="login-dlg" title="Login via Solid provider" >
         <p/>
-
-        <table id="oidc-login1" style="font-size: 14px;">
-         <tr >
-          <td> <button id="oidc-login-btn1">Login</button> </td>
-          <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
-         </tr>
-
-        </table>
+        <div id="oidc-login1" class="popup_frm_row">
+          <button id="oidc-login-btn1">Login</button>
+          <a id="oidc-webid1" href="" title="" style="display:none;"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a>
+        </div>
       </div>
-
+<!---------END POPUP --------------------->
 
       <div class="top"></div>
 
-      <table class="btn_block">
-       <tr>
-        <td class="action_btn">
-         <input type="image" id="login_btn" src="images/slogin24.png" width="24" height="24" title="Solid Login">
-        </td>
-        <td class="action_btn">
-         <input type="image" id="sparql_btn" src="images/osds-icon-query-24.png" width="24" height="24" title="LOD Cloud Lookup Query using SPARQL Query Language">
-        </td>
-        <td class="action_btn">
-         <input type="image" id="rww_btn" src="images/osds-icon-annotate-24.png" width="24" height="24" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
-        </td>
-        <td class="action_btn">
-          <input type="image" id="import_btn" src="images/osds-icon-describe-24.png" width="24" height="24" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar">
-        </td>
-        <td class="action_btn">
-          <input type="image" id="rest_btn" src="images/osds-icon-rest-24.png" width="24" height="24" title="Web Service Console for RESTful interaction with HTTP Servers">
-        </td>
-        <td class="action_btn">
-          <input type="image" id="download_btn" src="images/osds-icon-download-24.png" width="24" height="24" title="View or Download structured data">
-        </td>
-       </tr>
-      </table>
+      <div class="btn_block">
+         <input type="image" id="chat_btn" class="image_btn" src="images/chat.png" title="ChatGPT">
+         <input type="image" id="login_btn" class="image_btn" src="images/slogin24.png" title="Solid Login">
+         <input type="image" id="sparql_btn" class="image_btn" src="images/osds-icon-query-24.png" title="LOD Cloud Lookup Query using SPARQL Query Language">
+         <input type="image" id="rww_btn" class="image_btn" src="images/osds-icon-annotate-24.png" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
+         <input type="image" id="import_btn" class="image_btn" src="images/osds-icon-describe-24.png" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar">
+         <input type="image" id="rest_btn" class="image_btn" src="images/osds-icon-rest-24.png" title="Web Service Console for RESTful interaction with HTTP Servers">
+         <input type="image" id="download_btn" class="image_btn" src="images/osds-icon-download-24.png" title="View or Download structured data">
+      </div>
 
       <div class="content">
-      <ul class="tabs" role="tablist">
+       <ul class="tabs" role="tablist">
         <li id="tab-micro" >
           <input type="radio" name="tabs" id="itab-micro" checked />
           <label for="itab-micro" role="tab" aria-selected="true" tabindex="0">
@@ -390,32 +358,33 @@
         <li id="tab-cons" >
           <input type="radio" name="tabs" id="itab-cons" />
           <div id="cons_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+
             <div style="display:flex; flex-direction:row; align-items:baseline;">
               <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
               <button id="rest_exit" >Exit</button>
             </div>
             <div class="rest_path">
-              <span style="margin:5px;margin-right:10px; width:3em">URL</span>
-              <input id="rest_url" style="WIDTH: 100%; background-color: #dce9f9; " readonly >
+              <span class="rest_frm_label5">URL</span>
+              <input id="rest_url" class="rest_frm_field" style="background-color: #dce9f9;" readonly >
             </div>
             <p/>
             <div class="rest_path">
-              <span style="margin:5px;margin-right:10px; width:5em">Scheme</span>
-              <input id="rest_scheme" style="WIDTH: 100%; " >
+              <span class="rest_frm_label5">Scheme</span>
+              <input id="rest_scheme" class="rest_frm_field">
             </div>
             <div class="rest_path">
-              <span style="margin:5px;margin-right:10px; width:5em">Authority</span>
-              <input id="rest_auth" style="WIDTH: 100%; " >
+              <span class="rest_frm_label5">Authority</span>
+              <input id="rest_auth" class="rest_frm_field">
             </div>
             <div class="rest_path">
-              <span style="margin:5px;margin-right:10px; width:5em">Path</span>
-              <input id="rest_path" style="WIDTH: 100%; " >
+              <span class="rest_frm_label5">Path</span>
+              <input id="rest_path" class="rest_frm_field">
             </div>
             <p/>
             <div id="rest_query">
               <div class="rest_query_title" >
-                <span style="margin:5px;margin-right:10px; width:9em">Query&nbsp;Parameter</span>
-                <input id="query_id" style="WIDTH: 100%;" >
+                <span class="rest_frm_label9">Query&nbsp;Parameter</span>
+                <input id="query_id" class="rest_frm_field" >
               </div>
               <textarea id="query_place" style="width: 100%; height: 100px">
               </textarea>
@@ -435,13 +404,13 @@
             <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
             <p/>
             <div class="rest_path">
-              <span style="margin:5px;margin-right:10px; width:5em">Fragment</span>
-              <input id="rest_hash" style="WIDTH: 100%; " >
+              <span class="rest_frm_label5">Fragment</span>
+              <input id="rest_hash" class="rest_frm_field">
             </div>
           </div>
         </li>
 
-      </ul>
+       </ul>
       </div>
 
 

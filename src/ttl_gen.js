@@ -38,7 +38,7 @@
     this.escape3    = /["\ud800-\udbff]/;
     this.escapeAll3 = /[\ud800-\udbff][\udc00-\udfff]/g;
 
-    this.test_esc = /[!'()*&?#$:@=;+.\/]/g;
+    this.test_esc = /[!'()*&?#$:@=;+.\/]/;
     this.bnode_types = bnode_types || {};
   };
 
@@ -184,7 +184,8 @@
         else {
           var u = new URL(value);
           if (u.hash) {
-            return this.pre(u.hash.substring(1)+sid);
+            var hash = u.hash.endsWith('/') ? u.hash.substring(1, u.hash.length-1) : u.hash.substring(1);
+            return this.pre(hash+sid);
           } else {
             var lst = u.pathname.split('/');
             var data = lst.length>0 ? lst[lst.length-1] : "";
@@ -246,8 +247,10 @@
        }
        else {
          value = String(value);
-         if ( value.match(/^http(s)?:\/\//) ) 
-           value = (new URL(value)).href;
+         if ( value.match(/^http(s)?:\/\//) )  {
+           var url = new URL(value);
+           value = url.href;
+         }
 
          var pref = this.use_prefixes ? this.ns.has_known_ns(value) : null;
          if (pref!=null) {
@@ -270,8 +273,9 @@
     {
       val = String(val);
       if ( val.match(/^http(s)?:\/\//) ) {
-        val = (new URL(val)).href;
-        val = "<"+this.pre(val)+">";
+        var url = new URL(val);
+        url.hash = url.hash.replaceAll('/', '%2F');
+        val = "<"+this.pre(url.href)+">";
       } else if ( val.match(/^mailto:/) ) {
         val = "<"+this.pre(val)+">";
       } else {
@@ -301,13 +305,14 @@
     pref_link : function (val, pref) 
     {
       val = String(val);
-      if ( val.match(/^http(s)?:\/\//) ) 
-        val = (new URL(val)).href;
+      if ( val.match(/^http(s)?:\/\//) ) {
+        var url = new URL(val);
+        val = url.href;
+      }
 
       var data = val.substring(pref.link.length);
-      var len = data.length;
 
-      if (data[len-1]==="/") 
+      if (data.endsWith("/")) 
         data = data.substring(0, data.length-1);
 
       if (data.indexOf("/")!==-1 || this.test_esc.test(data))

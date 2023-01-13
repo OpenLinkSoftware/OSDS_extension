@@ -18,17 +18,6 @@
  *
  */
 
-
-function sanitize_str(str) {
-  str = str || '';
-  return str.replace(/&/g, '&amp;')
-                 .replace(/</g, '&lt;')
-                 .replace(/>/g, '&gt;')
-                 .replace(/"/g, '&quot;')
-                 .replace(/'/g, '&#39;');
-}
-
-
 class Rest_Cons {
   constructor()
   {
@@ -339,8 +328,33 @@ async function showSnackbar(text1, text2) {
 }
 
 
+function sanitize_str(str) {
+  str = str || '';
+  return str.replace(/&/g, '&amp;')
+                 .replace(/</g, '&lt;')
+                 .replace(/>/g, '&gt;')
+                 .replace(/"/g, '&quot;')
+                 .replace(/'/g, '&#39;');
+}
+
 
 var DOM = {};
 DOM.qSel = (sel) => { return document.querySelector(sel); };
 DOM.qSelAll = (sel) => { return document.querySelectorAll(sel); };
 DOM.iSel = (id) => { return document.getElementById(id); };
+DOM.htmlToElement = (html) => {
+    var template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
+  }
+
+DOM.htmlToElements = (html) => {
+    var template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content.childNodes;
+  }
+DOM.qShow = (sel) => { DOM.qSel(sel).classList.remove('hidden'); };
+DOM.qHide = (sel) => { DOM.qSel(sel).classList.add('hidden'); };
+DOM.Show = (el) => { el.classList.remove('hidden'); };
+DOM.Hide = (el) => { el.classList.add('hidden'); };

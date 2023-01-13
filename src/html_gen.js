@@ -27,6 +27,7 @@
     this.ObjName  = "Object";
     this.docURI = _docURI;
     this.bnode_types = bnode_types || {};
+    this.test_esc = /[!'()*&?#$:@=;+.\/]/;
     this.subst_list = {
       "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
             "http://www.w3.org/2000/01/rdf-schema#label": "Label",
@@ -283,7 +284,8 @@
         else {
           var u = new URL(value);
           if (u.hash) {
-            return this.docURI +u.hash+sid;
+            var hash = u.hash.endsWith('/') ? u.hash.substring(0, u.hash.length-1) : u.hash;
+            return this.docURI +hash+sid;
           } else {
             var lst = u.pathname.split('/');
             var data = lst.length>0 ? lst[lst.length-1] : "";
@@ -343,17 +345,17 @@
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
         s_val = (new URL(s_val)).href;
-        if ( s_val.match(/\.(jpg|png|gif|svg)$/) ) {
+        if ( s_val.match(/\.(jpg|png|gif|svg|webp)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
-        if ( s_val.match(/\.(jpg|png|gif|svg)[?#].*/) ) {
+        if ( s_val.match(/\.(jpg|png|gif|svg|webp)[?#].*/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
         return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       } 
-      else if ( s_val.match(/^data:image\/(png|gif|jpg)/) ) 
+      else if ( s_val.match(/^data:image\/(png|gif|jpg|webp)/) ) 
       {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
@@ -378,7 +380,13 @@
         s_val = (new URL(s_val)).href;
 
       var data = s_val.substring(pref.link.length);
-      return `<a ${sid} href="${s_val}" title="${s_val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
+      if (data.endsWith("/")) 
+        data = data.substring(0, data.length-1);
+
+      if (data.indexOf("/")!==-1 || this.test_esc.test(data))
+        return `<a ${sid} href="${s_val}" title="${s_val}"> ${this.decodeURI(s_val)} </a>`;
+      else
+        return `<a ${sid} href="${s_val}" title="${s_val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
     },
 
     pre : function (text) 

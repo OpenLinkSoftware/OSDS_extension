@@ -246,12 +246,11 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         header.value = "text/plain";
         could_handle = true;
       }
-      else if (headerContent.value.match(/\/(json\+ld)/)) {
-        handle = true;
-        type = "jsonld";
-        could_handle = true;
-      }
-      else if (headerContent.value.match(/\/(ld\+json)/)) {
+      else if (headerContent.value.match(/\/(json\+ld)/)
+               || headerContent.value.match(/(application\/activity\+json)/)       
+               || headerContent.value.match(/\/(ld\+json)/)
+              ) 
+      {
         handle = true;
         type = "jsonld";
         could_handle = true;
@@ -282,6 +281,7 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         could_handle = true;
       }
       else if (headerContent.value.match(/\/(sparql\-results\+json)/) 
+               || headerContent.value.match(/(application\/rdf\+json)/) 
                || headerContent.value.match(/(application\/json)/) 
                || headerContent.value.match(/(application\/odata\+json)/) 
                || headerContent.value.match(/(application\/microdata\+json)/) 
@@ -296,7 +296,7 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       }
     }
 
-    if (!could_handle && (content_type===null || content_type.match(/(application\/xml)/) 
+    if (!could_handle && (!content_type || content_type.match(/(application\/xml)/) 
                                           || content_type.match(/(text\/xml)/) 
                                           || content_type.match(/(text\/plain)/)
                                           || content_type.match(/(application\/octet-stream)/)

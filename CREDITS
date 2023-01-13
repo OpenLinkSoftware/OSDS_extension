@@ -97,6 +97,24 @@ following projects:
     License	: MIT license
     Description	: Yet Another Sparql Query Editor.
 
+* DOMPurify
+    Project	: https://github.com/cure53/DOMPurify
+    License	: Apache/Mozilla license
+    Description	: DOMPurify - a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, 
+                  MathML and SVG. DOMPurify works with a secure default, but offers a lot 
+                  of configurability and hooks.
+
+* markdown-it
+    Project	: https://github.com/markdown-it/markdown-it
+    License	: MIT license
+    Description	: Markdown parser, done right. 100% CommonMark support, extensions, syntax plugins & high speed 
+
+* Highlight.js
+    Project	: https://github.com/highlightjs/highlight.js
+    License	: BSD-3-Clause license 
+    Description	: JavaScript syntax highlighter with language auto-detection and zero dependencies. 
+
+
 
 This list may not complete. If you feel any third party project is missing from this list, please
 email the current maintainer.

@@ -329,6 +329,7 @@
                 data_found = true;
 
             if (!data_found) {
+                //?? document.querySelector('script[type="application/ld+json"]');
                 var all = document.getElementsByTagName("script");
                 for (var i = 0; i < all.length; i++) {
                     if (all[i].hasAttribute('type')
@@ -1019,12 +1020,26 @@
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
 
-                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
+//??--                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
+                var list = document.querySelectorAll('a[href$=".rss"]');
 
                 docData.posh.dlinks = {rss:[]};
 
-                for(var v of list)
-                  docData.posh.dlinks.rss.push(v.href);
+                for(var v of list) {
+                  var uri = decodeURIComponent(v.href);
+                  var i = 0;
+                  var p;
+
+                  if ((p = uri.lastIndexOf('https://')) > i)
+                    i = p;
+                  if ((p = uri.lastIndexOf('http://')) > i)
+                    i = p;
+
+                  if (i > 0)
+                    uri = uri.substring(i);
+
+                  docData.posh.dlinks.rss.push(uri);
+                }
 
 
                 if ((microdata.items && microdata.items.length > 0)

@@ -298,7 +298,6 @@ function putResource (oidc, url, data, contentType, links, options = {})
   }
 
   options.method = 'PUT'
-
   options.body = data
 
   if (!options.noCredentials) {

@@ -928,6 +928,12 @@ class Handle_RDF_XML {
 
   async parse(textData, baseURL, bnode_types) 
   {
+    var baseURL = new URL(baseURL);
+    baseURL.search = '';
+    baseURL.hash = ''
+
+    baseURL = baseURL.href;
+
     var self = this;
     var output = '';
 

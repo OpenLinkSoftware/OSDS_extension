@@ -147,6 +147,9 @@ class SPARQL_Upload {
 
   async exec_sparql(prefixes, triples)
   {
+    var setting = new Settings();
+    var timeout = parseInt(await setting.getValue('upload_sparql_timeout'), 10);
+    
     var pref = "";
     var max_bytes = 30000;
     var pref_len = 10;
@@ -180,7 +183,7 @@ class SPARQL_Upload {
       if (qry_sz + triples[i].length >= max_bytes || count+1 >= max_count) {
         this.messages.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
-        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+        var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }', timeout);
         if (!ret.rc)
           return ret;
 
@@ -199,7 +202,7 @@ class SPARQL_Upload {
     {
       this.messages.throbber_show('&nbsp;Uploading&nbsp;data&nbsp;...'+z);  z++;
 
-      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }');
+      var ret = await this.send_sparql(pref + "\n" + insert_cmd + data.join('\n') + ' }', timeout);
       if (!ret.rc)
         return ret;
     }
@@ -208,7 +211,7 @@ class SPARQL_Upload {
   }
 
 
-  async send_sparql(query)
+  async send_sparql(query, timeout)
   {
     var contentType = "application/sparql-update;utf-8";
     var ret;
@@ -221,8 +224,11 @@ class SPARQL_Upload {
       body: query
     }
 
+    if (!timeout || timeout < 1)
+      timeout = 5;
+
     try {
-      ret = await this.oidc.fetch(this.sparql_ep, options);
+      ret = await this.fetchWithTimeout(this.sparql_ep, options, timeout * 1000);
 
       if (!ret.ok) {
         var message = this.create_error(ret.status, ret.statusText);
@@ -235,6 +241,18 @@ class SPARQL_Upload {
 
     return {rc: true};
   }
+
+
+  fetchWithTimeout(url, options, timeout) 
+  {
+    return Promise.race([
+      this.oidc.fetch(url, options),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query execution timeout')), timeout)
+      )
+    ]);
+  }
+
 
 
   create_error(status, statusText)
@@ -317,7 +335,6 @@ class SuperLinks {
   }
 
 
-
   async request_superlinks(iter)
   {
     this.state = 'sponge';
@@ -349,14 +366,14 @@ class SuperLinks {
         };
   
     try  {
-      var rc = await this.fetchWithTimeout(url_sponge, options, 60000);  //links_timeout); //  30000);
+      var rc = await this.fetchWithTimeout(url_sponge, options, links_timeout);
       if (rc.ok && rc.status == 200) {
         if (rc.redirected && rc.url.lastIndexOf(LOGIN_URL, 0) === 0) {
           this.messages.throbber_hide();
           this.messages.snackbar_show("Could not retrieving information for current page with: "+url_sponge,"Trying Relogin and execute sponge again"); 
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
-          return null;
+          return {statusCode: rc.status, data: null};
         }
         return await this.exec_super_links_query(iter);
   
@@ -366,7 +383,7 @@ class SuperLinks {
           this.messages.snackbar_show("Sponge error:"+rc.status,"Trying Relogin and execute sponge again"); 
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
-          return null;
+          return {statusCode: rc.status, data: null};
         } else {
           this.messages.snackbar_show("Sponge error:"+rc.status, rc.statusText); 
           return await this.exec_super_links_query(iter);
@@ -382,10 +399,11 @@ class SuperLinks {
       } else {
         this.messages.snackbar_show("Sponge error:"+e.toString(), null); 
       }
+      return {statusCode: e.statusCode, data: null};
       console.log(e);
     }
   
-    return null;
+    return {statusCode:0, data:null};
   }
 
 
@@ -452,7 +470,7 @@ class SuperLinks {
             var links = val.results.bindings;
             if (links.length == 0) {
 //              alert("Empty SuperLinks resultSet was received from server");
-              return null;
+              return {statusCode: rc.status, data: null};
             }
           } catch(e) {
             console.log(e);
@@ -460,7 +478,7 @@ class SuperLinks {
         }
         
         this.state = null;
-        return data;
+        return {statusCode: rc.status, data: data};
   
       } else {
         this.messages.throbber_hide();
@@ -468,10 +486,11 @@ class SuperLinks {
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
           return null;
+          return {statusCode: rc.status, data: null};
         } else {
           this.state = 'init';
           this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, "Error:"+rc.status); 
-          return null;
+          return {statusCode: rc.status, data: null};
         }
       }
   
@@ -485,7 +504,7 @@ class SuperLinks {
       } else {
         this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString());
       }
-      return null;
+      return {statusCode: e.statusCode, data: null};
     } finally {
       this.messages.throbber_hide();
     }
@@ -529,20 +548,20 @@ class SuperLinks {
     if (rtimeout < 2)
       rtimeout = 2;
 
-    var data = null;
+    var rc = null;
 
     for(var i=0; i < retries; i++)
     {
       if (i == 0)
-         data = await this.request_superlinks(i+1);
+         rc = await this.request_superlinks(i+1);
       else
-         data = await this.exec_super_links_query(i+1);
+         rc = await this.exec_super_links_query(i+1);
 
       if (this.state === 'login' || this.state === 'init')
         break;
 
-      if (data) {
-        this.apply_super_links(data);
+      if (rc && rc.data) {
+        this.apply_super_links(rc.data);
         return true;
       } 
       else {
@@ -550,9 +569,11 @@ class SuperLinks {
       }
     }
 
-    if (!data) {
-      this.logout();
-      this.check_login(true);
+    if (!rc || (rc && !data)) {
+      if (rc.statusCode == 401 || rc.statusCode == 403) {
+        this.logout();
+        this.check_login(true);
+      }
     }
 
     return false;
@@ -570,16 +591,16 @@ class SuperLinks {
     if (rtimeout < 2)
       rtimeout = 2;
 
-    var data = null;
+    var rc = null;
 
     for(var i=0; i < retries; i++)
     {
-      data = await this.exec_super_links_query(i+1);
+      rc = await this.exec_super_links_query(i+1);
 
       if (this.state === 'login')
         break;
 
-      if (data) {
+      if (rc && rc.data) {
         this.apply_super_links(data);
         return true;
       } 
@@ -588,10 +609,12 @@ class SuperLinks {
       }
     }
 
-    if (!data) {
+    if (!rc || (rc && !data)) {
 //??--      alert("Empty SuperLinks resultSet was received from server");
-      this.logout();
-      this.check_login(true);
+      if (rc.statusCode == 401 || rc.statusCode == 403) {
+        this.logout();
+        this.check_login(true);
+      }
     }
 
     return false;

@@ -98,46 +98,35 @@ function showPopup(tabId)
      }
   } 
 
-  var oidc_login_btn = DOM.iSel('oidc-login-btn');
-  oidc_login_btn.addEventListener('click', click_login);
+  DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
+  DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
 
-  var oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
-  oidc_login_btn1.addEventListener('click', click_login);
+  DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
+  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
+  DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
+  DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
+  DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
 
-
-  $('#slink_btn').click(SuperLinks_exec);
-
-  $('#login_btn').click(Login_exec);
-
-  $('#import_btn').click(Import_doc);
-
-  $('#rww_btn').click(Rww_exec);
-
-  $('#sparql_btn').click(Sparql_exec);
-
-  $('#rest_btn').click(function() {
+  DOM.iSel("rest_btn").onclick = (e) => { 
     selectTab('cons');
     g_RestCons.load(doc_URL);
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
     gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
-  });
+  }
 
-  $('#download_btn').click(Download_exec);
+  DOM.iSel("download_btn").onclick = (e) => { Download_exec() }
+  DOM.iSel("prefs_btn").onclick = (e) => { Prefs_exec() }
 
-  $('#prefs_btn').click(Prefs_exec);
-
-
-  $('#load_rss').click(function() {
+  DOM.iSel("load_rss").onclick = (e) => {
         if (gData.links.rss)
           gData.links.rss.loadData({}, 0);
-  });
+  }
 
-  $('#load_atom').click(function() {
+  DOM.iSel("load_atom").onclick = (e) => {
         if (gData.links.atom)
           gData.links.atom.loadData({}, 0);
-  });
-
+  }
 
   $('#tab-rss').hide();
   $('#tab-atom').hide();
@@ -151,35 +140,33 @@ function showPopup(tabId)
 
   try{
     g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
-      lineNumbers: true,
+      lineNumbers: false,
       lineWrapping: false,
+      foldGutter: false,
       sparql: { showQueryButton: false },
 	      createShortLink : null,
 	      createShareLink : null,
 	      persistent: null,
 
     });
-    g_RestCons.yasqe.obj.setSize("100%", 260);
+    g_RestCons.yasqe.obj.setSize("98%", 260);
   } catch(e) {
   }
   
   if (doc_URL)
     g_RestCons.load(doc_URL);
 
-  $('#rest_exec').click(function() {
-    g_RestCons.exec(gData.tab_index);
-  });
-  $('#rest_exit').click(function(){
+  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
+
+  DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(gData.tab_index); }
+  DOM.iSel("rest_exit").onclick = (e) => { 
     gMutationObserver.disconnect();
     if (prevSelectedTab)
       selectTab(prevSelectedTab);
     return false;
-  });
+  }
 
-  $('#src_exit').click(function(){
-    selectTab(prevSelectedTab);
-    return false;
-  });
+  DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
 
   gData_showed = false;
 }
@@ -192,7 +179,7 @@ async function loadPopup()
   $("#login-dlg").hide();
   $("#query_place").hide();
 
-  jQuery('#ext_ver').text('\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version);
+  DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
   var curTabs = await getCurTab();
   var tabId = null;
@@ -551,48 +538,39 @@ async function parse_Data(dData)
     {
       var setting = new Settings();
       var chk_discovery = await setting.getValue("ext.osds.auto_discovery");
-      var atom_links = [];
-      var rss_links = [];
-      var jsonld_links = []
-      var rdf_links = []
-      var ttl_links = []
+      var atom_links = {};
+      var rss_links = {};
+      var jsonld_links = {};
+      var rdf_links = {};
+      var ttl_links = {};
 
       for(var href in val.d.posh.links) {
         var type = val.d.posh.links[href];
         if (type === 'application/atom+xml')
-           atom_links.push(href);
+           atom_links[href] = type;
         else if (type === 'application/rss+xml')
-          rss_links.push(href);
-        else if (type === 'application/json+ld' || type === 'application/ld+json')
-          jsonld_links.push(href);
+          rss_links[href] = type;
+        else if (type === 'application/json+ld' || type === 'application/ld+json' || type === 'application/activity+json')
+          jsonld_links[href] = type;
         else if (type === 'application/rdf+xml')
-          rdf_links.push(href);
+          rdf_links[href] = type;
         else if (type === 'text/turtle' || type === 'text/n3')
-          ttl_links.push(href);
+          ttl_links[href] = type;
       }
-
 
       if (dData.posh.dlinks.rss.length > 0) {
-        var list = dData.posh.dlinks.rss;
-        var dlinks = []
 
-        for(var v of list) {
-          var found = false;
-  
-          for(var rss of rss_links)
-            found = (rss === v);
-
-          if (!found)
-            dlinks.push(v);
+        for(var v of dData.posh.dlinks.rss) {
+          if (!rss_links[v])
+            rss_links[v] = 'application/rss+xml'; 
         }
-        rss_links = rss_links.concat(dlinks);
       }
 
 
-      if (rss_links.length > 0) 
+      if (Object.keys(rss_links).length > 0) 
         gData.links.rss = new RSS_Links("rss", "RSS", gData.baseURL, rss_links, links_cb_start, links_cb_error, links_cb_success);
 
-      if (atom_links.length > 0)
+      if (Object.keys(atom_links).length > 0)
         gData.links.atom = new Atom_Links("atom", "Atom", gData.baseURL, atom_links, links_cb_start, links_cb_error, links_cb_success);
 
       if (chk_discovery === "1") {
@@ -608,7 +586,7 @@ async function parse_Data(dData)
           gData.links.atom.loadData({}, 0);
       }
 
-      if (jsonld_links.length > 0) {
+      if (Object.keys(jsonld_links).length > 0) {
         $('#jsonld_items #throbber').show();
         $('#jsonld_items #load_jsonld').hide();
         $(`#jsonld_items table.loader`).show();
@@ -616,7 +594,7 @@ async function parse_Data(dData)
         gData.links.jsonld.loadData({}, 0); 
       }
 
-      if (rdf_links.length > 0) {
+      if (Object.keys(rdf_links).length > 0) {
         $('#rdf_items #throbber').show();
         $('#rdf_items #load_jsonld').hide();
         $(`#rdf_items table.loader`).show();
@@ -624,7 +602,7 @@ async function parse_Data(dData)
         gData.links.rdf.loadData({}, 0); 
       }
 
-      if (ttl_links.length > 0) {
+      if (Object.keys(ttl_links).length > 0) {
         $('#ttl_items #throbber').show();
         $('#ttl_items #load_jsonld').hide();
         $(`#ttl_items table.loader`).show();
@@ -680,8 +658,8 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 });
 
 
-
 ////////////////////////////////////////////////////
+
 async function SuperLinks_exec()
 {
   var settings = new Settings();
@@ -952,6 +930,8 @@ async function Download_exec()
     var cur_fmt = $('#save-fmt option:selected').attr('id');
     $('#'+cur_fmt,'#save-fmt').removeProp('selected');
     $('#'+fmt,'#save-fmt').prop('selected',true);
+
+    DOM.iSel('save-sparql-endpoint').value = await settings.getValue('upload_sparql_endpoint');
 
     var dlg = $( "#save-confirm" ).dialog({
       resizable: true,

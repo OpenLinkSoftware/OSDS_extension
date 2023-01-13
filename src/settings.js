@@ -191,6 +191,13 @@ class Settings {
       return val;
 
     switch(id) {
+      case "upload_sparql_endpoint":
+          val = "https://linkeddata.uriburner.com/sparql";
+          break;
+      case "upload_sparql_timeout":
+          val = "30";
+          break;
+
       case "ext.osds.pref.user.chk":
           val = "1";
           break;

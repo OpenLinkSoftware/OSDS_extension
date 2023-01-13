@@ -181,20 +181,23 @@ function setRWWDefaults()
     });
 };
 
-function setSparqlDefaults()
+async function setSparqlDefaults()
 {
+    async function revert(_this) {
+          DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
+          DOM.iSel('sparql-url').value = gPref.def_sparql_url;
+          yasqe_srv.setValue(await createSparqlQuery(gPref.def_sparql_cmd));
+
+          $(_this).dialog( "close" );
+    }
+
     $( "#revert-confirm" ).dialog({
       resizable: false,
       height:160,
       modal: true,
       buttons: {
         "OK": function() {
-
-          DOM.qSel('#sparql-cmd #'+gPref.def_sparql_cmd).selected=true;
-          DOM.iSel('sparql-url').value = gPref.def_sparql_url;
-	  yasqe_srv.setValue(createSparqlQuery(gPref.def_sparql_cmd));
-
-          $(this).dialog( "close" );
+            revert(this);
         },
         Cancel: function() {
           $(this).dialog( "close" );
@@ -314,6 +317,15 @@ async function loadPref()
 
     changeHandleAll();
 
+    var sparql_ep = await gPref.getValue("upload_sparql_endpoint");
+    if (sparql_ep)
+      DOM.iSel('upload_sparql_endpoint').value = sparql_ep;
+
+    var sparql_tm = await gPref.getValue("upload_sparql_timeout");
+    if (sparql_tm)
+      DOM.iSel('upload_sparql_timeout').value = sparql_tm;
+
+
     var import_url = await gPref.getValue("ext.osds.import.url");
     var import_srv = await gPref.getValue("ext.osds.import.srv");
 
@@ -389,6 +401,9 @@ async function savePref()
    var import_srv = DOM.qSel('#import-srv option:checked').id;
    await gPref.setValue("ext.osds.import.srv", import_srv);
    await gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
+
+   await gPref.setValue("upload_sparql_endpoint", DOM.iSel('upload_sparql_endpoint').value.trim());
+   await gPref.setValue("upload_sparql_timeout", DOM.iSel('upload_sparql_timeout').value.trim());
 
 
    await gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());
