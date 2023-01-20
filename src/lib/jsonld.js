@@ -1880,8 +1880,6 @@ __webpack_require__(/*! core-js/modules/es.promise.js */ "./node_modules/core-js
 __webpack_require__(/*! core-js/modules/es.regexp.exec.js */ "./node_modules/core-js/modules/es.regexp.exec.js");
 __webpack_require__(/*! core-js/modules/es.string.match.js */ "./node_modules/core-js/modules/es.string.match.js");
 __webpack_require__(/*! core-js/modules/es.array.includes.js */ "./node_modules/core-js/modules/es.array.includes.js");
-__webpack_require__(/*! core-js/modules/es.string.starts-with.js */ "./node_modules/core-js/modules/es.string.starts-with.js");
-__webpack_require__(/*! core-js/modules/es.string.ends-with.js */ "./node_modules/core-js/modules/es.string.ends-with.js");
 __webpack_require__(/*! core-js/modules/es.string.includes.js */ "./node_modules/core-js/modules/es.string.includes.js");
 __webpack_require__(/*! core-js/modules/es.json.stringify.js */ "./node_modules/core-js/modules/es.json.stringify.js");
 __webpack_require__(/*! core-js/modules/es.array.sort.js */ "./node_modules/core-js/modules/es.array.sort.js");
@@ -2570,12 +2568,6 @@ api.createTermDefinition = ({
       mapping['@id'] = _id2;
       // indicate if this term may be used as a compact IRI prefix
       mapping._prefix = simpleTerm && !mapping._termHasColon && _id2.match(/[:\/\?#\[\]@]$/);
-      if (!mapping._prefix && simpleTerm && !mapping._termHasColon) {
-        if ((_id2.startsWith('http://') || _id2.startsWith('https://')) && !_id2.endsWith('/')) {
-          mapping._prefix = true;
-          mapping['@id'] = _id2 + '/';
-        }
-      }
     }
   }
   if (!('@id' in mapping)) {
