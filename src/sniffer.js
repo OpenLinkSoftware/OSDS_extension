@@ -662,13 +662,13 @@
     {
       if ($(".osds_popup").length == 0) {
         $('body').append(
-          `<div class="osds_popup" style="display:none">
-             <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
-             <div class="osds_popup-content">
-               <p id="osds_popup_msg">  </p>
-               <div class="osds_popup_btns">
-                 <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
-                 <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
+          `<div class="osds_revert_css osds_popup" style="display:none">
+             <div class="osds_revert_css osds_popup-title"> <b>&nbsp;Error</b></div>
+             <div class="osds_revert_css osds_popup-content">
+               <p class="osds_revert_css" id="osds_popup_msg">  </p>
+               <div class="osds_revert_css osds_popup_btns">
+                 <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_revert_css osds_popup_btn">
+                 <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_revert_css osds_popup_btn">
                <div>
              </div>
            </div>`
@@ -692,21 +692,21 @@
     {
       if ($(".super_links_popup").length == 0) {
         $('body').append(
-         `<div class="super_links_popup" style="display:none" >
-           <div class="super_links_popup-title"> &nbsp;Super Links </div>
-           <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-           <div class="super_links_popup-content"></div>
-           <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+         `<div class="osds_revert_css super_links_popup" style="display:none" >
+           <div class="osds_revert_css super_links_popup-title"> &nbsp;Super Links </div>
+           <a href="#close" title="Close" class="osds_revert_css super_links_popup_close">&times;</a> 
+           <div class="osds_revert_css super_links_popup-content"></div>
+           <img class="osds_revert_css super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
           </div> 
-          <div class="super_links_msg" style="display:none" > 
-            <div style="width:16px;">
-              <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+          <div class="osds_revert_css super_links_msg" style="display:none" > 
+            <div class="osds_revert_css" style="width:16px;">
+              <img src="data:image/gif;base64,${Browser.throbber}" class="osds_revert_css super_links_img">
             </div>
-            <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+            <div class="osds_revert_css" id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
           </div>
-          <div id="super_links_snackbar">
-            <div id="msg1"></div>
-            <div id="msg2"></div>
+          <div class="osds_revert_css" id="super_links_snackbar">
+            <div class="osds_revert_css" id="msg1"></div>
+            <div class="osds_revert_css" id="msg2"></div>
           </div>`
         );
       }
@@ -881,12 +881,12 @@
 
 
         $('.super_links_popup-content')
-           .append('<table class="super_links_table">'
+           .append('<table class="osds_revert_css super_links_table">'
                +'<thead><tr>'
-               +'<th> Word <span class="super_links_table-resize-handle"/></th>'
-               +'<th> Association <span class="super_links_table-resize-handle"/></th>'
-               +'<th> Source <span class="super_links_table-resize-handle"/></th>'
-               +'<th> Type <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Word <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Association <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Source <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Type <span class="super_links_table-resize-handle"/></th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
