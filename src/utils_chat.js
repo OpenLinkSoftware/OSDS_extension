@@ -178,9 +178,9 @@ class ChatUI {
 
     for(const i of lst) {
       if (i.type === 'c') // text
-        block.push( this._create_code_block_html(this.md.render(i.str)) ) 
+        block.push( this._create_code_block_html(DOMPurify.sanitize(this.md.render(i.str))) ) 
       else
-        block.push( this._create_text_block_html(this.md.render(i.str)) ) 
+        block.push( this._create_text_block_html(DOMPurify.sanitize(this.md.render(i.str))) ) 
     }
   
     return block.join('\n');
@@ -191,7 +191,7 @@ class ChatUI {
   {
     var sid = 'ch_q_'+this.id++;
 
-    var s = this._create_question_html(this.md.render(str), sid);
+    var s = this._create_question_html(DOMPurify.sanitize(this.md.render(str)), sid);
     var el = DOM.htmlToElement(s);
 
     this.chat_lst.appendChild(el); 

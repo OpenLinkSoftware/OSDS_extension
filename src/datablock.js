@@ -334,6 +334,85 @@ class DataBlock_Prepare extends DataBlock {
 }
 
 
+class Markdown_Block extends DataBlock {
+  constructor(_baseURL, _text)
+  {
+    super(_baseURL, _text);
+    this.fmt = '.md';
+
+    const self = this;
+    this.md = markdownit({
+      html:         false,
+      xhtmlOut:     true,
+      breaks:       true,
+      langPrefix:   'language-',  // CSS language prefix for fenced blocks. Can be
+                              // useful for external highlighters.
+      linkify:      true,        // Autoconvert URL-like text to links
+
+      typographer:  true,
+
+  // Double + single quotes replacement pairs, when typographer enabled,
+  // and smartquotes on. Could be either a String or an Array.
+  //
+  // For example, you can use '«»„“' for Russian, '„“‚‘' for German,
+  // and ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'] for French (including nbsp).
+      quotes: '“”‘’',
+
+      highlight: function (str, lang) {
+         if (lang && hljs.getLanguage(lang)) {
+           try {
+             return '<pre class="hljs"><code>' +
+                     hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                   '</code></pre>';
+           } catch (__) {}
+         }
+
+         return '<pre class="hljs"><code>' + self.md.utils.escapeHtml(str) + '</code></pre>';
+       }
+     });
+  }
+
+
+  async to_html(bnode_types, start_id)
+  {
+    var html = [];
+    var error = [];
+    try {
+      for(const v of this.text)
+        html.push('<div>'+DOMPurify.sanitize(this.md.render(v))+'</div>');
+
+      return {start_id:this.start_id, html:html.join('\n'), error};
+
+    } catch(ex) {
+      error.push(ex.toString());
+      return {start_id:0, html:null, error};
+    }
+  }
+
+  async to_ttl(for_query) 
+  {
+    return {txt: "", error: ""};
+  }
+
+  async to_rdf()
+  {
+    return {txt: "", error: ""};
+  }
+
+  async to_jsonld()
+  {
+    return {txt: "", error: ""};
+  }
+
+
+  async to_json()
+  {
+    return {txt: "", error: ""};
+  }
+}
+
+
+
 class RSS_Block extends DataBlock_Prepare {
   constructor(_baseURL, _text, is_atom)
   {

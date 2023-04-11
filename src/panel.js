@@ -41,6 +41,7 @@ var gData = {
         csv: null,
         rss: null,
         atom: null,
+        md: null,
 
         links: {}
       };
@@ -339,7 +340,9 @@ function update_tab(tabname, title, val, err_tabs)
 
   $(`#${tabname}_items table.wait`).hide();
   $(`#${tabname}_items #docdata_view`).remove();
-  $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
+
+  if (tabname !== 'markdown')
+    $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
 
   if (val.html && val.html.trim().length > 0) {
       html += val.html;
@@ -354,7 +357,12 @@ function update_tab(tabname, title, val, err_tabs)
       }
   }
   if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $(`#${tabname}_items #docdata_view`).append(html);
+    if (tabname === 'markdown') {
+       var preview = $("#md_preview iframe").contents().find("body");
+       preview.get(0).innerHTML = html;
+    } else {
+       $(`#${tabname}_items #docdata_view`).append(html);
+    }
       return true;
   } else {
     $(`#tab-${tabname}`).hide();
@@ -372,6 +380,7 @@ async function update_tab_exec(tabname, title, block, err_tabs)
   return update_tab(tabname, title, val, err_tabs);
 }
 
+
 async function show_Data()
 {
   var cons = false;
@@ -385,6 +394,7 @@ async function show_Data()
   var csv = false;
   var rss = false;
   var atom = false;
+  var md = false;
   var html = "";
   var err_tabs = [];
   var bnode_types = {};
@@ -416,6 +426,9 @@ async function show_Data()
 
   if (gData.csv)
     csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
+
+  if (gData.md)
+    md = await update_tab_exec('markdown', 'Markdown', gData.md, err_tabs);
 
   if (gData.links.rss)
     rss = true;
@@ -459,6 +472,10 @@ async function show_Data()
   if (!csv) {
     $('#tab-csv').hide();
     $('#csv-save').hide();
+  }
+  if (!md) {
+    $('#tab-markdown').hide();
+//??    $('#markdown-save').hide();
   }
   if (rss) {
     $('#tab-rss').show();
@@ -533,6 +550,8 @@ async function parse_Data(dData)
     gData.rdf.add_nano(dData.rdf_nano.text);
 
     gData.csv = new CSV_Block(gData.baseURL, dData.csv_nano.text);
+
+    gData.md = new Markdown_Block(gData.baseURL, dData.md_nano.text);
 
     if (dData.posh.links) 
     {
@@ -921,6 +940,9 @@ async function Download_exec()
   else if (selectedTab==="atom") {
     filename = "turtle_data.txt";
     fmt = "ttl";
+  }
+  else if (selectedTab==="markdown") {
+    return;
   }
 
 

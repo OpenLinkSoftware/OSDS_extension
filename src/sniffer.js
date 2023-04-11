@@ -31,14 +31,15 @@
     var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null, md:null};
     var data_found = false;
 
-    var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
-    var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
-    var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
-    var csv_nano_pattern = /(## CSV +Start ##)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
-    var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
+    var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
+    var jsonld_nano_pattern = /(## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var json_nano_pattern = /(## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
+    var csv_nano_pattern = /(## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
+    var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
+    var md_nano_pattern = /(## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((## Markdown +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -154,10 +155,13 @@
 
 
     function sniff_nanotation() {
+        var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
+        var comment = /^ *#/;
         var doc_Texts = [];
-        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]};
 
-        function isWhitespace(c) {
+        function isWhitespace(c) 
+        {
             var cc = c.charCodeAt(0);
             if (( cc >= 0x0009 && cc <= 0x000D ) ||
                 ( cc == 0x0020 ) ||
@@ -167,6 +171,25 @@
             }
             return false;
         }
+
+        function dropComments(str) 
+        {
+          if (str.length > 0) 
+          {
+             //drop commetns
+             var s_split = str.split(eoln);
+             var v = [];
+             s_split.forEach(function (item, i, arr) {
+               if (!comment.test(item))
+                  v.push(item);
+             });
+
+             return v.join('\n');
+          } 
+          else
+            return str;
+        }
+
 
         var txt = document.body.innerText;
 
@@ -183,23 +206,9 @@
 
             txt = doc_Texts[i];
             if (txt) {
-                //drop commetns
-                var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
-                var s_split = txt.split(eoln);
-                var s_doc = "";
-                var p1 = /## +(Nanotation|Turtle|RDF-Turtle) +(Start|End|Stop) *##/i;
-                var p2 = /^ *#/;
-                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/i;
-                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/i;
-                var p5 = /## +(JSON) +(Start|End|Stop) *##/i;
-                var p6 = /## +(CSV) +(Start|End|Stop) *##/i;
 
-                s_split.forEach(function (item, i, arr) {
-                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item) || p5.test(item) || p6.test(item)))
-                        s_doc += item + "\n";
-                });
+                var s_doc = fix_Nano_data(txt);
 
-                s_doc = fix_Nano_data(s_doc);
                 //try get Turtle Nano
                 while (true) {
                     var ndata = ttl_nano_pattern.exec(s_doc);
@@ -208,7 +217,7 @@
 
                     var str = ndata[3];
                     if (str.length > 0)
-                       ret.ttl.push(str);
+                      ret.ttl.push(dropComments(str));
                 }
 
                 //try get Turtle Nano in CurlyBraces { ... }
@@ -230,7 +239,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        ret.ttl_curly.push(str);
+                        ret.ttl_curly.push(dropComments(str));
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -307,14 +316,27 @@
                     }
                 }
 
+                //try get MD Nano
+                while (true) {
+                    var ndata = md_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        ret.md.push(str);
+                    }
+                }
+
             }
         }
 
 
-        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
+        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 
+            || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0 || ret.md.length > 0)
             return {exists: true, data: ret}; 
         else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]}};
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]}};
     }
 
 
@@ -947,6 +969,7 @@
                     json_nano: {text: null},
                     rdf_nano: {text: null},
                     csv_nano: {text: null},
+                    md_nano: {text: null},
                     posh: {text: null}
                 };
 
@@ -1019,6 +1042,7 @@
                 docData.json_nano.text = nano.json;
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
+                docData.md_nano.text = nano.md;
 
 //??--                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
                 var list = document.querySelectorAll('a[href$=".rss"]');
@@ -1053,6 +1077,7 @@
                     || (nano.json    && nano.json.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
+                    || (nano.md      && nano.md.length > 0)
                     || (posh_Data    && posh_Data.triples.length > 0)
                     || (posh_Data    && posh_Data.links.length > 0)
                    )
