@@ -57,7 +57,7 @@
 
           div#conversations {
             width:250px;
-            background: black; 
+            background: rgb(32,33,35); /*black; */
             overflow:auto; 
             display:flex; 
             flex-direction:column
@@ -173,7 +173,7 @@
            border-collapse: separate;
            border-spacing: 0;
            width: 100%;
-           border: solid gray 1px;
+           border-bottom: solid gray 1px;
            font-size: 14px;
            color: white;
          }
@@ -187,12 +187,16 @@
          }
 
          .btn_new_chat {
-           color: lightgray; 
+           color:  lightgray; 
            display:flex; 
            align-items:center;
-           margin: 5px;
-           padding: 5px;
-           border-radius: 3px;
+           margin: 7px;
+           padding: 3px;
+           border-radius: 4px;
+           min-height: 40px;
+           border-width: 1px;
+           border-style: solid;
+           border-color: gray;
          }
 
          .btn_msg_chat {
@@ -201,13 +205,14 @@
            align-items:center;
            margin: 5px;
            padding: 5px;
-           border-radius: 3px;
+           border-radius: 4px;
+           min-height: 40px;
          }
          .btn_selected {
            background: gray; 
          }
 
-         .btn_new_chat:hover, .btn_msg_chat:hover {
+         .btn_new_chat:hover, .btn_msg_chat:hover{
            background: gray;
          }
 
@@ -215,6 +220,7 @@
            width: 22px;
            height: 22px;
            padding: 2;
+           margin-right: 10px;
          }
 
          .model_list {
@@ -224,12 +230,30 @@
          }
 
          .model {
-           widht: 150px;
+           widht: 150px; 
            height: 2.5em;
-           border: gray;
-           border-radius: 5px;
+           border-color: lightgray; 
+           border-radius: 4px; 
+         }
+
+         textarea#chat_req {
+           width: calc(100% - 100px); 
+           border-color: gray; 
+           border-radius:4px
+         }
+
+         button#chat_send {
+           margin:5px; 
+           margin-left:10px;
          }
          
+         button#chat_stop {
+           margin:5px; 
+           margin-left:10px;
+           color:white; 
+           background-color:red;
+         }
+
         </style>
 
     </head>
@@ -298,7 +322,7 @@
       
       <div style="width:calc(100% - 260px)">
         <div class="model_list">
-          <SELECT id="model" class="model" style="WIDTH: 150px" >
+          <SELECT id="model" class="model" style_="WIDTH: 150px; border-color:lightgray; border-radius:4px" >
               <OPTION id="gpt_3_5" value="text-davinci-002-render-sha" selected>Default (GPT-3.5)</OPTION>
               <OPTION id="gpt_3_5l" value="text-davinci-002-render-paid">Legacy (GPT-3.5)</OPTION>
               <OPTION id="gpt_4" value="gpt-4">GPT-4</OPTION>
@@ -312,9 +336,9 @@
                <div style="width:50px;"> 
                  <img id="chat_throbber" src="images/throbber.gif" style="margin: 7 10 7 25;">
                </div>
-               <textarea id="chat_req" style="width: calc(100% - 100px)"></textarea>
-               <button id="chat_send" style="margin:5px; margin-left:10px;">Send</button>
-               <button id="chat_stop" class="hidden" style="margin:5px; margin-left:10px;color:white; background-color:red;">Stop</button>
+               <textarea id="chat_req"></textarea>
+               <button id="chat_send" >Send</button>
+               <button id="chat_stop" class="hidden">Stop</button>
              </div>
            </td>
           </tr>
