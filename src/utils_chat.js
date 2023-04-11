@@ -23,6 +23,8 @@
 class ChatUI {
   constructor(_chat_lst) 
   {
+    this.chat_is_working = false;
+    this.chat_cancelled = false;
     this.history_offset = 0;
     this.history_len = 0;
     this.chat = new chat_gpt();
@@ -274,6 +276,9 @@ class ChatUI {
     }
 
     if (is_new) {
+      if (this.chat_cancelled)
+        await sleep(5000);
+
       await this.reqNewTitle();
       await this.load_history(false, 0);
       this._mark_cur_title(this.chat.getConversationId());
@@ -441,13 +446,14 @@ class ChatUI {
 
   _startThrobber()
   {
-    $("#chat_throbber").show();
+    DOM.qShow("#chat_throbber");
     DOM.iSel('chat_send').disabled = true
   }
   _endThrobber()
   {
-    $("#chat_throbber").hide();
+    DOM.qHide("#chat_throbber");
     DOM.iSel('chat_send').disabled = false
+    DOM.qHide('#chat_stop');
   }
 
 
@@ -648,7 +654,9 @@ class ChatUI {
     this.append_question(req);
     this.append_ai("\n");
     const new_chat = !this.chat.getConversationId();
-
+    this.chat_is_working = true;
+    this.chat_cancelled = false;
+    DOM.qShow('#chat_stop');
     try {
       var answer = await this.chat.getAnswer(req, (data) => {
         if (data.text)
@@ -658,6 +666,8 @@ class ChatUI {
       this.update_ai(answer.text, answer.conversation_id, answer.message_id);
 
     } catch(e) {
+      DOM.qHide('#chat_stop');
+      this.chat_is_working = false;
       const s = e.message;
       this.end_ai(new_chat);
       this.append_msg(" "+s+"\n");
@@ -665,12 +675,22 @@ class ChatUI {
          this.append_msg(" --- Send query againg after the Relogin --- \n");
          Browser.openTab("https://chat.openai.com/auth/login");
       }
+    } finally {
+      DOM.qHide('#chat_stop');
+      this.chat_is_working = false;
     }
     DOM.iSel('chat_req').value = '';
     await this.end_ai(new_chat);
     this._endThrobber()
   }
 
+  stop_exec()
+  {
+    if (this.chat_is_working) {
+      this.chat.stop_work();
+      this.chat_cancelled = true;
+    }
+  }
   
   new_chat()
   {

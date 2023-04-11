@@ -884,7 +884,7 @@
     }
 
 
-    jQuery(document).ready(function () {
+    DOM.ready(() => {
 
         try {
 

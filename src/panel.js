@@ -216,7 +216,7 @@ async function loadPopup()
   }
 }
 
-$(document).ready(function ()
+DOM.ready(() =>
 { 
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 

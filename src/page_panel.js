@@ -42,7 +42,7 @@ var g_RestCons = new Rest_Cons();
 var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
 
 
-$(document).ready(function()
+DOM.ready(() =>
 {
   if (Browser.is_safari) {
       var el = DOM.qSel("body.sniffer");

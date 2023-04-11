@@ -22,9 +22,8 @@ var gPref = null;
 var yasqe_slinks = null;
 var yasqe_srv = null;
 
-$(function() {
-  init();
-});
+
+DOM.ready(() => { init(); })
 
 async function init()
 {

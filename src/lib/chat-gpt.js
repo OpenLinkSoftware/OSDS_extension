@@ -48,13 +48,14 @@ const KEY_ACCESS_TOKEN = "accessToken";
 class chat_gpt {
   constructor() {
     this.conversation_id = null
-    this.parentID = fetchSse.uuidv4()
+    this.parentID = sse.uuidv4()
     this.user_id = null
+    this.fetch_sse = null;
   }
 
   newChat() {
     this.conversation_id = null
-    this.parentID = fetchSse.uuidv4()
+    this.parentID = sse.uuidv4()
   }
 
 
@@ -88,7 +89,7 @@ class chat_gpt {
   setParentId(v) 
   {
     if (!v)
-      this.parentID = fetchSse.uuidv4();
+      this.parentID = sse.uuidv4();
     else
       this.parentID = v;
   }
@@ -115,7 +116,7 @@ class chat_gpt {
       action: "next",   //variant
       messages: [
         {
-          id: fetchSse.uuidv4(),
+          id: sse.uuidv4(),
           role: "user",
           content: {
             content_type: "text",
@@ -130,7 +131,9 @@ class chat_gpt {
       payload.conversation_id = this.conversation_id
 
     try {
-      await fetchSse.fetchSSE("https://chat.openai.com/backend-api/conversation", {
+      this.fetch_sse = new sse.Fetch_SSE();
+      await this.fetch_sse.fetch("https://chat.openai.com/backend-api/conversation", 
+        {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,8 +144,19 @@ class chat_gpt {
       });
     } catch (e) {
       callback("[ERROR]="+e.message);
+    } finally {
+      this.fetch_sse = null;
     }
   }
+
+  stop_work()
+  {
+    try {
+    if (this.fetch_sse)
+      this.fetch_sse.close();
+    } catch(e) { }
+  }
+
 
   async sendMessage(content, callback) {
     const messages = [];

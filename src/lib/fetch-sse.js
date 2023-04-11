@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.fetchSse = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sse = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1015,7 +1015,7 @@ exports.default = _default;
 var createParser = require("eventsource-parser").createParser;
 var uuidv4 = require("uuid").v4;
 
-async function* streamAsyncIterable(stream) {
+async function* streamAsyncIterable(stream, fetcher) {
   const reader = stream.getReader();
   try {
     while (true) {
@@ -1023,37 +1023,82 @@ async function* streamAsyncIterable(stream) {
       if (done) {
         return;
       }
+
+      if (fetcher && fetcher.stop)
+        return;
+        
       yield value;
     }
   } finally {
     reader.releaseLock();
+    if (fetcher && fetcher.stop)
+      await stream.cancel();
+
   }
 }
+
+
+class Fetch_SSE {
+  constructor()
+  {
+    this.stop = false;
+  }
+
+  close()
+  {
+    this.stop = true;
+  }
+
+  async fetch(url, options)
+  {
+    const { onMessage, ...fetchOptions } = options;
+    const resp = await fetch(url, fetchOptions);
+    if (!resp.ok)
+      throw new Error("HTTP: "+resp.status);
+
+    const parser = createParser(event => {
+      if (event.type === "event") {
+        onMessage(event.data);
+      }
+    });
+
+    this.stop = false;
+
+    for await (const chunk of streamAsyncIterable(resp.body, this)) {
+      const str = new TextDecoder().decode(chunk);
+      parser.feed(str);
+    }
+
+    if (this.stop)
+      onMessage("[DONE]");
+
+    this.stop = true;
+  }
+}
+
 
 async function fetchSSE(resource, options) {
   const { onMessage, ...fetchOptions } = options;
   const resp = await fetch(resource, fetchOptions);
-  if (!resp.ok) {
-    if (resp.status === 429) {
-      const d = await resp.json();
-      throw new Error("HTTP: "+resp.status+" | "+d.detail);
-    } else {
-      throw new Error("HTTP: "+resp.status);
-    }
-  }
+  if (!resp.ok)
+    throw new Error("HTTP: "+resp.status);
 
   const parser = createParser(event => {
     if (event.type === "event") {
       onMessage(event.data);
     }
   });
-  for await (const chunk of streamAsyncIterable(resp.body)) {
+  for await (const chunk of streamAsyncIterable(resp.body, null)) {
     const str = new TextDecoder().decode(chunk);
     parser.feed(str);
   }
 }
 
+
+
+
 exports.uuidv4 = uuidv4; 
 exports.fetchSSE = fetchSSE;
+exports.Fetch_SSE = Fetch_SSE;
 },{"eventsource-parser":1,"uuid":2}]},{},[18])(18)
 });
