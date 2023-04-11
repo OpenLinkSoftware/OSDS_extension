@@ -340,7 +340,8 @@
     }
 
 
-    function is_data_exist() {
+    function is_data_exist() 
+    {
         try {
 
             scan_frames();
@@ -657,6 +658,61 @@
     }
 
 
+    function inject_osds_popup()
+    {
+      if ($(".osds_popup").length == 0) {
+        $('body').append(
+          `<div class="osds_popup" style="display:none">
+             <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
+             <div class="osds_popup-content">
+               <p id="osds_popup_msg">  </p>
+               <div class="osds_popup_btns">
+                 <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
+                 <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
+               <div>
+             </div>
+           </div>`
+        );
+
+        DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+           DOM.qSel('.osds_popup').style.display = 'none';
+           Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+           return false;
+        };
+        DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+           DOM.qSel('.osds_popup').style.display = 'none';
+           Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+           return false;
+        };
+      }
+    } 
+    
+
+    function inject_super_links_popup() 
+    {
+      if ($(".super_links_popup").length == 0) {
+        $('body').append(
+         `<div class="super_links_popup" style="display:none" >
+           <div class="super_links_popup-title"> &nbsp;Super Links </div>
+           <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
+           <div class="super_links_popup-content"></div>
+           <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+          </div> 
+          <div class="super_links_msg" style="display:none" > 
+            <div style="width:16px;">
+              <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
+            </div>
+            <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+          </div>
+          <div id="super_links_snackbar">
+            <div id="msg1"></div>
+            <div id="msg2"></div>
+          </div>`
+        );
+      }
+    }
+
+
 
     async function add_super_links(sender, data)
     {
@@ -668,7 +724,6 @@
 
       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
       DOM.qSel('.super_links_msg').style.display = 'flex';
-
 
       setTimeout(() => {
         try {
@@ -728,8 +783,10 @@
       vpWH = getViewPortWidthHeight();
       vpW = vpWH[0];
       vpH = vpWH[1];
-      var popup = $(".super_links_popup");
 
+      inject_super_links_popup();
+
+      var popup = $(".super_links_popup");
       popup.css("position","fixed");
       // if not display: block, .offsetWidth & .offsetHeight === 0
       popup.css("display","block");
@@ -909,36 +966,6 @@
     DOM.ready(() => {
 
         try {
-
-            if ($(".osds_popup").length == 0) {
-               $('body').append(
-                 `<div class="osds_popup">
-                    <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
-                    <div class="osds_popup-content">
-                      <p id="osds_popup_msg">  </p>
-                      <div class="osds_popup_btns">
-                        <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
-                        <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
-                      <div>
-                    </div>
-                  </div>`
-               );
-
-               DOM.qSel('.osds_popup').style.display = 'none';
-
-               DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
-                   DOM.qSel('.osds_popup').style.display = 'none';
-                   Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
-                   return false;
-               };
-               DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
-                   DOM.qSel('.osds_popup').style.display = 'none';
-                   Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
-                   return false;
-               };
-            }
-            
-            
             is_data_exist();
             if (!data_found) {
                 window.setTimeout(is_data_exist, 3000);
@@ -1094,29 +1121,6 @@
 
 
             // wait data req from extension
-            if ($(".super_links_popup").length == 0) {
-               $('body').append(
-                 `<div class="super_links_popup" >
-                   <div class="super_links_popup-title"> &nbsp;Super Links </div>
-                   <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-                   <div class="super_links_popup-content"></div>
-                   <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
-                  </div> 
-                  <div class="super_links_msg"> 
-                    <div style="width:16px;">
-                      <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
-                    </div>
-                    <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
-                  </div>
-                  <div id="super_links_snackbar">
-                    <div id="msg1"></div>
-                    <div id="msg2"></div>
-                  </div>`
-               );
-            }
-            DOM.qSel('.super_links_popup').style.display = 'none';
-            DOM.qSel('.super_links_msg').style.display = 'none';
-
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if (request.property == "req_doc_data") {
@@ -1126,30 +1130,39 @@
                  }
                 else if (request.property == "open_tab")
                     request_open_tab(request.url, sender);
-                else if (request.property == "super_links_data")
+                else if (request.property == "super_links_data") {
+                    inject_super_links_popup();
                     add_super_links(sender, request.data);
+                }
                 else if (request.property == "super_links_msg_show") {
                     if (request.message) {
+                      inject_super_links_popup();
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
                       DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
                 else if (request.property == "super_links_msg_hide") {
-                    DOM.qSel('.super_links_msg').style.display = 'none';
+                    var el = DOM.qSel('.super_links_msg');
+                    if (el)
+                      el.style.display = 'none';
                 }
                 else if (request.property == "super_links_snackbar") {
+                    inject_super_links_popup();
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
                 }
                 else if (request.property == "osds_msg_show") {
                     if (request.message) {
+                      inject_osds_popup();
                       DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
                       DOM.qSel('.osds_popup').style.display = 'block';
                     }
                 }
                 else if (request.property == "osds_msg_hide") {
-                    DOM.qSel('.osds_popup').style.display = 'none';
+                    var el = DOM.qSel('.osds_popup');
+                    if (el)
+                      el.style.display = 'none';
                 }
 
                 sendResponse({});  // stop
