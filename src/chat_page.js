@@ -65,6 +65,10 @@
       DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
       DOM.iSel("chat_stop").onclick = (e) =>{ chatUI.stop_exec(); }; 
       DOM.iSel("new_chat").onclick = (e) =>{ chatUI.new_chat(); }; 
+      DOM.iSel("model").onchange = (e) =>{ 
+        var sel = DOM.qSel('#model option:checked').value;
+        chatUI.selectModel(sel); 
+      }; 
 
       DOM.qHide("#chat_throbber");
       $("#thumb_up").hide();

@@ -23,6 +23,7 @@
 class ChatUI {
   constructor(_chat_lst) 
   {
+    this.models = [];
     this.chat_is_working = false;
     this.chat_cancelled = false;
     this.history_offset = 0;
@@ -456,6 +457,33 @@ class ChatUI {
     DOM.qHide('#chat_stop');
   }
 
+  selectModel(m)
+  {
+    if (m === 'text-davinci-002-render-sha'
+        || m === 'text-davinci-002-render-paid'
+        || m === 'gpt-4')
+    {
+      this.chat.setModel(m);
+      const el = DOM.qSel(`#model option[value="${m}"]`);
+      if (el)
+        el.selected = true;
+    }
+  }
+
+  selectDefModel()
+  {
+    this.chat.setModel(null);
+    this.selectModel(this.chat.getModel());
+  }
+
+  enableModelList(v)
+  {
+    if (v)
+      DOM.qSel('#model').disabled = false;
+    else
+      DOM.qSel('#model').disabled = true;
+  }
+
 
   async _load_conversation(el) 
   {
@@ -469,53 +497,27 @@ class ChatUI {
 
       var rc = await this.chat.loadConversation(cid);
       if (rc.ok) {
-        const last = rc.data.current_node;
-        const lst = rc.data.mapping;
+        const list = rc.data.list;
 
-        var cur_id;
-        for(var key in lst) {
-          var v = lst[key];
-          if (!v.parent && !v.message && v.children.length > 0) 
-            cur_id = v.id;
-        }
+        this.chat_lst.innerHTML = '';
+        this.chat.setConversationId(cid);
+        this.chat.setParentId(null);
+        this.selectModel(rc.data.model);
 
-        if (cur_id) {
-          // start
-          this.chat_lst.innerHTML = '';
-          this.chat.setConversationId(cid);
-          this.chat.setParentId(null);
-
-          while(cur_id && lst[cur_id] !== null) 
-          {
-            var v = lst[cur_id];
-
-            if (v.id)
-              this.chat.setParentId(v.id);
-
-            if (v.message) 
-            {
-              const m = v.message;
-              if (m.content.content_type === 'text' && m.content.parts.length > 0) 
-              {
-                if (m.role === 'user') 
-                  this.append_question(m.content.parts[0], true);
-                else if (m.role === 'assistant') {
-                  this.append_ai(m.content.parts[0], true);
-                  this.update_ai(m.content.parts[0], cid, m.id, true);
-                }
-              }
-            }
-
-            if (!v.children || v.children.length < 1)
-              break;
-            if (v.id === last)
-              break;
-            cur_id = v.children[0];
+        for(const m of list) {
+          this.chat.setParentId(m.id);
+          if (m.role === 'user')  {
+            this.append_question(m.text, true);
+          }
+          else if (m.role === 'assistant') {
+            this.append_ai(m.text, true);
+            this.update_ai(m.text, cid, m.id, true);
           }
         }
 
         this._mark_cur_title(cid);
         this.chat_lst.scrollTo(1,1);
+        this.enableModelList(false);
       }
     } catch(e) {
       console.log('ERR==>'+e);
@@ -550,22 +552,41 @@ class ChatUI {
     }
 
     try {
-      var options = {
-        headers: {
-          'Content-Type': 'application/json',
-           Authorization: `Bearer ${accessToken}`,
-        }
+      const rc = await this.chat.checkAccount()
+      if (!rc.ok) {
+        this._endThrobber();
+        this.append_msg(` --- Could not load account info, try again later :${rc.message} --- \n`);
+        return;
       }
-
-      var rc = await fetch(`https://chat.openai.com/backend-api/conversations?offset=${offset}&limit=${limit}`, options);
-      if (rc.ok) {
-        var data = await rc.json();
-        this._update_hist_list(data, offset);
-        this.history_offset = data.offset;
-        this.history_len = data.items.length;
-      }
-
+      this.account_plan = rc.account_plan;
     } catch(e) {
+      this._endThrobber();
+      log.console(e);
+    }
+
+    try {
+      const rc = await this.chat.getModels()
+      if (!rc.ok) {
+        this._endThrobber();
+        this.append_msg(` --- Could not load list of supported models :${rc.message} --- \n`);
+        return;
+      }
+      this.models = rc.models;
+      this.enableModelList(this.models.length > 1);
+    } catch(e) {
+      this._endThrobber();
+      log.console(e);
+    }
+
+    try {
+      const rc = await this.chat.loadConversationsList(offset, limit);
+      if (rc.ok && rc.data) {
+        this._update_hist_list(rc.data, offset);
+        this.history_offset = rc.data.offset;
+        this.history_len = rc.data.items.length;
+      }
+    } catch(e) {
+      this._endThrobber();
       console.log(e);
     } finally {
       if (show_throbber)
@@ -576,7 +597,7 @@ class ChatUI {
 
   async load_history_more()
   {
-     await this.load_history(true, this.history_offset+this.history_len);
+     await thisload_history(true, this.history_offset+this.history_len);
   }
 
   async reqNewTitle()
@@ -596,26 +617,11 @@ class ChatUI {
     if (!ok || !accessToken)
       return;
 
-    const payload = {
-      message_id,
-      model: "text-davinci-002-render"
-    };
-
     try {
-      var options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-           Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(payload)
-      }
-
-      var rc = await fetch(`https://chat.openai.com/backend-api/conversation/gen_title/${conversation_id}`, options);
-      if (rc.ok) {
-        var data = await rc.json();
-        this._add_new_title2list(conversation_id, data.title);
-      }
+      var rc = await this.chat.genTitle(conversation_id, message_id);
+      if (rc.ok && rc.title)
+        this._add_new_title2list(conversation_id, rc.title);
+       
     } catch(e) {
       console.log(e);
     } finally {
@@ -680,6 +686,7 @@ class ChatUI {
       this.chat_is_working = false;
     }
     DOM.iSel('chat_req').value = '';
+    this.enableModelList(false);
     await this.end_ai(new_chat);
     this._endThrobber()
   }
@@ -696,6 +703,8 @@ class ChatUI {
   {
     this.chat_lst.innerHTML = '';
     this.chat.newChat();
+    this.selectDefModel();
+    this.enableModelList(true);
   }
 
 

@@ -66,7 +66,7 @@
 
          div.chat {
            overflow: auto;
-           height: calc(100% - 76px);
+           height: calc(100% - 76px - 2.5em);
          }
 
          div.chat_item{
@@ -217,6 +217,18 @@
            padding: 2;
          }
 
+         .model_list {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+         }
+
+         .model {
+           widht: 150px;
+           height: 2.5em;
+           border: gray;
+           border-radius: 5px;
+         }
          
         </style>
 
@@ -285,6 +297,14 @@
       </div>
       
       <div style="width:calc(100% - 260px)">
+        <div class="model_list">
+          <SELECT id="model" class="model" style="WIDTH: 150px" >
+              <OPTION id="gpt_3_5" value="text-davinci-002-render-sha" selected>Default (GPT-3.5)</OPTION>
+              <OPTION id="gpt_3_5l" value="text-davinci-002-render-paid">Legacy (GPT-3.5)</OPTION>
+              <OPTION id="gpt_4" value="gpt-4">GPT-4</OPTION>
+          </SELECT>
+
+        </div>
         <table style="width: 100%;min-height:60px;">
           <tr>
            <td>
