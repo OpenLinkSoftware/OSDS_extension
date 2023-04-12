@@ -34,12 +34,12 @@
     var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null, md:null};
     var data_found = false;
 
-    var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
-    var jsonld_nano_pattern = /(## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
-    var json_nano_pattern = /(## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
-    var csv_nano_pattern = /(## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
-    var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
-    var md_nano_pattern = /(## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((## Markdown +(End|Stop) ##))(.*)/gmi;
+    var ttl_nano_pattern = /(^\s*## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(^\s*## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
+    var jsonld_nano_pattern = /(^\s*## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var json_nano_pattern = /(^\s*## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON +(End|Stop) ##))(.*)/gmi;
+    var csv_nano_pattern = /(^\s*## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## CSV +(End|Stop) ##))(.*)/gmi;
+    var rdf_nano_pattern = /(^\s*## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
+    var md_nano_pattern = /(^\s*## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Markdown +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -473,7 +473,9 @@
             turtle_Text = null;
             for (var i = 0; i < all.length; i++) {
                 if (all[i].hasAttribute('type')
-                    && all[i].getAttribute('type') == "text/turtle") {
+                    && (all[i].getAttribute('type') == "text/turtle"
+                        || all[i].getAttribute('type') === "application/turtle"))
+                {
                     var htmlText = all[i].innerHTML;
                     if (turtle_Text == null)
                         turtle_Text = [];
