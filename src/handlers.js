@@ -337,7 +337,7 @@ class Handle_Turtle {
               }
               else
               {
-                var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id);
+                var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id, this._base);
                 output = html_str==null?'':html_str;
               }
 
@@ -456,7 +456,7 @@ class Handle_Quads {
                     output.push(ttl_data);
                 }
                 else {
-                  var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id);
+                  var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id, this._base);
                   if (html_str)
                     output += html_str;
                 }

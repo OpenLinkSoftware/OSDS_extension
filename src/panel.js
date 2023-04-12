@@ -864,7 +864,9 @@ async function Download_exec()
 
   var _url = new URL(doc_URL);
   _url.hash = "osds";
-  $('#save-sparql-graph').val(_url.toString());
+
+  const graph = await settings.getValue('upload_sparql_graph');
+  DOM.iSel('save-sparql-graph').value = graph ? graph : _url.toString();
 
   $('#save-action').change(function() {
     Download_exec_update_state();

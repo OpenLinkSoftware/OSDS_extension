@@ -317,13 +317,14 @@ async function loadPref()
     changeHandleAll();
 
     var sparql_ep = await gPref.getValue("upload_sparql_endpoint");
-    if (sparql_ep)
-      DOM.iSel('upload_sparql_endpoint').value = sparql_ep;
+    DOM.iSel('upload_sparql_endpoint').value = sparql_ep;
 
     var sparql_tm = await gPref.getValue("upload_sparql_timeout");
     if (sparql_tm)
       DOM.iSel('upload_sparql_timeout').value = sparql_tm;
 
+    var sparql_gr = await gPref.getValue("upload_sparql_graph");
+    DOM.iSel('upload_sparql_graph').value = sparql_gr;
 
     var import_url = await gPref.getValue("ext.osds.import.url");
     var import_srv = await gPref.getValue("ext.osds.import.srv");
@@ -403,6 +404,7 @@ async function savePref()
 
    await gPref.setValue("upload_sparql_endpoint", DOM.iSel('upload_sparql_endpoint').value.trim());
    await gPref.setValue("upload_sparql_timeout", DOM.iSel('upload_sparql_timeout').value.trim());
+   await gPref.setValue("upload_sparql_graph", DOM.iSel('upload_sparql_graph').value.trim());
 
 
    await gPref.setValue("ext.osds.rww.edit.url", DOM.iSel('rww-edit-url').value.trim());

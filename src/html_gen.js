@@ -50,13 +50,16 @@
 
   HTML_Gen.prototype = {
 
-    load: function (n_data, start_id) 
+    load: function (n_data, start_id, _base) 
     {
       var expanded = null;
       var id_list = {};
    
       if (start_id===undefined)
         start_id = 0;
+
+      if (_base)
+        this.docURI = _base;
 
       if (n_data!=null &&
           n_data.length!==undefined && 
