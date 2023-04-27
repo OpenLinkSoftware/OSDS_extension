@@ -1193,7 +1193,7 @@ exports.SessionInfoManager = SessionInfoManager;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 class BrowserStorage {
     get storage() {
-        return window.localStorage;
+        return window.localStorage ? window.localStorage : window.sessionStorage;
     }
     async get(key) {
         return this.storage.getItem(key) || undefined;
