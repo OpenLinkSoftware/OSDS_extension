@@ -200,7 +200,12 @@ OidcWeb.prototype = {
 
         for(var key in data) {
           if (key.startsWith('issuerConfig:') || key.startsWith('solidClientAuthenticationUser:') || key.startsWith('oidc.'))
-            localStorage.setItem(key, data[key]);
+          {
+            if (window.localStorage)
+              window.localStorage.setItem(key, data[key]);
+            else
+              window.sessionStorage.setItem(key, data[key]);
+          }
         }
 
         this.IdP = this.extractIdp(data.url, data);

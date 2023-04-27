@@ -118,7 +118,10 @@ async function silentlyAuthenticate(sessionId, clientAuthn, session) {
     var _a;
     const storedSessionInfo = await clientAuthn.validateCurrentSession(sessionId);
     if (storedSessionInfo !== null) {
-        window.localStorage.setItem(constant_1.KEY_CURRENT_URL, window.location.href);
+        if (window.localStorage)
+            window.localStorage.setItem(constant_1.KEY_CURRENT_URL, window.location.href);
+        else
+            window.sessionStorage.setItem(constant_1.KEY_CURRENT_URL, window.location.href);
         await clientAuthn.login({
             sessionId,
             prompt: "none",
@@ -153,7 +156,10 @@ class Session extends events_1.default {
             return this.clientAuthentication.fetch(url, init);
         };
         this.internalLogout = async (emitSignal) => {
-            window.localStorage.removeItem(constant_1.KEY_CURRENT_SESSION);
+            if (window.localStorage)
+                window.localStorage.removeItem(constant_1.KEY_CURRENT_SESSION);
+            else
+                window.sessionStorage.removeItem(constant_1.KEY_CURRENT_SESSION);
             await this.clientAuthentication.logout(this.info.sessionId);
             this.info.isLoggedIn = false;
             if (emitSignal) {
@@ -176,17 +182,22 @@ class Session extends events_1.default {
             const sessionInfo = await this.clientAuthentication.handleIncomingRedirect(url, this.events, tokens);
             if (isLoggedIn(sessionInfo)) {
                 this.setSessionInfo(sessionInfo);
-                const currentUrl = window.localStorage.getItem(constant_1.KEY_CURRENT_URL);
+                const currentUrl = window.localStorage ? window.localStorage.getItem(constant_1.KEY_CURRENT_URL)
+                    : window.sessionStorage.getItem(constant_1.KEY_CURRENT_URL);
                 if (currentUrl === null) {
                     this.events.emit(solid_client_authn_core_1.EVENTS.LOGIN);
                 }
                 else {
-                    window.localStorage.removeItem(constant_1.KEY_CURRENT_URL);
+                    if (window.localStorage)
+                        window.localStorage.removeItem(constant_1.KEY_CURRENT_URL);
+                    else
+                        window.sessionStorage.removeItem(constant_1.KEY_CURRENT_URL);
                     this.events.emit(solid_client_authn_core_1.EVENTS.SESSION_RESTORED, currentUrl);
                 }
             }
             else if (options.restorePreviousSession === true) {
-                const storedSessionId = window.localStorage.getItem(constant_1.KEY_CURRENT_SESSION);
+                const storedSessionId = window.localStorage ? window.localStorage.getItem(constant_1.KEY_CURRENT_SESSION)
+                    : window.sessionStorage.getItem(constant_1.KEY_CURRENT_SESSION);
                 if (storedSessionId !== null) {
                     const attemptedSilentAuthentication = await silentlyAuthenticate(storedSessionId, this.clientAuthentication, this);
                     if (attemptedSilentAuthentication) {
@@ -223,7 +234,12 @@ class Session extends events_1.default {
                 isLoggedIn: false,
             };
         }
-        this.events.on(solid_client_authn_core_1.EVENTS.LOGIN, () => window.localStorage.setItem(constant_1.KEY_CURRENT_SESSION, this.info.sessionId));
+        this.events.on(solid_client_authn_core_1.EVENTS.LOGIN, () => {
+            if (window.localStorage)
+                window.localStorage.setItem(constant_1.KEY_CURRENT_SESSION, this.info.sessionId);
+            else
+                window.sessionStorage.setItem(constant_1.KEY_CURRENT_SESSION, this.info.sessionId);
+        });
         this.events.on(solid_client_authn_core_1.EVENTS.SESSION_EXPIRED, () => this.internalLogout(false));
         this.events.on(solid_client_authn_core_1.EVENTS.ERROR, () => this.internalLogout(false));
     }
@@ -818,7 +834,10 @@ class AuthCodeRedirectHandler {
                     codeVerifier,
                     redirectUrl: storedRedirectIri,
                 });
-            window.localStorage.removeItem(`oidc.${oauthState}`);
+            if (window.localStorage)
+                window.localStorage.removeItem(`oidc.${oauthState}`);
+            else
+                window.sessionStorage.removeItem(`oidc.${oauthState}`);
         }
         else {
             tokens = await (0, oidc_client_ext_1.getBearerToken)(url.toString());
@@ -5335,7 +5354,7 @@ async function clearOidcPersistentStorage() {
         response_mode: "query",
     });
     await client.clearStaleState(new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.WebStorageStateStore({}));
-    const myStorage = window.localStorage;
+    const myStorage = window.localStorage ? window.localStorage : window.sessionStorage;
     const itemsToRemove = [];
     for (let i = 0; i <= myStorage.length; i += 1) {
         const key = myStorage.key(i);
