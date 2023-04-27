@@ -5353,7 +5353,10 @@ async function clearOidcPersistentStorage() {
     const client = new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.OidcClient({
         response_mode: "query",
     });
-    await client.clearStaleState(new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.WebStorageStateStore({}));
+    if (window.localStorage)
+        await client.clearStaleState(new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.WebStorageStateStore({}));
+    else
+        await client.clearStaleState(new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.WebStorageStateStore({ store: window.sessionStorage }));
     const myStorage = window.localStorage ? window.localStorage : window.sessionStorage;
     const itemsToRemove = [];
     for (let i = 0; i <= myStorage.length; i += 1) {
