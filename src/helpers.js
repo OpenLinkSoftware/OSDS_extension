@@ -50,12 +50,10 @@ class SPARQL_Upload {
       } 
       else 
       {
-        await this.oidc.checkSession();
-        if (this.oidc.webid) {
-          if (!this.oidc.isSessionForIdp(this.idp_url))
+        if (!this.oidc.isSessionForIdp(this.idp_url)) {
             await this.oidc.logout();
         }
-        if (!this.oidc.webid) {
+        if (!this.oidc.getWebId()) {
           this.state = 'login';
           this.oidc.login2(this.idp_url);
           return false;
@@ -76,13 +74,15 @@ class SPARQL_Upload {
   
   async reexec()
   {
-    if (this.state === 'init') {
-      var rc = await this.check_login();
+    if (this.state === 'init' || this.state === 'login') {
+      const webId = await this.oidc.restoreConn();
+
+      var rc = await this.check_login(webId===null);
       if (rc) {
         return await this.mexec();
       }
     } 
-    else if (this.state === 'login' || this.state === 'query') 
+    else if (this.state === 'query') 
     {
       return await this.mexec();
     } 

@@ -19,10 +19,6 @@
  */
 
  
-const { OIDCWebClient } = OIDC;
-const oidc_session = 'oidc.session';
-const oidc_clients = 'oidc.clients.';
-
 class myStore {
   constructor()
   {
@@ -78,36 +74,20 @@ OidcWeb = function(data) {
 
   const options = Browser.is_safari ? { solid: true, store: this.jstore} : { solid: true } ;
 
-  this.authClient = new OIDCWebClient(options);
-  this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
-  this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
+  this.authClient = solidClientAuthentication.default;
+//  this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
+//  this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
+  this.login_url = 'https://smalinin.github.io/oidc-web/dpop/login.html#relogin';
+  this.login2_url = 'https://smalinin.github.io/oidc-web/dpop/login.html';
 }
 
 
 OidcWeb.prototype = {
   logout : async function()
   {
-    if (this.webid) {
-      var idp = '';
-      if (this.session) {
-        idp = this.session.issuer;
-        var key = oidc_clients+idp;
-        var rec = await this.localStore_get(key);
-
-        if (rec && rec[key]) {
-          if (Browser.is_safari)
-            this.jstore.setItem(oidc_clients+idp, rec[key]);
-          else
-            localStorage.setItem(oidc_clients+idp, rec[key]);
-        }
-
-        await this.authClient.logout();
-      }
-      await this.localStore_remove(oidc_session);
-      await this.localStore_remove(oidc_clients+idp);
-      this.webid = null;
-      this.storage = null;
-      this.session = null;
+    const session = this.authClient.getDefaultSession();
+    if (session && session.info && session.info.isLoggedIn) {
+      await this.authClient.logout();
     }
   },
 
@@ -192,19 +172,54 @@ OidcWeb.prototype = {
     }  
   },
 
+  restoreConn: async function()
+  {
+    const settings = new Settings();
+    try {
+      const oidc_code = await settings.getValue('oidc_code');
+      if (oidc_code && oidc_code.length > 0) {
+        await settings.setValue('oidc_code', '');
+        const data = JSON.parse(atob(oidc_code));
+
+        for(var key in data) {
+          if (key.startsWith('issuerConfig:') || key.startsWith('solidClientAuthenticationUser:') || key.startsWith('oidc.'))
+            localStorage.setItem(key, data[key]);
+        }
+
+        const ret = await this.authClient.handleIncomingRedirect({url:data.url, restorePreviousSession: true});
+        console.log('ret = ', ret);
+        const session = this.authClient.getDefaultSession();
+        if (session.info && session.info.isLoggedIn && session.info.webId)
+          return session.info.webId;
+      }
+    } catch(e) {
+      console.log(e);
+    }
+    return null;
+  },
+
 
   isSessionForIdp: function(idp)
   {
-    return (this.session && this.session.issuer.startsWith(idp));
+    const session = this.authClient.getDefaultSession();
+//??    return (session && session.info && session.info.isLoggedIn && session.info.webId.startsWith(idp));
+    return (session && session.info && session.info.isLoggedIn);
+  },
+  
+  getWebId: function()
+  {
+    const session = this.authClient.getDefaultSession();
+    return (session && session.info && session.info.isLoggedIn) ? session.info.webId : null;
   },
   
   fetch: async function(url, options)
   {
-    return this.authClient.authFetch(url, options);
+    return this.authClient.fetch(url, options);
   },
 
   checkSession: async function() 
   {
+/***
     try {
       var rec = await this.localStore_get(oidc_session);
 
@@ -243,6 +258,7 @@ OidcWeb.prototype = {
     } catch(e) {
       console.log(e);
     }
+***/
   },
 
   localStore_save: async function(key, val) 

@@ -88,6 +88,8 @@ function showPopup(tabId)
     g_RestCons.show();
   }
 
+//????
+/*****
   Download_exec_update_state();
 
   async function click_login() {
@@ -101,9 +103,10 @@ function showPopup(tabId)
 
   DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
   DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
+***/
 
   DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
-  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
+//??  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
   DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
@@ -177,7 +180,7 @@ async function loadPopup()
 {
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
-  $("#login-dlg").hide();
+//??  $("#login-dlg").hide();
   $("#query_place").hide();
 
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
@@ -752,7 +755,8 @@ function Prefs_exec()
 }
 
 
-
+//???
+/******
 async function Login_exec()
 {
   Download_exec_update_state();
@@ -771,10 +775,13 @@ async function Login_exec()
 
   return false;
 }
+******/
 
 
 function Download_exec_update_state() 
 {
+//????????
+/*********
   try {
     gOidc.checkSession().then(() => {
       var webid = gOidc.webid;
@@ -805,7 +812,7 @@ function Download_exec_update_state()
   } catch (e) {
     console.log(e);
   }
-
+************/
   
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
@@ -814,15 +821,15 @@ function Download_exec_update_state()
     $('#save-file').hide();
 
   if (cmd==='fileupload') {
-    $('#oidc-login').show();
+//??    $('#oidc-login').show();
     $('#oidc-upload').show();
   } 
   else if (cmd==='sparqlupload') {
-    $('#oidc-login').show();
+//??    $('#oidc-login').show();
     $('#oidc-upload').hide();
   }
   else {
-    $('#oidc-login').hide();
+//??    $('#oidc-login').hide();
     $('#oidc-upload').hide();
   }
 
