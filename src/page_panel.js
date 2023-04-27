@@ -26,7 +26,6 @@ var $ = jQuery;
 var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
-var gOidc = new OidcWeb();
 
 var gData = {
         text: null,
@@ -40,6 +39,7 @@ var gData = {
 var src_view = null;
 var g_RestCons = new Rest_Cons();
 var gMutationObserver = new MutationObserver((mlist, observer) => g_RestCons.update())
+var gOidc = new OidcWeb();
 
 
 DOM.ready(() =>
@@ -56,21 +56,9 @@ DOM.ready(() =>
 
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
-  async function click_login() {
-     if (gOidc.webid) {
-       await gOidc.logout();
-       Download_exec_update_state();
-     } else {
-       gOidc.login();
-     }
-  } 
-
-  DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
-  DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
 
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
-  $("#login-dlg").hide();
 
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
 
@@ -111,7 +99,6 @@ DOM.ready(() =>
   $("#query_place").hide();
 
   DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
-  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
 
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(); }
   DOM.iSel("rest_exit").onclick = (e) => { 
@@ -533,56 +520,8 @@ async function Sparql_exec()
 }
 
 
-async function Login_exec()
-{
-  Download_exec_update_state();
-
-  var dlg = $( "#login-dlg" ).dialog({
-    resizable: true,
-    width:500,
-    height:200,
-    modal: true,
-    buttons: {
-      "OK": function() {
-        $(this).dialog( "destroy" );
-      }
-    }
-  });
-
-  return false;
-}
-
-
 function Download_exec_update_state() 
 {
-
-  try {
-    gOidc.checkSession().then(() => {
-      var webid_href = document.getElementById('oidc-webid');
-      var webid1_href = document.getElementById('oidc-webid1');
-
-      webid1_href.href = webid_href.href = gOidc.webid ? gOidc.webid :'';
-      webid1_href.title = webid_href.title = gOidc.webid ? gOidc.webid :'';
-      webid1_href.style.display = webid_href.style.display = gOidc.webid ? 'initial' :'none';
-
-      var oidc_login_btn = document.getElementById('oidc-login-btn');
-      var oidc_login_btn1 = document.getElementById('oidc-login-btn1');
-      oidc_login_btn1.innerText = oidc_login_btn.innerText = gOidc.webid ? 'Logout' : 'Login';
-
-      var login_tab = document.getElementById('login_btn');
-      if (gOidc.webid) {
-        login_tab.title = "Logged as "+gOidc.webid;
-        login_tab.src = "images/uid.png";
-      } else {
-        login_tab.title = "Solid Login";
-        login_tab.src = "images/slogin24.png";
-      }
-
-    });
-
-  } catch (e) {
-    console.log(e);
-  }
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
     $('#save-file').show();
@@ -590,15 +529,12 @@ function Download_exec_update_state()
     $('#save-file').hide();
 
   if (cmd==='fileupload') {
-    $('#oidc-login').show();
     $('#oidc-upload').show();
   } 
   else if (cmd==='sparqlupload') {
-    $('#oidc-login').show();
     $('#oidc-upload').hide();
   }
   else {
-    $('#oidc-login').hide();
     $('#oidc-upload').hide();
   }
 

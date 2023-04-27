@@ -88,25 +88,8 @@ function showPopup(tabId)
     g_RestCons.show();
   }
 
-//????
-/*****
-  Download_exec_update_state();
-
-  async function click_login() {
-     if (gOidc.webid) {
-       await gOidc.logout();
-       Download_exec_update_state();
-     } else {
-       gOidc.login();
-     }
-  } 
-
-  DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
-  DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
-***/
 
   DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
-//??  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
   DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
@@ -180,7 +163,6 @@ async function loadPopup()
 {
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
-//??  $("#login-dlg").hide();
   $("#query_place").hide();
 
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
@@ -755,64 +737,10 @@ function Prefs_exec()
 }
 
 
-//???
-/******
-async function Login_exec()
-{
-  Download_exec_update_state();
-
-  var dlg = $( "#login-dlg" ).dialog({
-    resizable: true,
-    width:500,
-    height:200,
-    modal: true,
-    buttons: {
-      "OK": function() {
-        $(this).dialog( "destroy" );
-      }
-    }
-  });
-
-  return false;
-}
-******/
 
 
 function Download_exec_update_state() 
 {
-//????????
-/*********
-  try {
-    gOidc.checkSession().then(() => {
-      var webid = gOidc.webid;
-
-      var webid_href = document.getElementById('oidc-webid');
-      var webid1_href = document.getElementById('oidc-webid1');
-
-      webid1_href.href = webid_href.href = webid ? webid :'';
-      webid1_href.title = webid_href.title = webid ? webid :'';
-      webid1_href.style.display = webid_href.style.display = webid ? 'initial' :'none';
-
-      var oidc_login_btn = document.getElementById('oidc-login-btn');
-      var oidc_login_btn1 = document.getElementById('oidc-login-btn1');
-      oidc_login_btn1.innerText = oidc_login_btn.innerText 
-                                = webid ? 'Logout' : 'Login';
-
-      var login_tab = document.getElementById('login_btn');
-      if (webid) {
-        login_tab.title = "Logged as "+webid;
-        login_tab.src = "images/uid.png";
-      } else {
-        login_tab.title = "Solid Login";
-        login_tab.src = "images/slogin24.png";
-      }
-    });
-
-
-  } catch (e) {
-    console.log(e);
-  }
-************/
   
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
@@ -821,15 +749,12 @@ function Download_exec_update_state()
     $('#save-file').hide();
 
   if (cmd==='fileupload') {
-//??    $('#oidc-login').show();
     $('#oidc-upload').show();
   } 
   else if (cmd==='sparqlupload') {
-//??    $('#oidc-login').show();
     $('#oidc-upload').hide();
   }
   else {
-//??    $('#oidc-login').hide();
     $('#oidc-upload').hide();
   }
 

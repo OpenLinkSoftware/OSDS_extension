@@ -283,7 +283,7 @@ class SuperLinks {
     this.tabId = tabId;
     this.messages = messages;
     this.state = 'init';
-    this.ss_idp = 'https://linkeddata.uriburner.com';
+    this.idp_url = 'https://linkeddata.uriburner.com';
   }
 
   async check_login(relogin)
@@ -295,19 +295,17 @@ class SuperLinks {
       {
         await this.oidc.logout();
         this.state = 'login';
-        this.oidc.login2(this.ss_idp);
+        this.oidc.login2(this.idp_url);
         return false;
       } 
       else 
       {
-        await this.oidc.checkSession();
-        if (this.oidc.webid) {
-          if (!this.oidc.isSessionForIdp(this.ss_idp))
+        if (!this.oidc.isSessionForIdp(this.idp_url)) {
             await this.oidc.logout();
         }
-        if (!this.oidc.webid) {
+        if (!this.oidc.getWebId()) {
           this.state = 'login';
-          this.oidc.login2(this.ss_idp);
+          this.oidc.login2(this.idp_url);
           return false;
         }
       }
@@ -420,7 +418,6 @@ class SuperLinks {
     
     var url = new URL(this.doc_url);
     url.hash = '';
-    //url.search = '';
     var iri = url.toString();
   
     var br_lang = navigator.language || navigator.userLanguage;
@@ -516,15 +513,18 @@ class SuperLinks {
       Browser.api.tabs.sendMessage(this.tabId, { property: 'super_links_data', data : data });
   }
 
+  
   async reexec()
   {
-    if (this.state === 'init') {
-      var rc = await slinks.check_login();
+    if (this.state === 'init' || this.state === 'login') {
+      const webId = await this.oidc.restoreConn();
+
+      var rc = await this.check_login(webId===null);
       if (rc) {
         return await this.mexec();
       }
     } 
-    else if (this.state === 'sponge' || this.state === 'login') 
+    else if (this.state === 'sponge') 
     {
       return await this.mexec();
     } 

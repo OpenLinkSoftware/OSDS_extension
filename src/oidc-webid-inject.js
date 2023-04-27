@@ -21,8 +21,6 @@
 
 (function () {
 
-const prefix_oidc = "oidc-webid:";
-const prefix_oidc_slogin = "oidc-webid-slogin:";
 const prefix_code = "oidc-code:";
 const prefix_code1 = "oidc-code1:";
 
