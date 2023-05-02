@@ -21,8 +21,8 @@
 
 (function () {
 
-const prefix_oidc = "oidc-webid:";
-const prefix_oidc_slogin = "oidc-webid-slogin:";
+const prefix_code = "oidc-code:";
+const prefix_code1 = "oidc-code1:";
 
 window.addEventListener("message", recvMessage, false);
 
@@ -32,35 +32,17 @@ async function recvMessage(event)
   var session = null;
   var idp = null;
 
-  if (!String(event.data).startsWith(prefix_oidc) && !String(event.data).startsWith(prefix_oidc_slogin))
+  const ev = String(event.data);
+  if (!ev.startsWith(prefix_code) && !ev.startsWith(prefix_code1))
     return;
 
-  var s_session = localStorage.getItem('oidc.session');
-  try {
-    session = JSON.parse(s_session);
-  } catch(e) {
-  }
+  const authData = (ev.startsWith(prefix_code)) ? ev.substring(prefix_code.length) : ev.substring(prefix_code1.length);
+  await save_data('oidc_code', authData);
 
-  if (session) {
-    idp = session.issuer;
-    if (idp.endsWith('/'))
-      idp = idp.substring(0, idp.length-1);
-  }
-
-  if (session && idp) {
-    var s_client = localStorage.getItem('oidc.clients.'+idp);
-
-    if (s_client)
-      await save_data('oidc.clients.'+idp, s_client);
-
-    if (session) {
-      await save_data('oidc.session', s_session);
-      Browser.api.runtime.sendMessage({cmd:'store_updated', key:'oidc.session'});
-    }
-  }    
+  Browser.api.runtime.sendMessage({cmd:'store_updated', key:'oidc_code'});
 
   setTimeout(function (){
-     if (String(event.data).startsWith(prefix_oidc_slogin))
+     if (ev.startsWith(prefix_code1))
        Browser.api.runtime.sendMessage({cmd:'close_oidc_web_slogin', url: document.location.href});
      else
        Browser.api.runtime.sendMessage({cmd:'close_oidc_web', url: document.location.href});

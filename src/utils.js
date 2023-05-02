@@ -358,3 +358,12 @@ DOM.qShow = (sel) => { DOM.qSel(sel).classList.remove('hidden'); };
 DOM.qHide = (sel) => { DOM.qSel(sel).classList.add('hidden'); };
 DOM.Show = (el) => { el.classList.remove('hidden'); };
 DOM.Hide = (el) => { el.classList.add('hidden'); };
+DOM.ready = (fn) => {
+  // If we're early to the party
+  document.addEventListener("DOMContentLoaded", fn);
+  // If late; I mean on time.
+  if (document.readyState === "interactive" || document.readyState === "complete" ) {
+    fn();
+  }
+}
+

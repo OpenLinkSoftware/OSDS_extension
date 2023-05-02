@@ -31,14 +31,15 @@
     var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null, md:null};
     var data_found = false;
 
-    var ttl_nano_pattern = /(## (Nanotation|Turtle|RDF-Turtle) +Start ##)((.|\n|\r)*?)(## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
-    var jsonld_nano_pattern = /(## JSON-LD +Start ##)((.|\n|\r)*?)((## JSON-LD +(End|Stop) ##))(.*)/gmi;
-    var json_nano_pattern = /(## JSON +Start ##)((.|\n|\r)*?)((## JSON +(End|Stop) ##))(.*)/gmi;
-    var csv_nano_pattern = /(## CSV +Start ##)((.|\n|\r)*?)((## CSV +(End|Stop) ##))(.*)/gmi;
-    var rdf_nano_pattern = /(## RDF(\/|-)XML +Start ##)((.|\n|\r)*?)((## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
+    var ttl_nano_pattern = /(^\s*## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(^\s*## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
+    var jsonld_nano_pattern = /(^\s*## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON-LD +(End|Stop) ##))(.*)/gmi;
+    var json_nano_pattern = /(^\s*## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON +(End|Stop) ##))(.*)/gmi;
+    var csv_nano_pattern = /(^\s*## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## CSV +(End|Stop) ##))(.*)/gmi;
+    var rdf_nano_pattern = /(^\s*## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
+    var md_nano_pattern = /(^\s*## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Markdown +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -154,10 +155,13 @@
 
 
     function sniff_nanotation() {
+        var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
+        var comment = /^ *#/;
         var doc_Texts = [];
-        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]};
 
-        function isWhitespace(c) {
+        function isWhitespace(c) 
+        {
             var cc = c.charCodeAt(0);
             if (( cc >= 0x0009 && cc <= 0x000D ) ||
                 ( cc == 0x0020 ) ||
@@ -167,6 +171,25 @@
             }
             return false;
         }
+
+        function dropComments(str) 
+        {
+          if (str.length > 0) 
+          {
+             //drop commetns
+             var s_split = str.split(eoln);
+             var v = [];
+             s_split.forEach(function (item, i, arr) {
+               if (!comment.test(item))
+                  v.push(item);
+             });
+
+             return v.join('\n');
+          } 
+          else
+            return str;
+        }
+
 
         var txt = document.body.innerText;
 
@@ -183,23 +206,9 @@
 
             txt = doc_Texts[i];
             if (txt) {
-                //drop commetns
-                var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
-                var s_split = txt.split(eoln);
-                var s_doc = "";
-                var p1 = /## +(Nanotation|Turtle|RDF-Turtle) +(Start|End|Stop) *##/i;
-                var p2 = /^ *#/;
-                var p3 = /## +(JSON-LD) +(Start|End|Stop) *##/i;
-                var p4 = /## +(RDF(\/|-)XML) +(Start|End|Stop) *##/i;
-                var p5 = /## +(JSON) +(Start|End|Stop) *##/i;
-                var p6 = /## +(CSV) +(Start|End|Stop) *##/i;
 
-                s_split.forEach(function (item, i, arr) {
-                    if (item.length > 0 && (!p2.test(item) || p1.test(item) || p3.test(item) || p4.test(item) || p5.test(item) || p6.test(item)))
-                        s_doc += item + "\n";
-                });
+                var s_doc = fix_Nano_data(txt);
 
-                s_doc = fix_Nano_data(s_doc);
                 //try get Turtle Nano
                 while (true) {
                     var ndata = ttl_nano_pattern.exec(s_doc);
@@ -208,7 +217,7 @@
 
                     var str = ndata[3];
                     if (str.length > 0)
-                       ret.ttl.push(str);
+                      ret.ttl.push(dropComments(str));
                 }
 
                 //try get Turtle Nano in CurlyBraces { ... }
@@ -230,7 +239,7 @@
                     }
                     else if (ch == '}') {
                         inCurly--;
-                        ret.ttl_curly.push(str);
+                        ret.ttl_curly.push(dropComments(str));
                         str = "";
                     }
                     else if (inCurly > 0) {
@@ -307,18 +316,32 @@
                     }
                 }
 
+                //try get MD Nano
+                while (true) {
+                    var ndata = md_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        ret.md.push(str);
+                    }
+                }
+
             }
         }
 
 
-        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0  )
+        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 
+            || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0 || ret.md.length > 0)
             return {exists: true, data: ret}; 
         else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[]}};
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]}};
     }
 
 
-    function is_data_exist() {
+    function is_data_exist() 
+    {
         try {
 
             scan_frames();
@@ -450,7 +473,9 @@
             turtle_Text = null;
             for (var i = 0; i < all.length; i++) {
                 if (all[i].hasAttribute('type')
-                    && all[i].getAttribute('type') == "text/turtle") {
+                    && (all[i].getAttribute('type') == "text/turtle"
+                        || all[i].getAttribute('type') === "application/turtle"))
+                {
                     var htmlText = all[i].innerHTML;
                     if (turtle_Text == null)
                         turtle_Text = [];
@@ -635,6 +660,61 @@
     }
 
 
+    function inject_osds_popup()
+    {
+      if ($(".osds_popup").length == 0) {
+        $('body').append(
+          `<div class="osds_revert_css osds_popup" style="display:none">
+             <div class="osds_revert_css osds_popup-title"> <b>&nbsp;Error</b></div>
+             <div class="osds_revert_css osds_popup-content">
+               <p class="osds_revert_css" id="osds_popup_msg">  </p>
+               <div class="osds_revert_css osds_popup_btns">
+                 <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_revert_css osds_popup_btn">
+                 <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_revert_css osds_popup_btn">
+               <div>
+             </div>
+           </div>`
+        );
+
+        DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+           DOM.qSel('.osds_popup').style.display = 'none';
+           Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+           return false;
+        };
+        DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+           DOM.qSel('.osds_popup').style.display = 'none';
+           Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+           return false;
+        };
+      }
+    } 
+    
+
+    function inject_super_links_popup() 
+    {
+      if ($(".super_links_popup").length == 0) {
+        $('body').append(
+         `<div class="osds_revert_css super_links_popup" style="display:none" >
+           <div class="osds_revert_css super_links_popup-title"> &nbsp;Super Links </div>
+           <a href="#close" title="Close" class="osds_revert_css super_links_popup_close">&times;</a> 
+           <div class="osds_revert_css super_links_popup-content"></div>
+           <img class="osds_revert_css super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+          </div> 
+          <div class="osds_revert_css super_links_msg" style="display:none" > 
+            <div class="osds_revert_css" style="width:16px;">
+              <img src="data:image/gif;base64,${Browser.throbber}" class="osds_revert_css super_links_img">
+            </div>
+            <div class="osds_revert_css" id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
+          </div>
+          <div class="osds_revert_css" id="super_links_snackbar">
+            <div class="osds_revert_css" id="msg1"></div>
+            <div class="osds_revert_css" id="msg2"></div>
+          </div>`
+        );
+      }
+    }
+
+
 
     async function add_super_links(sender, data)
     {
@@ -646,7 +726,6 @@
 
       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = '&nbsp;Applying&nbsp;Super&nbsp;Links';
       DOM.qSel('.super_links_msg').style.display = 'flex';
-
 
       setTimeout(() => {
         try {
@@ -706,8 +785,10 @@
       vpWH = getViewPortWidthHeight();
       vpW = vpWH[0];
       vpH = vpWH[1];
-      var popup = $(".super_links_popup");
 
+      inject_super_links_popup();
+
+      var popup = $(".super_links_popup");
       popup.css("position","fixed");
       // if not display: block, .offsetWidth & .offsetHeight === 0
       popup.css("display","block");
@@ -802,12 +883,12 @@
 
 
         $('.super_links_popup-content')
-           .append('<table class="super_links_table">'
+           .append('<table class="osds_revert_css super_links_table">'
                +'<thead><tr>'
-               +'<th> Word <span class="super_links_table-resize-handle"/></th>'
-               +'<th> Association <span class="super_links_table-resize-handle"/></th>'
-               +'<th> Source <span class="super_links_table-resize-handle"/></th>'
-               +'<th> Type <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Word <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Association <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Source <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> Type <span class="super_links_table-resize-handle"/></th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
@@ -884,39 +965,9 @@
     }
 
 
-    jQuery(document).ready(function () {
+    DOM.ready(() => {
 
         try {
-
-            if ($(".osds_popup").length == 0) {
-               $('body').append(
-                 `<div class="osds_popup">
-                    <div class="osds_popup-title"> <b>&nbsp;Error</b></div>
-                    <div class="osds_popup-content">
-                      <p id="osds_popup_msg">  </p>
-                      <div class="osds_popup_btns">
-                        <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_popup_btn">
-                        <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_popup_btn">
-                      <div>
-                    </div>
-                  </div>`
-               );
-
-               DOM.qSel('.osds_popup').style.display = 'none';
-
-               DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
-                   DOM.qSel('.osds_popup').style.display = 'none';
-                   Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
-                   return false;
-               };
-               DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
-                   DOM.qSel('.osds_popup').style.display = 'none';
-                   Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
-                   return false;
-               };
-            }
-            
-            
             is_data_exist();
             if (!data_found) {
                 window.setTimeout(is_data_exist, 3000);
@@ -947,6 +998,7 @@
                     json_nano: {text: null},
                     rdf_nano: {text: null},
                     csv_nano: {text: null},
+                    md_nano: {text: null},
                     posh: {text: null}
                 };
 
@@ -1019,6 +1071,7 @@
                 docData.json_nano.text = nano.json;
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
+                docData.md_nano.text = nano.md;
 
 //??--                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
                 var list = document.querySelectorAll('a[href$=".rss"]');
@@ -1053,6 +1106,7 @@
                     || (nano.json    && nano.json.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
+                    || (nano.md      && nano.md.length > 0)
                     || (posh_Data    && posh_Data.triples.length > 0)
                     || (posh_Data    && posh_Data.links.length > 0)
                    )
@@ -1069,29 +1123,6 @@
 
 
             // wait data req from extension
-            if ($(".super_links_popup").length == 0) {
-               $('body').append(
-                 `<div class="super_links_popup" >
-                   <div class="super_links_popup-title"> &nbsp;Super Links </div>
-                   <a href="#close" title="Close" class="super_links_popup_close">&times;</a> 
-                   <div class="super_links_popup-content"></div>
-                   <img class="super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
-                  </div> 
-                  <div class="super_links_msg"> 
-                    <div style="width:16px;">
-                      <img src="data:image/gif;base64,${Browser.throbber}" class="super_links_img">
-                    </div>
-                    <div id="super_links_msg_text">&nbsp;Applying&nbsp;Super&nbsp;Links</div>
-                  </div>
-                  <div id="super_links_snackbar">
-                    <div id="msg1"></div>
-                    <div id="msg2"></div>
-                  </div>`
-               );
-            }
-            DOM.qSel('.super_links_popup').style.display = 'none';
-            DOM.qSel('.super_links_msg').style.display = 'none';
-
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
                 if (request.property == "req_doc_data") {
@@ -1101,30 +1132,39 @@
                  }
                 else if (request.property == "open_tab")
                     request_open_tab(request.url, sender);
-                else if (request.property == "super_links_data")
+                else if (request.property == "super_links_data") {
+                    inject_super_links_popup();
                     add_super_links(sender, request.data);
+                }
                 else if (request.property == "super_links_msg_show") {
                     if (request.message) {
+                      inject_super_links_popup();
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
                       DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
                 else if (request.property == "super_links_msg_hide") {
-                    DOM.qSel('.super_links_msg').style.display = 'none';
+                    var el = DOM.qSel('.super_links_msg');
+                    if (el)
+                      el.style.display = 'none';
                 }
                 else if (request.property == "super_links_snackbar") {
+                    inject_super_links_popup();
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
                 }
                 else if (request.property == "osds_msg_show") {
                     if (request.message) {
+                      inject_osds_popup();
                       DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
                       DOM.qSel('.osds_popup').style.display = 'block';
                     }
                 }
                 else if (request.property == "osds_msg_hide") {
-                    DOM.qSel('.osds_popup').style.display = 'none';
+                    var el = DOM.qSel('.osds_popup');
+                    if (el)
+                      el.style.display = 'none';
                 }
 
                 sendResponse({});  // stop

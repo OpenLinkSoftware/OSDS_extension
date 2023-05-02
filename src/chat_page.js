@@ -27,7 +27,7 @@
   var $ = jQuery;
   var chatUI;
 
-    $(document).ready(function()
+    DOM.ready(() =>
     {
       if ($(".osds_popup").length == 0) {
          $('body').append(
@@ -63,9 +63,14 @@
       chatUI = new ChatUI(DOM.qSel('div.chat'));
 
       DOM.iSel("chat_send").onclick = (e) =>{ chatUI.exec(); }; 
+      DOM.iSel("chat_stop").onclick = (e) =>{ chatUI.stop_exec(); }; 
       DOM.iSel("new_chat").onclick = (e) =>{ chatUI.new_chat(); }; 
+      DOM.iSel("model").onchange = (e) =>{ 
+        var sel = DOM.qSel('#model option:checked').value;
+        chatUI.selectModel(sel); 
+      }; 
 
-      $("#chat_throbber").hide();
+      DOM.qHide("#chat_throbber");
       $("#thumb_up").hide();
       $("#thumb_down").hide();
       $("#alert-dlg").hide();

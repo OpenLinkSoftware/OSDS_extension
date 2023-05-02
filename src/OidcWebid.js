@@ -19,10 +19,6 @@
  */
 
  
-const { OIDCWebClient } = OIDC;
-const oidc_session = 'oidc.session';
-const oidc_clients = 'oidc.clients.';
-
 class myStore {
   constructor()
   {
@@ -71,43 +67,25 @@ class myStore {
 
 
 OidcWeb = function(data) {
-  this.webid = null;
   this.storage = null;
   this.session = null;
   this.jstore = new myStore();
+  this.IdP = null;
 
   const options = Browser.is_safari ? { solid: true, store: this.jstore} : { solid: true } ;
 
-  this.authClient = new OIDCWebClient(options);
-  this.login_url = 'https://openlinksoftware.github.io/oidc-web/login.html#relogin';
-  this.login2_url = 'https://openlinksoftware.github.io/oidc-web/login.html';
+  this.authClient = solidClientAuthentication.default;
+  this.login_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login.html#relogin';
+  this.login2_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login.html';
 }
 
 
 OidcWeb.prototype = {
   logout : async function()
   {
-    if (this.webid) {
-      var idp = '';
-      if (this.session) {
-        idp = this.session.issuer;
-        var key = oidc_clients+idp;
-        var rec = await this.localStore_get(key);
-
-        if (rec && rec[key]) {
-          if (Browser.is_safari)
-            this.jstore.setItem(oidc_clients+idp, rec[key]);
-          else
-            localStorage.setItem(oidc_clients+idp, rec[key]);
-        }
-
-        await this.authClient.logout();
-      }
-      await this.localStore_remove(oidc_session);
-      await this.localStore_remove(oidc_clients+idp);
-      this.webid = null;
-      this.storage = null;
-      this.session = null;
+    const session = this.authClient.getDefaultSession();
+    if (session && session.info && session.info.isLoggedIn) {
+      await this.authClient.logout();
     }
   },
 
@@ -192,57 +170,81 @@ OidcWeb.prototype = {
     }  
   },
 
+  extractIdp: function(url, data)
+  {
+    try {
+      const u = new URL(url);
+      const state = u.searchParams.get("state");
+      const session = JSON.parse(data['solidClientAuthenticationUser:'+state]);
+      if (session && session.sessionId) {
+        const session_data = JSON.parse(data['solidClientAuthenticationUser:'+session.sessionId]);
+        if (session_data && session_data.issuer) 
+          return session_data.issuer;
+      }
+    } catch (e) {
+      console.log(e);
+    }
+    return null;
+  },
+
+  restoreConn: async function()
+  {
+    const settings = new Settings();
+    this.IdP = null;
+
+    try {
+      const oidc_code = await settings.getValue('oidc_code');
+      if (oidc_code && oidc_code.length > 0) {
+        await settings.setValue('oidc_code', '');
+        const data = JSON.parse(atob(oidc_code));
+
+        for(var key in data) {
+          if (key.startsWith('issuerConfig:') || key.startsWith('solidClientAuthenticationUser:') || key.startsWith('oidc.'))
+          {
+            if (window.localStorage)
+              window.localStorage.setItem(key, data[key]);
+            else
+              window.sessionStorage.setItem(key, data[key]);
+          }
+        }
+
+        this.IdP = this.extractIdp(data.url, data);
+
+        const ret = await this.authClient.handleIncomingRedirect({url:data.url, restorePreviousSession: true});
+        //??console.log('ret = ', ret);
+        //??if (ret && ret.tokens)
+        //??  localStorage.setItem('myTokens', JSON.stringify(ret.tokens));
+
+        const session = this.authClient.getDefaultSession();
+        if (session.info && session.info.isLoggedIn && session.info.webId)
+          return session.info.webId;
+      }
+    } catch(e) {
+      console.log(e);
+    }
+    return null;
+  },
+
 
   isSessionForIdp: function(idp)
   {
-    return (this.session && this.session.issuer.startsWith(idp));
+    const session = this.authClient.getDefaultSession();
+    return (session && session.info && session.info.isLoggedIn && this.IdP && this.IdP.startsWith(idp));
+  },
+  
+  getWebId: function()
+  {
+    const session = this.authClient.getDefaultSession();
+    return (session && session.info && session.info.isLoggedIn) ? session.info.webId : null;
   },
   
   fetch: async function(url, options)
   {
-    return this.authClient.authFetch(url, options);
+    return this.authClient.fetch(url, options);
   },
 
   checkSession: async function() 
   {
-    try {
-      var rec = await this.localStore_get(oidc_session);
-
-      if (rec && rec[oidc_session]) {
-        var session = rec[oidc_session];
-        if (Browser.is_safari)
-          this.jstore.setItem(oidc_session, session);
-        else
-          localStorage.setItem(oidc_session, session);
-      } 
-      else {
-        if (Browser.is_safari)
-          this.jstore.removeItem(oidc_session);
-        else
-          localStorage.removeItem(oidc_session);
-      }
-
-      var prev_webid = this.webid;
-
-      this.session = await this.authClient.currentSession()
-      this.webid = (this.session.hasCredentials()) ? this.session.idClaims.sub : null;
-
-      if (prev_webid !== this.webid && this.webid) {
-        this.storage = (new URL(this.webid)).origin + '/';
-        var prof = await getWebIdProfile(this.webid);
-
-        if (prof.storage)
-          this.storage = prof.storage;
-        if (!this.storage.endsWith('/'))
-          this.storage += '/';
-      }
-
-      if (!this.webid)
-        this.storage = '';
-
-    } catch(e) {
-      console.log(e);
-    }
   },
 
   localStore_save: async function(key, val) 

@@ -47,4 +47,4 @@ for I_DIR in images lib; do
   tar --exclude 'original' -cf - -C $SRC_DIR/$I_DIR .|tar -xf - -C $DST_DIR/$I_DIR
 done
 
-rm $DST_DIR/lib/oidc-web.min.js.map
+rm $DST_DIR/lib/solid-client-authn.bundle.js.map

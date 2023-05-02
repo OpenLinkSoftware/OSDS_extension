@@ -41,6 +41,7 @@ var gData = {
         csv: null,
         rss: null,
         atom: null,
+        md: null,
 
         links: {}
       };
@@ -87,22 +88,8 @@ function showPopup(tabId)
     g_RestCons.show();
   }
 
-  Download_exec_update_state();
-
-  async function click_login() {
-     if (gOidc.webid) {
-       await gOidc.logout();
-       Download_exec_update_state();
-     } else {
-       gOidc.login();
-     }
-  } 
-
-  DOM.iSel("oidc-login-btn").onclick = (e) => { click_login() }
-  DOM.iSel("oidc-login-btn1").onclick = (e) => { click_login() }
 
   DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
-  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
   DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
@@ -176,7 +163,6 @@ async function loadPopup()
 {
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
-  $("#login-dlg").hide();
   $("#query_place").hide();
 
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
@@ -216,7 +202,7 @@ async function loadPopup()
   }
 }
 
-$(document).ready(function ()
+DOM.ready(() =>
 { 
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
@@ -339,7 +325,9 @@ function update_tab(tabname, title, val, err_tabs)
 
   $(`#${tabname}_items table.wait`).hide();
   $(`#${tabname}_items #docdata_view`).remove();
-  $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
+
+  if (tabname !== 'markdown')
+    $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
 
   if (val.html && val.html.trim().length > 0) {
       html += val.html;
@@ -354,7 +342,12 @@ function update_tab(tabname, title, val, err_tabs)
       }
   }
   if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-      $(`#${tabname}_items #docdata_view`).append(html);
+    if (tabname === 'markdown') {
+       var preview = $("#md_preview iframe").contents().find("body");
+       preview.get(0).innerHTML = html;
+    } else {
+       $(`#${tabname}_items #docdata_view`).append(html);
+    }
       return true;
   } else {
     $(`#tab-${tabname}`).hide();
@@ -372,6 +365,7 @@ async function update_tab_exec(tabname, title, block, err_tabs)
   return update_tab(tabname, title, val, err_tabs);
 }
 
+
 async function show_Data()
 {
   var cons = false;
@@ -385,6 +379,7 @@ async function show_Data()
   var csv = false;
   var rss = false;
   var atom = false;
+  var md = false;
   var html = "";
   var err_tabs = [];
   var bnode_types = {};
@@ -416,6 +411,9 @@ async function show_Data()
 
   if (gData.csv)
     csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
+
+  if (gData.md)
+    md = await update_tab_exec('markdown', 'Markdown', gData.md, err_tabs);
 
   if (gData.links.rss)
     rss = true;
@@ -459,6 +457,10 @@ async function show_Data()
   if (!csv) {
     $('#tab-csv').hide();
     $('#csv-save').hide();
+  }
+  if (!md) {
+    $('#tab-markdown').hide();
+//??    $('#markdown-save').hide();
   }
   if (rss) {
     $('#tab-rss').show();
@@ -533,6 +535,8 @@ async function parse_Data(dData)
     gData.rdf.add_nano(dData.rdf_nano.text);
 
     gData.csv = new CSV_Block(gData.baseURL, dData.csv_nano.text);
+
+    gData.md = new Markdown_Block(gData.baseURL, dData.md_nano.text);
 
     if (dData.posh.links) 
     {
@@ -734,59 +738,9 @@ function Prefs_exec()
 
 
 
-async function Login_exec()
-{
-  Download_exec_update_state();
-
-  var dlg = $( "#login-dlg" ).dialog({
-    resizable: true,
-    width:500,
-    height:200,
-    modal: true,
-    buttons: {
-      "OK": function() {
-        $(this).dialog( "destroy" );
-      }
-    }
-  });
-
-  return false;
-}
-
 
 function Download_exec_update_state() 
 {
-  try {
-    gOidc.checkSession().then(() => {
-      var webid = gOidc.webid;
-
-      var webid_href = document.getElementById('oidc-webid');
-      var webid1_href = document.getElementById('oidc-webid1');
-
-      webid1_href.href = webid_href.href = webid ? webid :'';
-      webid1_href.title = webid_href.title = webid ? webid :'';
-      webid1_href.style.display = webid_href.style.display = webid ? 'initial' :'none';
-
-      var oidc_login_btn = document.getElementById('oidc-login-btn');
-      var oidc_login_btn1 = document.getElementById('oidc-login-btn1');
-      oidc_login_btn1.innerText = oidc_login_btn.innerText 
-                                = webid ? 'Logout' : 'Login';
-
-      var login_tab = document.getElementById('login_btn');
-      if (webid) {
-        login_tab.title = "Logged as "+webid;
-        login_tab.src = "images/uid.png";
-      } else {
-        login_tab.title = "Solid Login";
-        login_tab.src = "images/slogin24.png";
-      }
-    });
-
-
-  } catch (e) {
-    console.log(e);
-  }
-
   
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
@@ -795,15 +749,12 @@ function Download_exec_update_state()
     $('#save-file').hide();
 
   if (cmd==='fileupload') {
-    $('#oidc-login').show();
     $('#oidc-upload').show();
   } 
   else if (cmd==='sparqlupload') {
-    $('#oidc-login').show();
     $('#oidc-upload').hide();
   }
   else {
-    $('#oidc-login').hide();
     $('#oidc-upload').hide();
   }
 
@@ -845,7 +796,9 @@ async function Download_exec()
 
   var _url = new URL(doc_URL);
   _url.hash = "osds";
-  $('#save-sparql-graph').val(_url.toString());
+
+  const graph = await settings.getValue('upload_sparql_graph');
+  DOM.iSel('save-sparql-graph').value = graph ? graph : _url.toString();
 
   $('#save-action').change(function() {
     Download_exec_update_state();
@@ -921,6 +874,9 @@ async function Download_exec()
   else if (selectedTab==="atom") {
     filename = "turtle_data.txt";
     fmt = "ttl";
+  }
+  else if (selectedTab==="markdown") {
+    return;
   }
 
 

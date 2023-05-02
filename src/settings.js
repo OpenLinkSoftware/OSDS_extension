@@ -197,6 +197,9 @@ class Settings {
       case "upload_sparql_timeout":
           val = "30";
           break;
+      case "upload_sparql_graph":
+          val = "";
+          break;
 
       case "ext.osds.pref.user.chk":
           val = "1";

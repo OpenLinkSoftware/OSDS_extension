@@ -283,6 +283,7 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       else if (headerContent.value.match(/\/(sparql\-results\+json)/) 
                || headerContent.value.match(/(application\/rdf\+json)/) 
                || headerContent.value.match(/(application\/json)/) 
+               || headerContent.value.match(/(application\/jrd\+json)/) 
                || headerContent.value.match(/(application\/odata\+json)/) 
                || headerContent.value.match(/(application\/microdata\+json)/) 
                ) 
