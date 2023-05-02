@@ -24,6 +24,7 @@ web pages using any of the following formats:
 - **CSV**
 - **RSS**
 - **Atom**
+- **Markdown Tables**
 
 ## License
 Copyright 2015-2022 [OpenLink Software](mailto:opensource@openlinksw.com)
