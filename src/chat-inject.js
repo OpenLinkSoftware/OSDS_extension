@@ -32,28 +32,51 @@
                  <OPTION id="json">JSON</OPTION>
                  <OPTION id="csv">CSV</OPTION>
                  <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
            </SELECT>
            </div>`;
 
+  function debounce(callback, wait) {
+    let timeout;
+    return (...args) => {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => callback.apply(context, args), wait);
+    };
+  }
+
+
+  DOM_htmlToElements = (html) => {
+    var template = document.createElement('template');
+    template.innerHTML = html;
+    return template.content.childNodes;
+  }
+
+
+  function scan_code()
+  {
+    const lst = document.querySelectorAll('pre');
+    if (lst.length > 0) {
+        for(const v of lst) {
+          const title = v.children[0].children[0];
+          const btn_copy = title.querySelector('button');
+          const dd_el = title.querySelector('#code_type');
+          if (!dd_el) {
+            title.insertBefore(DOM_htmlToElements(dropDown)[0], btn_copy);
+          }
+        }
+    }
+  }
 
 
   var gMutationObserver = new MutationObserver(debounce((v) => {
 //      console.log('page was updated');
       if (g_top) {
 //        console.log('start scan for code');
-        const lst = document.querySelectorAll('pre');
-        if (lst.length > 0) {
-            for(const v of lst) {
-              const title = v.children[0].children[0];
-              const btn_copy = title.querySelector('button');
-              const dd_el = title.querySelector('#code_type');
-              if (!dd_el) {
-                title.insertBefore(DOM_htmlToElements(dropDown)[0], btn_copy);
-              }
-            }
-        }
+        scan_code();
       }
     }, 500));
+
 
   DOM_ready = (fn) => {
     // If we're early to the party
@@ -70,6 +93,8 @@
 //    console.log('ready start');
 
     try {
+      scan_code();
+
 //      g_top = document.querySelector('div#__next main');
       g_top = document.querySelector('div#__next');
       if (g_top) {
@@ -109,20 +134,6 @@
       console.log("OSDS:" + e);
     }
 
-/**      
-      const _url = new URL(location.href);
-      if (_url.hash.length > 1) {
-        const par = new URLSearchParams(_url.hash.substring(1));
-
-        _url.hash = '#';
-        location.href = _url.toString();
-      
-        if (par.size > 0 && par.has('prompt') && par.has('url'))
-          update_prompt(par.get('prompt'), par.get('url'));
-      }
- **/
-
-
   });
 
 
@@ -151,23 +162,6 @@
     txtArea.classList.remove('resize-none');
     txtArea.classList.add('resize');
     txtArea.style['overflow-y'] = 'auto';
-  }
-
-
-  function debounce(callback, wait) {
-    let timeout;
-    return (...args) => {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => callback.apply(context, args), wait);
-    };
-  }
-
-
-  DOM_htmlToElements = (html) => {
-    var template = document.createElement('template');
-    template.innerHTML = html;
-    return template.content.childNodes;
   }
 
 

@@ -423,6 +423,16 @@
               }
             }
           }
+          else if (el_type === 'markdown') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.md.push(el_code.textContent);
+              }
+            }
+          }
         }
 
       return nano;

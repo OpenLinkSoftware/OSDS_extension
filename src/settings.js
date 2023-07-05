@@ -106,14 +106,14 @@ class Settings {
 
     this.def_prompt_query = ''
   +'Disregard any previous instructions. \n'
-  +'Generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation, and ## Turtle Start ## and ## Turtle End ## included in the generated code-block. \n'
+  +'Using a code-block, generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation, with ## Turtle Start ## and ## Turtle End ## also included in the generated code-block. \n'
   +'"""\n'
   +'{selected_text}\n'
-  +'"""\n';
+  +'"""\n\n\n\n\n';
+
 /**
   +'Disregard any previous instructions. \n'
-  +'Generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation. \n'
-  +'\n'
+  +'Generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation, and ## Turtle Start ## and ## Turtle End ## included in the generated code-block. \n'
   +'"""\n'
   +'{selected_text}\n'
   +'"""\n';
