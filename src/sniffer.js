@@ -1239,46 +1239,55 @@
             // wait data req from extension
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                if (request.property == "req_doc_data") {
+                if (request.property === "req_doc_data") {
                     request_doc_data();
                     sendResponse({ping:1});
                     return true;
                  }
-                else if (request.property == "open_tab")
+                else if (request.property === "open_tab")
                     request_open_tab(request.url, sender);
                 else if (request.property == "super_links_data") {
                     inject_super_links_popup();
                     add_super_links(sender, request.data);
                 }
-                else if (request.property == "super_links_msg_show") {
+                else if (request.property === "super_links_msg_show") {
                     if (request.message) {
                       inject_super_links_popup();
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
                       DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
-                else if (request.property == "super_links_msg_hide") {
+                else if (request.property === "super_links_msg_hide") {
                     var el = DOM.qSel('.super_links_msg');
                     if (el)
                       el.style.display = 'none';
                 }
-                else if (request.property == "super_links_snackbar") {
+                else if (request.property === "super_links_snackbar") {
                     inject_super_links_popup();
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
                 }
-                else if (request.property == "osds_msg_show") {
+                else if (request.property === "osds_msg_show") {
                     if (request.message) {
                       inject_osds_popup();
                       DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
                       DOM.qSel('.osds_popup').style.display = 'block';
                     }
                 }
-                else if (request.property == "osds_msg_hide") {
+                else if (request.property === "osds_msg_hide") {
                     var el = DOM.qSel('.osds_popup');
                     if (el)
                       el.style.display = 'none';
+                }
+                else if (request.cmd === "page_content") {
+                    var page_content = document.body.innerText;
+
+                    if (!page_content|| (page_content && page_content.length == 0))
+                      page_content = getSelectionString(document.body, window);
+
+                    sendResponse({page_content});
+                    return true;
                 }
             });
 

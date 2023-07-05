@@ -595,7 +595,12 @@ if (Browser.is_ff || Browser.is_chrome) {
     Browser.api.contextMenus.create(
         {"title": "Ask ChatGPT", 
          "contexts":["selection"],
-         "onclick": askChatGPT});
+         "onclick": askChatGPT_selection});
+
+    Browser.api.contextMenus.create(
+        {"title": "Ask ChatGPT for Page Content", 
+         "contexts":["page"],
+         "onclick": askChatGPT_page_content});
 
          
   } catch(e) {
@@ -637,9 +642,9 @@ async function openChatWin()
   }
 }
 
-function askChatGPT(info, tab) 
+function askChatGPT(ask, tab, mode) 
 {
-  const new_ask = {text:info.selectionText, url:info.pageUrl};
+  ask["mode"] = mode;
   if (g_chatTab) {
     Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"}, 
       function(resp)
@@ -647,23 +652,40 @@ function askChatGPT(info, tab)
         if (resp && resp.ping === 1) {
           // GPT window opened
           if (resp.winId && resp.tabId) {
-            activateChatWin(resp.winId, resp.tabId, {text:info.selectionText, url:info.pageUrl});
+            activateChatWin(resp.winId, resp.tabId, ask);
           }
           else {
-            g_waited_ask = new_ask;
+            g_waited_ask = ask;
             openChatWin();
           }
         }
         else {
-          g_waited_ask = new_ask;
-          openChatWin();;
+          g_waited_ask = ask;
+          openChatWin();
         }
       });
   }
   else {
-    g_waited_ask = new_ask;
-    openChatWin();;
+    g_waited_ask = ask;
+    openChatWin();
   }
+}
+
+function askChatGPT_selection(info, tab) 
+{
+  askChatGPT({text:info.selectionText, url:info.pageUrl}, tab, 'selection');
+}
+
+function askChatGPT_page_content(info, tab) 
+{
+  Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"},
+    function(resp)
+    {
+      if (resp && resp.page_content) {
+        console.log(resp);
+        askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
+      }
+    });
 }
 
 Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
