@@ -38,6 +38,7 @@ var gData = {
         rdf: null,
         rdfa: null,
         json: null,
+        jsonl: null,
         csv: null,
         rss: null,
         atom: null,
@@ -376,6 +377,7 @@ async function show_Data()
   var rdf = false;
   var posh = false;
   var json = false;
+  var jsonl = false;
   var csv = false;
   var rss = false;
   var atom = false;
@@ -408,6 +410,9 @@ async function show_Data()
 
   if (gData.json)
     json = await update_tab_exec('json', 'JSON', gData.json, err_tabs);
+
+  if (gData.jsonl)
+    jsonl = await update_tab_exec('jsonl', 'JSONL', gData.jsonl, err_tabs);
 
   if (gData.csv)
     csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
@@ -452,8 +457,14 @@ async function show_Data()
   }
   if (!json) {
     $('#tab-json').hide();
+  }
+  if (!jsonl) {
+    $('#tab-jsonl').hide();
+  }
+  if (!jsonl && !json) {
     $('#json-save').hide();
   }
+
   if (!csv) {
     $('#tab-csv').hide();
     $('#csv-save').hide();
@@ -522,6 +533,7 @@ async function parse_Data(dData)
     gData.jsonld.add_nano(dData.jsonld_nano.text);
 
     gData.json = new JSON_Block(gData.baseURL, dData.json_nano.text);
+    gData.jsonl = new JSONL_Block(gData.baseURL, dData.jsonl_nano.text);
 
     gData.turtle = new TTL_Block(gData.baseURL, dData.turtle.text);
     await gData.turtle.add_nano(dData.ttl_nano.text);
@@ -858,7 +870,7 @@ async function Download_exec()
     filename = "posh_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="json") {
+  else if (selectedTab==="json" || selectedTab==="jsonl") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
@@ -1048,6 +1060,8 @@ async function prepare_data(for_query, curTab, fmt)
       block = gData.jsonld;
     else if (curTab==="json")
       block = gData.json;
+    else if (curTab==="jsonl")
+      block = gData.jsonl;
     else if (curTab==="turtle")
       block = gData.turtle;
     else if (curTab==="micro")

@@ -153,6 +153,7 @@
             <div id="rdf-save">    <input id="rdf-chk" type="checkbox">RDF/XML</div>
             <div id="posh-save">   <input id="posh-chk" type="checkbox">POSH</div>
             <div id="json-save">   <input id="json-chk" type="checkbox">JSON</div>
+            <div id="jsonl-save">  <input id="jsonl-chk" type="checkbox">JSONL</div>
             <div id="csv-save">    <input id="csv-chk" type="checkbox">CSV</div>
             <div id="rss-save">    <input id="rss-chk" type="checkbox">RSS</div>
             <div id="atom-save">    <input id="atom-chk" type="checkbox">Atom</div>
@@ -309,6 +310,22 @@
             JSON
           </label>
           <div id="json_items" class="tab-content" role="tabpanel" aria-hidden="true">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
+        <li id="tab-jsonl">
+          <input type="radio" name="tabs" id="itab-jsonl" />
+          <label for="itab-jsonl" role="tab" aria-selected="false" tabindex="0"
+                 title="Metadata encoded using JSONL Notation" >
+            JSONL
+          </label>
+          <div id="jsonl_items" class="tab-content" role="tabpanel" aria-hidden="true">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>

@@ -31,12 +31,13 @@
     var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null, md:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, jsonl:null, csv:null, md:null};
     var data_found = false;
 
     var ttl_nano_pattern = /(^\s*## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(^\s*## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
     var jsonld_nano_pattern = /(^\s*## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON-LD +(End|Stop) ##))(.*)/gmi;
     var json_nano_pattern = /(^\s*## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON +(End|Stop) ##))(.*)/gmi;
+    var jsonl_nano_pattern = /(^\s*## JSONL +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSONL +(End|Stop) ##))(.*)/gmi;
     var csv_nano_pattern = /(^\s*## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## CSV +(End|Stop) ##))(.*)/gmi;
     var rdf_nano_pattern = /(^\s*## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
     var md_nano_pattern = /(^\s*## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Markdown +(End|Stop) ##))(.*)/gmi;
@@ -158,7 +159,7 @@
         var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
         var comment = /^ *#/;
         var doc_Texts = [];
-        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[]};
 
         function isWhitespace(c) 
         {
@@ -304,6 +305,29 @@
                 }
 
 
+                //try get JSONL Nano
+                while (true) {
+                    var ndata = jsonl_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        var add = false;
+                        for (var c = 0; c < str.length; c++) {
+                            add = (str[c] === "{" || str[c] === "[") ? true : false;
+                            if (add)
+                                break;
+                            if (!isWhitespace(str[c]))
+                                break;
+                        }
+
+                        if (add)
+                            ret.jsonl.push(str);
+                    }
+                }
+
+
                 //try get CSV Nano
                 while (true) {
                     var ndata = csv_nano_pattern.exec(s_doc);
@@ -333,10 +357,11 @@
 
 
         if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 
-            || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0 || ret.md.length > 0)
+            || ret.rdf.length > 0|| ret.json.length > 0 || ret.jsonl.length > 0 
+            || ret.csv.length > 0 || ret.md.length > 0)
             return {exists: true, data: ret}; 
         else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]}};
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[]}};
     }
 
 
@@ -996,6 +1021,7 @@
                     ttl_curly_nano: {text: null},
                     jsonld_nano: {text: null},
                     json_nano: {text: null},
+                    jsonl_nano: {text: null},
                     rdf_nano: {text: null},
                     csv_nano: {text: null},
                     md_nano: {text: null},
@@ -1069,6 +1095,7 @@
                 docData.ttl_curly_nano.text = nano.ttl_curly;
                 docData.jsonld_nano.text = nano.jsonld;
                 docData.json_nano.text = nano.json;
+                docData.jsonl_nano.text = nano.jsonl;
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
                 docData.md_nano.text = nano.md;
@@ -1104,6 +1131,7 @@
                     || (nano.ttl_curly && nano.ttl_curly.length > 0)
                     || (nano.jsonld  && nano.jsonld.length > 0)
                     || (nano.json    && nano.json.length > 0)
+                    || (nano.jsonl   && nano.jsonl.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
                     || (nano.md      && nano.md.length > 0)

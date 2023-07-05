@@ -94,6 +94,12 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       ext = "json";
       could_handle = true;
     }
+    else if (path_name.endsWith(".jsonl")) {
+      handle = true;
+      type = "jsonl";
+      ext = "jsonl";
+      could_handle = true;
+    }
     else if (handle_csv && path_name.endsWith(".csv")) {
       handle = handle_csv;
       type = "csv";
@@ -292,6 +298,12 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         type = "json";
         could_handle = true;
       }
+      else if (headerContent.value.match(/(application\/jsonl)/)) 
+      {
+        handle = true;
+        type = "jsonl";
+        could_handle = true;
+      }
       else {
         content_type = headerContent.value;
       }
@@ -343,6 +355,12 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
           handle = true;
           type = "jsonld";
           ext = "jsonld";
+          could_handle = true;
+        }
+        else if (url_path.endsWith(".jsonl")) {
+          handle = true;
+          type = "jsonl";
+          ext = "jsonl";
           could_handle = true;
         }
         else if (url_path.endsWith(".xml")) {
