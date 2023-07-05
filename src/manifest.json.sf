@@ -3,7 +3,7 @@
   "short_name": "OSD Sniffer",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
@@ -40,6 +40,11 @@
       "js": ["frame.js"],
       "run_at": "document_idle",
       "all_frames": true
+    },
+    {
+      "matches": ["https://chat.openai.com/*"],
+      "js": ["chat-inject.js"],
+      "run_at": "document_idle"
     }
   ],
   "permissions": [
