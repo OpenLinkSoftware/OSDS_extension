@@ -614,9 +614,9 @@ async function savePref()
    await gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
    await gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
-   var pref_user = DOM.qSel('#pref_user option:checked').text;
-   await gPref.setValue("ext.osds.pref.user", pref_user);
-
+   var pref_user = DOM.qSel('#pref_user option:checked');
+   if (pref_user)
+     await gPref.setValue("ext.osds.pref.user", pref_user.text);
 
    var import_srv = DOM.qSel('#import-srv option:checked').id;
    await gPref.setValue("ext.osds.import.srv", import_srv);
