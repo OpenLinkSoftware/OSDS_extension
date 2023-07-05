@@ -106,17 +106,19 @@ class Settings {
 
     this.def_prompt_query_turtle = ''
   +'Disregard any previous instructions. \n'
-  +'Using a code-block, generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation, with ## Turtle Start ## and ## Turtle End ## also included in the generated code-block. \n'
+  +'Using a code-block, generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation.\n'
   +'"""\n'
   +'{selected_text}\n'
   +'"""\n\n';
 
+
     this.def_prompt_query_jsonld = ''
   +'Disregard any previous instructions. \n'
-  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly, with ## JSON-LD Start ## and ## JSON-LD End ## also included in the generated code-block. Note, I don\'t want any HTML tags included in the output. \n'    
+  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note, I don\'t want any HTML tags included in the output. \n'
   +'"""\n'
   +'{selected_text}\n'
   +'"""\n\n';
+  
 
     this._data = (data!== undefined && data!==null) ? data:null;
   }

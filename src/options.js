@@ -468,7 +468,6 @@ async function savePref()
 
 
    Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});
-   closeOptions();
 }
 
 
