@@ -85,31 +85,46 @@ async function init()
     console.log(e);
   }
 
-  $('#uiterm-mode').change(function() {
-      var cmd = $('#sparql-cmd option:selected').attr('id');
-      yasqe_srv.setValue(createSparqlQuery(cmd));
-  });
+  DOM.iSel('uiterm-mode').onchange = async (e) => {
+      var cmd = DOM.qSel('#sparql-cmd option:checked').id;
+      yasqe_srv.setValue(await createSparqlQuery(cmd));
+  };
 
-  $('#import-srv').change(function() {
+  DOM.iSel('import-srv').onchange = (e) => {
 	setTimeout(enableCtrls,200);
-  });
+  };
 
-  $('#sparql-cmd').change(function() {
-	var cmd = $('#sparql-cmd option:selected').attr('id');
-	 yasqe_srv.setValue(createSparqlQuery(cmd));
-  });
+  DOM.iSel('sparql-cmd').onchange = async (e) => {
+	var cmd = DOM.qSel('#sparql-cmd option:checked').id;
+	yasqe_srv.setValue(await createSparqlQuery(cmd));
+  };
 
-  $('#chk_try_handle_all').change(changeHandleAll);
-  $('#OK_btn').click(savePref);
-  $('#Cancel_btn').click(closeOptions);
+  DOM.iSel('chk_try_handle_all').onchange = () => { changeHandleAll() };
+  DOM.iSel('OK_btn').onclick = () => { savePref() }
+  DOM.iSel('Cancel_btn').onclick = () => { closeOptions() }
 
-  $('#import-set-def').click(setImportDefaults);
-  $('#rww-set-def').click(setRWWDefaults);
-  $('#sparql-set-def').click(setSparqlDefaults);
-  $('#super-links-set-def').click(setSuperLinksDefaults);
+  DOM.iSel('import-set-def').onclick = () => { setImportDefaults() }
+  DOM.iSel('rww-set-def').onclick = () => { setRWWDefaults() }
+  DOM.iSel('sparql-set-def').onclick = () => { setSparqlDefaults() }
+  DOM.iSel('super-links-set-def').onclick = () => { setSuperLinksDefaults() }
 
-  $('#call_edit_users').click(call_edit_users);
+  DOM.iSel('call_edit_users').onclick = () => { call_edit_users() }
 
+
+
+  DOM.iSel('def-prompt').onchange = (e) => {
+    var v = DOM.qSel('#def-prompt option:checked').id;
+    if (v === 'prompt-json') 
+      DOM.iSel('prompt-query').value = gPref.def_prompt_query_jsonld;
+    else if (v=== 'prompt-turtle')
+      DOM.iSel('prompt-query').value = gPref.def_prompt_query_turtle;
+  }
+  DOM.iSel('prompt-set-def').onclick = (e) => {
+    DOM.iSel('prompt-query').value = gPref.def_prompt_query_jsonld;
+    DOM.qSel('#gpt-model #gpt35').selected=true;
+    DOM.qSel('#def-prompt #prompt-json').selected=true;
+  } 
+  
   await enableCtrls();
 
   $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
@@ -376,6 +391,9 @@ async function loadPref()
 
 
     DOM.iSel('prompt-query').value = await gPref.getValue("ext.osds.prompt-query");
+
+    var model = await gPref.getValue("ext.osds.gpt-model");
+    DOM.qSel('#gpt-model #'+model).selected=true;
 }
 
 
@@ -398,7 +416,7 @@ async function savePref()
    await gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
    await gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
-   var pref_user = $('#pref_user option:selected').text();
+   var pref_user = DOM.qSel('#pref_user option:checked').text;
    await gPref.setValue("ext.osds.pref.user", pref_user);
 
 
@@ -445,7 +463,8 @@ async function savePref()
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
-   await gPref.setValue("ext.osds.prompt-query", DOM.iSel('prompt-query').value.trim());
+   await gPref.setValue("ext.osds.prompt-query", DOM.iSel('prompt-query').value);
+   await gPref.setValue("ext.osds.gpt-model", DOM.qSel('#gpt-model option:checked').id);
 
 
    Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});

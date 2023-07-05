@@ -608,9 +608,15 @@ var g_waited_ask = null;
 
 async function activateChatWin(winId, tabId, ask, timeout)
 {
-  Browser.api.windows.update(winId, {focused: true}, (window) => {
+  if (Browser.is_ff) {
+    await Browser.api.windows.update(winId, {focused: true});
+    await Browser.api.tabs.update(tabId, {active: true});
+  } 
+  else {
+    Browser.api.windows.update(winId, {focused: true}, (window) => {
       Browser.api.tabs.update(tabId, {active: true})
-  })
+    })
+  }
 
   if (timeout > 0)
     await sleep(timeout);
@@ -618,14 +624,17 @@ async function activateChatWin(winId, tabId, ask, timeout)
   Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:ask.text, url:ask.url});
 }
 
-function openChatWin()
+async function openChatWin()
 {
   const chat_url = "https://chat.openai.com";
   // Open GPT window
   if (Browser.is_ff)
     Browser.api.tabe.create({url:chat_url});
-  else
-    window.open(chat_url);
+  else {
+    const model = await setting.getValue('ext.osds.gpt-model');
+    const _url = chat_url+(model==='gpt4'?'/?model=gpt-4':'/?model=text-davinci-002-render-sha')
+    window.open(_url);
+  }
 }
 
 function askChatGPT(info, tab) 
@@ -655,7 +664,6 @@ function askChatGPT(info, tab)
     g_waited_ask = new_ask;
     openChatWin();;
   }
-/***/
 }
 
 Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
@@ -675,7 +683,7 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     else if (request.cmd === "gpt_window_unreg")  {  //receive that chat is opened
       const tab = sender.tab;
       g_waited_ask = null;
-      //??TODO unreg wind
+      g_chatTab = null;
     }
   } catch(e) {
     console.log("OSDS: onMsg="+e);

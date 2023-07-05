@@ -158,10 +158,12 @@
     prompt_query = prompt_query.replace("{url}", url);
 
     const txtArea = document.getElementById('prompt-textarea');
-    txtArea.value = prompt_query;
+    txtArea.focus();
+    window.document.execCommand('insertText', false, prompt_query);
+//??--    txtArea.value = prompt_query;
     txtArea.classList.remove('resize-none');
     txtArea.classList.add('resize');
-    txtArea.style['overflow-y'] = 'auto';
+//    txtArea.style['overflow-y'] = 'auto';
   }
 
 

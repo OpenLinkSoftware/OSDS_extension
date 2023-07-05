@@ -337,12 +337,26 @@
 
 	<div id="tabs-4">
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
-            <div class="ritem">
-              Default Prompt:
-<!--
-              <input id="prompt-id" style="WIDTH: 495px;margin-left:20px;">
--->
-            </div>
+            <table>
+              <tr>
+                <td style="width:100px; text-align:right;">GPT Model: </td>
+                <td> 
+                  <SELECT class="ml5" id="gpt-model" style="WIDTH: 200px" >
+                    <OPTION id="gpt35" selected>GPT 3.5</OPTION>
+                    <OPTION id="gpt4">GPT 4</OPTION>
+                  </SELECT>
+                </td>
+              </tr>
+              <tr>
+                <td style="width:100px; text-align:right;">Default Prompt:</td>
+                <td>
+                  <SELECT class="ml5" id="def-prompt" style="WIDTH: 200px" >
+                    <OPTION id="prompt-json">JSON-LD</OPTION>
+                    <OPTION id="prompt-turtle">Turtle</OPTION>
+                  </SELECT>
+                </td>
+              </tr>
+            </table>
           
             <div style="width: 550px; height: 450px; padding-top:5px">
               <textarea id="prompt-query" style="width: 550px; height: 450px">

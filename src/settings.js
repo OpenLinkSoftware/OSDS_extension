@@ -104,12 +104,18 @@ class Settings {
   +'order by ?extractLabel ?entityType \n';
 
 
-    this.def_prompt_query = ''
+    this.def_prompt_query_turtle = ''
   +'Disregard any previous instructions. \n'
   +'Using a code-block, generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation, with ## Turtle Start ## and ## Turtle End ## also included in the generated code-block. \n'
   +'"""\n'
   +'{selected_text}\n'
-  +'"""\n\n\n\n\n';
+  +'"""\n\n';
+    this.def_prompt_query_jsonld = ''
+  +'Disregard any previous instructions. \n'
+  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, relative hash-based hyperlinks for subject and object denotation, with ## JSON-LD Start ## and ## JSON-LD End ## also included in the generated code-block. \n'
+  +'"""\n'
+  +'{selected_text}\n'
+  +'"""\n\n';
 
 /**
   +'Disregard any previous instructions. \n'
@@ -289,7 +295,10 @@ class Settings {
           break;
 
       case "ext.osds.prompt-query":
-          val = this.def_prompt_query;
+          val = this.def_prompt_query_jsonld;
+          break;
+      case "ext.osds.gpt-model":
+          val = 'gpt35';
           break;
     }
     return val;
