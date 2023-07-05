@@ -627,11 +627,25 @@ async function activateChatWin(winId, tabId, ask, timeout)
     await sleep(timeout);
 
   const model = await setting.getValue('ext.osds.gpt-model');
+  var max_len = parseInt(await setting.getValue('ext.osds.gpt-tokens'), 10);
+  if (max_len == 0)
+    max_len = 4096;
+  
 ///gpt-35 max_tokens = 4096
 // gpt4 max-tokens = 8192  // 32768
-  const max_len = model === 'gpt4' ? 8192 : 4096;
+  const myprompt = await setting.getValue('ext.osds.prompt');
 
-  var prompt_query = await setting.getValue('ext.osds.prompt-query');
+  var prompt_query = setting.def_prompt_query_jsonld;
+
+  if (myprompt) {
+    if (myprompt.myid === 'jsonld')
+      prompt_query = setting.def_prompt_query_jsonld;
+    else if (myprompt.myid === 'turtle')
+      prompt_query = setting.def_prompt_query_turtle;
+    else if (myprompt.text && myprompt.text.length > 1)
+      prompt_query = myprompt.text;
+  }
+
   prompt_query = prompt_query.replace("{page_url}", ask.url);
 
   const pattern_len = gpt3encoder.countTokens(prompt_query);
@@ -646,7 +660,7 @@ async function activateChatWin(winId, tabId, ask, timeout)
   }
 
   prompt_query = prompt_query.replace("{selected_text}", text);
-  console.log(prompt_query);
+//  console.log(prompt_query);
 
   Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:prompt_query});
 }

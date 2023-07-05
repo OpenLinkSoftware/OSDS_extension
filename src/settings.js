@@ -295,6 +295,12 @@ class Settings {
       case "ext.osds.gpt-model":
           val = 'gpt35';
           break;
+      case "ext.osds.gpt-tokens":
+          val = '4096';
+          break;
+      case "ext.osds.prompt-lst":
+          val = [];
+          break;
     }
     return val;
   }
