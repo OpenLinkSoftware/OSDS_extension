@@ -522,6 +522,25 @@ class ChatUI {
       DOM.qSel('#model').disabled = true;
   }
 
+  updateModelList(list)
+  {
+    this.models = list;
+    const sel = DOM.iSel('model');
+
+    sel.innerHTML = '';
+    for(const i of this.models) {
+        var opt = document.createElement('option');
+        opt.id = i.slug;
+        opt.value = i.slug;
+        if (i.title.toLowerCase().indexOf('gpt')!=-1)
+           opt.text = i.title; //'Def(GPT-3.5)';
+        else
+           opt.text = i.title + ' ( '+ i.tags.join(', ')+' )';
+        sel.appendChild(opt);
+    }
+
+  }
+
 
   async _load_conversation(el) 
   {
@@ -602,7 +621,7 @@ class ChatUI {
       this.account_plan = rc.account_plan;
     } catch(e) {
       this._endThrobber();
-      log.console(e);
+      console.log(e);
     }
 
     try {
@@ -612,24 +631,12 @@ class ChatUI {
         this.append_msg(` --- Could not load list of supported models :${rc.message} --- \n`);
         return 0;
       }
-      this.models = rc.models;
-      const sel = DOM.iSel('model');
 
-      for(const i of this.models) {
-        var opt = document.createElement('option');
-        opt.id = i.slug;
-        opt.value = i.slug;
-        if (i.title.toLowerCase().indexOf('gpt')!=-1)
-           opt.text = i.title; //'Def(GPT-3.5)';
-        else
-           opt.text = i.title + ' ( '+ i.tags.join(', ')+' )';
-        sel.appendChild(opt);
-      }
-
+      this.updateModelList(rc.models);
       this.enableModelList(this.models.length > 1);
     } catch(e) {
       this._endThrobber();
-      log.console(e);
+      console.log(e);
     }
 
     try {
@@ -689,6 +696,13 @@ class ChatUI {
   async exec()
   {
     var accessToken, ok;
+
+    const model = this.chat.getModel();
+    if (model === 'gpt-4-browsing' || model === 'gpt-4-plugins' || model === 'gpt-4-mobile')
+    {
+      alert("Sending prompts for this model isn't supported yet.");
+      return;
+    }
 
     this._startThrobber();
 
