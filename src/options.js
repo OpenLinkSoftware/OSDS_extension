@@ -389,11 +389,11 @@ async function loadPref()
     DOM.iSel('super-links-retries').value = await gPref.getValue("ext.osds.super_links.retries");
     DOM.iSel('super-links-retries-timeout').value = await gPref.getValue("ext.osds.super_links.retries_timeout");
 
+    var model = await gPref.getValue("ext.osds.gpt-model");
+    DOM.qSel('#gpt-model #'+model).selected=true;
 
     DOM.iSel('prompt-query').value = await gPref.getValue("ext.osds.prompt-query");
 
-    var model = await gPref.getValue("ext.osds.gpt-model");
-    DOM.qSel('#gpt-model #'+model).selected=true;
 }
 
 

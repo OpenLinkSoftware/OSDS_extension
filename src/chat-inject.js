@@ -126,7 +126,7 @@
                return true;
             }
             else if (request.cmd === "gpt_prompt") {
-              update_prompt(request.text, request.url);
+              update_prompt(request.text);
             }
       });
 
@@ -146,24 +146,16 @@
   }
 
 
-  async function update_prompt(txt, url)
+  async function update_prompt(txt)
   {
     if (!txt)
       return;
 
-    const pref = new Settings();
-    const _url = url ?? '';
-    var prompt_query = await pref.getValue('ext.osds.prompt-query');
-    prompt_query = prompt_query.replace("{selected_text}", txt);
-    prompt_query = prompt_query.replace("{page_url}", url);
-
     const txtArea = document.getElementById('prompt-textarea');
     txtArea.focus();
-    window.document.execCommand('insertText', false, prompt_query);
-//??--    txtArea.value = prompt_query;
+    window.document.execCommand('insertText', false, txt);
     txtArea.classList.remove('resize-none');
     txtArea.classList.add('resize');
-//    txtArea.style['overflow-y'] = 'auto';
   }
 
 

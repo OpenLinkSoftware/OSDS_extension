@@ -626,7 +626,29 @@ async function activateChatWin(winId, tabId, ask, timeout)
   if (timeout > 0)
     await sleep(timeout);
 
-  Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:ask.text, url:ask.url});
+  const model = await setting.getValue('ext.osds.gpt-model');
+///gpt-35 max_tokens = 4096
+// gpt4 max-tokens = 8192  // 32768
+  const max_len = model === 'gpt4' ? 8192 : 4096;
+
+  var prompt_query = await setting.getValue('ext.osds.prompt-query');
+  prompt_query = prompt_query.replace("{page_url}", ask.url);
+
+  const pattern_len = gpt3encoder.countTokens(prompt_query);
+
+  var text = ask.text; 
+  var txt_encoded = gpt3encoder.encode(text);
+
+  if (pattern_len + txt_encoded.length > max_len) {
+    const len = Math.max(1, max_len - pattern_len);
+    txt_encoded.splice(len);
+    text = gpt3encoder.decode(txt_encoded);
+  }
+
+  prompt_query = prompt_query.replace("{selected_text}", text);
+  console.log(prompt_query);
+
+  Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:prompt_query});
 }
 
 async function openChatWin()
@@ -690,7 +712,7 @@ function askChatGPT_page_content(info, tab)
   function handle_resp(resp)
   {
     if (resp && resp.page_content) {
-      console.log(resp);
+//      console.log(resp);
       askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
     }
   }
@@ -725,7 +747,6 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       g_chatTab = null;
     }
     else if (request.cmd === "gpt_page_content" && request.tabId)  {
-      console.log(request);
       askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
     }
   } catch(e) {
