@@ -23,12 +23,24 @@
 (function () {
 
   var g_super_links = null;
+  var g_chatTab = null; //{windowId:0, tabId:0};
 
   var $ = jQuery;
   var chatUI;
 
+    async function init() 
+    {
+      try {
+        const v = await getCurTab();
+        if (v && v.length > 0)
+          g_chatTab = v[0];
+      } catch(e) {}
+    }
+
     DOM.ready(() =>
     {
+      init();
+
       if ($(".osds_popup").length == 0) {
          $('body').append(
            `<div class="osds_popup">
@@ -79,25 +91,30 @@
 
 
       try {
-
           Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) 
           {
-                if (request.property == "req_doc_data") {
+                if (request.property === "req_doc_data") {
                     request_doc_data();
                     sendResponse({ping:1});
                     return;
                  }
-                else if (request.property == "open_tab") {
+                else if (request.property === "open_tab") {
                     request_open_tab(request.url, sender);
                 }
-                else if (request.property == "osds_msg_show") {
+                else if (request.property === "osds_msg_show") {
                     if (request.message) {
                       DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
                       DOM.qSel('.osds_popup').style.display = 'block';
                     }
                 }
-                else if (request.property == "osds_msg_hide") {
+                else if (request.property === "osds_msg_hide") {
                     DOM.qSel('.osds_popup').style.display = 'none';
+                }
+                else if (request.cmd === "gpt_window") {
+                  sendResponse({ping:1, tab:g_chatTab.id, win:g_chatTab.windowId});
+                }
+                else if (request.cmd === "gpt_prompt") {
+                  update_prompt(request.text, request.url);
                 }
 
                 sendResponse({});  // stop
@@ -116,9 +133,37 @@
       }
 
       
-      chatUI.load_history(true, 0);
+      chatUI.load_history(true, 0).then((rc) => {
+        if (rc == 1) {
+          const _url = new URL(location.href);
+          if (_url.hash.length > 1) {
+            const par = new URLSearchParams(_url.hash.substring(1));
+
+            _url.hash = '#';
+            location.href = _url.toString();
+         
+            if (par.size > 0 && par.has('prompt') && par.has('url'))
+              update_prompt(par.get('prompt'), par.get('url'));
+          }
+        }
+      });
+
   });
 
+
+    async function update_prompt(txt, url)
+    {
+      if (!txt)
+        return;
+
+      const pref = new Settings();
+      const _url = url ?? '';
+      var prompt_query = await pref.getValue('ext.osds.prompt-query');
+      prompt_query = prompt_query.replace("{selected_text}", txt);
+      prompt_query = prompt_query.replace("{url}", url);
+
+      DOM.iSel('chat_req').value = prompt_query;
+    }
 
 
     function showInfo(msg)

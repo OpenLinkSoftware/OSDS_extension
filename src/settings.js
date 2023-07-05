@@ -102,6 +102,17 @@ class Settings {
   +'  } \n'
   +'} \n'
   +'order by ?extractLabel ?entityType \n';
+
+
+    this.def_prompt_query = ''
+  +'Disregard any previous instructions. \n'
+  +'Generate a representation of this information in RDF-Turtle using schema.org terms and relative hash-based hyperlinks for subject and object denotation. \n'
+  +'\n'
+  +'"""\n'
+  +'{selected_text}\n'
+  +'"""\n';
+
+
     this._data = (data!== undefined && data!==null) ? data:null;
   }
 
@@ -269,6 +280,10 @@ class Settings {
           break;
       case "ext.osds.super-links-sponge":
           val = "describe-ssl";
+          break;
+
+      case "ext.osds.prompt-query":
+          val = this.def_prompt_query;
           break;
     }
     return val;

@@ -100,7 +100,8 @@
       <li><a href="#tabs-1">Settings</a></li>
       <li><a href="#tabs-2">SPARQL Query Service</a></li>
       <li><a href="#tabs-3">Super Links</a></li>
-      <li><a href="#tabs-4">About</a></li>
+      <li><a href="#tabs-4">ChatGPT</a></li>
+      <li><a href="#tabs-5">About</a></li>
       </ul>
 
         <div id="tabs-1">
@@ -335,6 +336,26 @@
 
 
 	<div id="tabs-4">
+          <div style="display:flex; flex-direction: column; align-self: flex-start;">
+            <div class="ritem">
+              Default Prompt:
+<!--
+              <input id="prompt-id" style="WIDTH: 495px;margin-left:20px;">
+-->
+            </div>
+          
+            <div style="width: 550px; height: 450px; padding-top:5px">
+              <textarea id="prompt-query" style="width: 550px; height: 450px">
+              </textarea>
+            </div>
+            <p>
+            <input id="prompt-set-def" value="Revert to Defaults" type="button">
+            </p>
+          </div>
+        </div>
+
+
+	<div id="tabs-5">
             <IMG alt="" src="images/icon48.png">
             <h3>OpenLink Structured Data Sniffer</h3>
             <p id="ext_ver">Version 0.0.0</p>

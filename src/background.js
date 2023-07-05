@@ -589,9 +589,50 @@ if (Browser.is_ff || Browser.is_chrome) {
         {"title": "Super Links", 
          "contexts":["page"],
          "onclick": actionSuperLinks});
-  
-  } catch(e) {}
+
+    Browser.api.contextMenus.create(
+        {"title": "Ask ChatGPT", 
+         "contexts":["selection"],
+         "onclick": askChatGPT});
+
+         
+  } catch(e) {
+    console.log(e);
+  }
 }
+
+
+function askChatGPT(info, tab) {
+  function activateChatWin(winId, tabId)
+  {
+    Browser.api.windows.update(winId, {focused: true}, (window) => {
+        Browser.api.tabs.update(tabId, {active: true})
+    })
+  }
+
+  Browser.api.runtime.sendMessage({cmd:"gpt_window"},
+      function(resp) 
+      {
+        if (resp && resp.ping === 1) {
+          // GPT window opened
+          Browser.api.runtime.sendMessage({cmd:"gpt_prompt", text:info.selectionText, url:info.pageUrl});
+
+          if (resp.win && resp.tab)
+            activateChatWin(resp.win, resp.tab);
+        } 
+        else {
+          const chat_url = Browser.api.extension.getURL("chat_page.html")
+                 +"#prompt="+encodeURIComponent(info.selectionText)
+                 +"&url="+encodeURIComponent(info.pageUrl);
+          // Open GPT window
+          if (Browser.is_ff)
+            Browser.api.tabe.create({url:chat_url});
+          else
+            window.open(chat_url);
+        }
+      });
+}
+
 
 var gSuperLinks = null;
 var gSPARQL_Upload = null;

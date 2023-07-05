@@ -114,6 +114,7 @@ async function init()
 
   $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
+
 };
 
 function changeHandleAll()
@@ -372,6 +373,9 @@ async function loadPref()
 
     DOM.iSel('super-links-retries').value = await gPref.getValue("ext.osds.super_links.retries");
     DOM.iSel('super-links-retries-timeout').value = await gPref.getValue("ext.osds.super_links.retries_timeout");
+
+
+    DOM.iSel('prompt-query').value = await gPref.getValue("ext.osds.prompt-query");
 }
 
 
@@ -440,6 +444,9 @@ async function savePref()
 
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
+
+   await gPref.setValue("ext.osds.prompt-query", DOM.iSel('prompt-query').value.trim());
+
 
    Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});
    closeOptions();

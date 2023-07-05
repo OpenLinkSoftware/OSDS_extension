@@ -233,21 +233,32 @@ class chat_gpt {
 
       const data = await rc.json();
 
-      var cur_id = data.current_node;
       const mapping = data.mapping;
       var conv = {model:this.def_model, list:[]};
 
-      var is_last = true;
-
+      //search answer
+      var cur_id = data.current_node;
       while(cur_id && mapping[cur_id])
       {
         const v = mapping[cur_id];
 
-        if (is_last) {
-          is_last = false;
-          if (v.message && v.message.metadata && v.message.metadata.model_slug)
-            conv.model = v.message.metadata.model_slug
+        if (v.message && v.message.author && v.message.author.role === 'assistant' && v.message.metadata 
+            && v.message.metadata.model_slug) {
+          conv.model = v.message.metadata.model_slug
+          break;
         }
+
+        if (!v.parent)
+          break;
+
+        cur_id = v.parent;
+      }
+
+      // collect messages
+      var cur_id = data.current_node;
+      while(cur_id && mapping[cur_id])
+      {
+        const v = mapping[cur_id];
 
         if (!v.parent)
           break;
@@ -262,6 +273,24 @@ class chat_gpt {
               conv.list.unshift({role:m.author.role, text:m.content.parts[0], id:m.id});
             else if (m.author.role === 'assistant') {
               conv.list.unshift({role:m.author.role, text:m.content.parts[0], id:m.id});
+            }
+          } 
+          else if (m.content.content_type === 'code' && m.content.text.length > 0) 
+          {
+            if (m.author.role === 'assistant') {
+              conv.list.unshift({role:m.author.role, type:m.content.content_type, text:"```\n"+m.content.text+"\n```\n", 
+                                 type:m.content.content_type, 
+                                 id:m.id});
+            }
+          } 
+          else if (m.content.result && m.content.result.length > 0) 
+          {
+            if (m.author.role === 'tool') {
+              conv.list.unshift({role:m.author.role, name:m.author.name, 
+                                 type:m.content.content_type, 
+                                 text:m.content.result, 
+                                 summary:m.content.summary, 
+                                 id:m.id});
             }
           }
         }

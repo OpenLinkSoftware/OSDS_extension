@@ -64,11 +64,15 @@ class ChatUI {
      });
   }
 
-  _create_code_block_html(str)
+  _create_code_block_html(str, type)
   {
     var v = 
-     `<div class="chat_code">
-        <div class="code_header">
+     `<div class="chat_code">`;
+
+    if (type && type==='code')
+      v += `<div class="code_header5">`;
+    else
+      v += `<div class="code_header">
            <span id="copied" class="hidden">Copied!&nbsp;&nbsp;</span>
            <button id="copy_code"><img class="img20" src="images/copy-icon.svg"/>Copy code</button>
            <SELECT id="code_type" >
@@ -80,8 +84,9 @@ class ChatUI {
                  <OPTION id="rdfxml">RDF/XML</OPTION>
                </SELECT>
            <span>Data type:</span>
-        </div>
-        <div class="code_block">${str}</div>
+        </div>`;
+
+    v += `<div class="code_block">${str}</div>
       </div>`
     return v;                              
   }
@@ -151,34 +156,53 @@ class ChatUI {
     return v;
   }
 
-  _create_answer_html(text, id) 
+  _create_plugin_html(text, id, type, name) 
   {
-    var text = this._create_ai_html(text);
+    var text = this._create_ai_html(`- ${name}\n` + text, type);
+
     var v = 
-     `<div class="chat_item chat_item_ai">
+     `<div class="chat_item chat_item_plugin">
         <div class="chat_left"> 
-          <input type="image"src="images/chat.png" width="24" height="24" > 
+          <input type="image"src="images/robot.svg" width="24" height="24" > 
         </div> 
         <div id="${id}" class="chat_center">
           ${text}
-        </div>
-        <div class="chat_right"> 
-          <input id="thumb_up" type="image" src="images/thumb-up.png" width="20" height="20" > 
-          <input id="thumb_down" type="image" src="images/thumb-down.png" width="20" height="20" > 
         </div>
       </div>`;
     return v;
   }
 
   
-  _create_ai_html(str)
+  _create_answer_html(text, id, type) 
+  {
+    var text = this._create_ai_html(text, type);
+    var v = 
+     `<div class="chat_item ${type==='code'?'chat_item_plugin':'chat_item_ai'}">
+        <div class="chat_left"> 
+          <input type="image"src="images/chat.png" width="24" height="24" > 
+        </div> 
+        <div id="${id}" class="chat_center">
+          ${text}
+        </div>`;
+    if (type!=='code')
+      v += `<div class="chat_right"> 
+          <input id="thumb_up" type="image" src="images/thumb-up.png" width="20" height="20" > 
+          <input id="thumb_down" type="image" src="images/thumb-down.png" width="20" height="20" > 
+        </div>`;
+
+    v += `</div>`;
+    return v;
+  }
+
+  
+  _create_ai_html(str, type)
   {
     var block = [];
     var lst = this._parse_answer(str);
 
     for(const i of lst) {
       if (i.type === 'c') // text
-        block.push( this._create_code_block_html(DOMPurify.sanitize(this.md.render(i.str))) ) 
+        block.push( this._create_code_block_html(DOMPurify.sanitize(this.md.render(i.str)), type) ) 
       else
         block.push( this._create_text_block_html(DOMPurify.sanitize(this.md.render(i.str))) ) 
     }
@@ -210,10 +234,10 @@ class ChatUI {
   }
 
   
-  append_ai(str, disable_scroll)
+  append_ai(str, disable_scroll, type)
   {
     var sid = 'ch_ai_'+this.id++;
-    var s = this._create_answer_html(str, sid);
+    var s = this._create_answer_html(str, sid, type);
     var el = DOM.htmlToElement(s);
 
     this.chat_lst.appendChild(el); 
@@ -222,14 +246,26 @@ class ChatUI {
   }
 
   
-  update_ai(str, conversation_id, message_id, disable_scroll)
+  append_plugin(str, disable_scroll, type, name)
+  {
+    var sid = 'ch_plugin_'+this.id++;
+    var s = this._create_plugin_html(str, sid, type, name);
+    var el = DOM.htmlToElement(s);
+
+    this.chat_lst.appendChild(el); 
+    this.last_sid = sid;
+    this._update_scroll(disable_scroll);
+  }
+
+  
+  update_ai(str, conversation_id, message_id, disable_scroll, type)
   {
     if (this.last_sid) {
       var el = DOM.qSel("div#"+this.last_sid+".chat_center");
       el.conversation_id = conversation_id;
       el.message_id = message_id;
       if (el) {
-        el.innerHTML = this._create_ai_html(str, conversation_id, message_id);
+        el.innerHTML = this._create_ai_html(str, type);
       }
     }
     this._update_scroll(disable_scroll);
@@ -371,7 +407,7 @@ class ChatUI {
     }
 
     try {
-      console.log(options);
+//      console.log(options);
       var rc = await fetch('https://chat.openai.com/backend-api/conversation/message_feedback', options);
       if (rc.ok) {
         el.classList.add(rating === 'thumbsUp' ? 'thumbUp' : 'thumbDown');
@@ -459,10 +495,12 @@ class ChatUI {
 
   selectModel(m)
   {
-    if (m === 'text-davinci-002-render-sha'
-        || m === 'text-davinci-002-render-paid'
-        || m === 'gpt-4')
-    {
+    var found = false;
+    for(const model of this.models) 
+      if (model.slug === m)
+        found = true;
+
+    if (found) {
       this.chat.setModel(m);
       const el = DOM.qSel(`#model option[value="${m}"]`);
       if (el)
@@ -510,8 +548,11 @@ class ChatUI {
             this.append_question(m.text, true);
           }
           else if (m.role === 'assistant') {
-            this.append_ai(m.text, true);
-            this.update_ai(m.text, cid, m.id, true);
+            this.append_ai(m.text, true, m.type);
+            this.update_ai(m.text, cid, m.id, true, m.type);
+          }
+          else if (m.role === 'tool') {
+            this.append_plugin(m.text, true, m.type, m.name);
           }
         }
 
@@ -548,7 +589,7 @@ class ChatUI {
       this.append_msg(" --- Send query againg after the Relogin --- \n");
       Browser.openTab("https://chat.openai.com/auth/login");
       this.end_ai();
-      return;
+      return 0;
     }
 
     try {
@@ -556,7 +597,7 @@ class ChatUI {
       if (!rc.ok) {
         this._endThrobber();
         this.append_msg(` --- Could not load account info, try again later :${rc.message} --- \n`);
-        return;
+        return 0;
       }
       this.account_plan = rc.account_plan;
     } catch(e) {
@@ -569,9 +610,22 @@ class ChatUI {
       if (!rc.ok) {
         this._endThrobber();
         this.append_msg(` --- Could not load list of supported models :${rc.message} --- \n`);
-        return;
+        return 0;
       }
       this.models = rc.models;
+      const sel = DOM.iSel('model');
+
+      for(const i of this.models) {
+        var opt = document.createElement('option');
+        opt.id = i.slug;
+        opt.value = i.slug;
+        if (i.title.toLowerCase().indexOf('gpt')!=-1)
+           opt.text = i.title; //'Def(GPT-3.5)';
+        else
+           opt.text = i.title + ' ( '+ i.tags.join(', ')+' )';
+        sel.appendChild(opt);
+      }
+
       this.enableModelList(this.models.length > 1);
     } catch(e) {
       this._endThrobber();
@@ -592,6 +646,8 @@ class ChatUI {
       if (show_throbber)
         this._endThrobber()
     }
+
+    return 1;
   }
 
 
