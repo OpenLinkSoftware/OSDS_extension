@@ -98,7 +98,7 @@ DOM.ready(() =>
 
   $("#query_place").hide();
 
-  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
+  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("https://chat.openai.com", gData.tab_index); }
 
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(); }
   DOM.iSel("rest_exit").onclick = (e) => { 
@@ -130,7 +130,7 @@ DOM.ready(() =>
           }
       }
 
-      sendResponse({});  // stop
+//??      sendResponse({});  // stop
   });
 
 });
@@ -840,7 +840,7 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       Download_exec_update_state(); 
     }
  
-    sendResponse({}); /* stop */
+//??    sendResponse({}); /* stop */
 
   } catch(e) {
     console.log("OSDS: onMsg="+e);

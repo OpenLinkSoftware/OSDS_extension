@@ -505,9 +505,11 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
           Browser.openTab(url);
         }
         sendResponse({'cmd': request.cmd, 'opened':true, url});
+        return true;
       } 
       else {
         sendResponse({'cmd': request.cmd, 'opened':false});
+        return true;
       }
     }
     else if (request.cmd === "reloadSettings")
@@ -601,37 +603,86 @@ if (Browser.is_ff || Browser.is_chrome) {
   }
 }
 
+var g_chatTab = null;
+var g_waited_ask = null;
 
-function askChatGPT(info, tab) {
-  function activateChatWin(winId, tabId)
-  {
-    Browser.api.windows.update(winId, {focused: true}, (window) => {
-        Browser.api.tabs.update(tabId, {active: true})
-    })
-  }
+async function activateChatWin(winId, tabId, ask, timeout)
+{
+  Browser.api.windows.update(winId, {focused: true}, (window) => {
+      Browser.api.tabs.update(tabId, {active: true})
+  })
 
-  Browser.api.runtime.sendMessage({cmd:"gpt_window"},
-      function(resp) 
+  if (timeout > 0)
+    await sleep(timeout);
+
+  Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:ask.text, url:ask.url});
+}
+
+function openChatWin()
+{
+  const chat_url = "https://chat.openai.com";
+  // Open GPT window
+  if (Browser.is_ff)
+    Browser.api.tabe.create({url:chat_url});
+  else
+    window.open(chat_url);
+}
+
+function askChatGPT(info, tab) 
+{
+  const new_ask = {text:info.selectionText, url:info.pageUrl};
+  if (g_chatTab) {
+    Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"}, 
+      function(resp)
       {
         if (resp && resp.ping === 1) {
           // GPT window opened
-          Browser.api.runtime.sendMessage({cmd:"gpt_prompt", text:info.selectionText, url:info.pageUrl});
-
-          if (resp.win && resp.tab)
-            activateChatWin(resp.win, resp.tab);
-        } 
+          if (resp.winId && resp.tabId) {
+            activateChatWin(resp.winId, resp.tabId, {text:info.selectionText, url:info.pageUrl});
+          }
+          else {
+            g_waited_ask = new_ask;
+            openChatWin();
+          }
+        }
         else {
-          const chat_url = Browser.api.extension.getURL("chat_page.html")
-                 +"#prompt="+encodeURIComponent(info.selectionText)
-                 +"&url="+encodeURIComponent(info.pageUrl);
-          // Open GPT window
-          if (Browser.is_ff)
-            Browser.api.tabe.create({url:chat_url});
-          else
-            window.open(chat_url);
+          g_waited_ask = new_ask;
+          openChatWin();;
         }
       });
+  }
+  else {
+    g_waited_ask = new_ask;
+    openChatWin();;
+  }
+/***/
 }
+
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "gpt_window_reg")  {  //receive that chat is opened
+      const tab = g_chatTab = sender.tab; //??TODO reg win
+      // send back tabId and winId
+      Browser.api.tabs.sendMessage(tab.id, {cmd:"gpt_win_tab", tabId:tab.id, winId:tab.windowId});
+
+      if (g_waited_ask) {
+        activateChatWin(g_chatTab.windowId, g_chatTab.id, g_waited_ask, 3000)
+        g_waited_ask = null;
+      }
+
+    }
+    else if (request.cmd === "gpt_window_unreg")  {  //receive that chat is opened
+      const tab = sender.tab;
+      g_waited_ask = null;
+      //??TODO unreg wind
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
 
 
 var gSuperLinks = null;

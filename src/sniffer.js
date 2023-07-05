@@ -365,6 +365,71 @@
     }
 
 
+    function sniff_nanotation2(nano) 
+    {
+        var el_pre, el_code;
+      
+        var lst = DOM.qSelAll('div#__next main pre select#code_type option:checked');
+        for (var el of lst) {
+          var el_type = el.id;
+
+          if (el_type === 'turtle') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.ttl.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'jsonld') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.jsonld.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'json') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.json.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'csv') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.csv.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'rdfxml') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.rdf.push(el_code.textContent);
+              }
+            }
+          }
+        }
+
+      return nano;
+    }
+
+
+
     function is_data_exist() 
     {
         try {
@@ -438,6 +503,12 @@
                 var ret = sniff_nanotation();
                 data_found = ret.exists;
                 nano = ret.data;
+
+                if (!data_found && location.href.startsWith('https://chat.openai.com')) {
+                  ret = sniff_nanotation2(ret);
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
             }
 
 
@@ -529,6 +600,11 @@
 
             var ret = sniff_nanotation();
             nano = ret.data;
+            
+            if (location.href.startsWith('https://chat.openai.com')) {
+               ret = sniff_nanotation2(ret);
+               nano = ret.data;
+            }
 
         } catch (e) {
             console.log("OSDS:" + e);
@@ -1156,7 +1232,7 @@
                 if (request.property == "req_doc_data") {
                     request_doc_data();
                     sendResponse({ping:1});
-                    return;
+                    return true;
                  }
                 else if (request.property == "open_tab")
                     request_open_tab(request.url, sender);
@@ -1194,8 +1270,6 @@
                     if (el)
                       el.style.display = 'none';
                 }
-
-                sendResponse({});  // stop
             });
 
 

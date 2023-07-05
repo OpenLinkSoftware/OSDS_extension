@@ -182,6 +182,9 @@ class chat_gpt {
 
   async genTitle(conversation_id, message_id) 
   {
+    if (!conversation_id)
+      return;
+
     const {accessToken, ok} = await this.getAccessToken();
     if (!ok || !accessToken)
       return;
