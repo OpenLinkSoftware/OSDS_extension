@@ -155,7 +155,7 @@
     const _url = url ?? '';
     var prompt_query = await pref.getValue('ext.osds.prompt-query');
     prompt_query = prompt_query.replace("{selected_text}", txt);
-    prompt_query = prompt_query.replace("{url}", url);
+    prompt_query = prompt_query.replace("{page_url}", url);
 
     const txtArea = document.getElementById('prompt-textarea');
     txtArea.focus();
