@@ -144,7 +144,11 @@ function showPopup(tabId)
   if (doc_URL)
     g_RestCons.load(doc_URL);
 
-  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("https://chat.openai.com", gData.tab_index); }
+  DOM.iSel("chat_btn").onclick = async (e) =>{ 
+    const curTabs = await getCurTab();
+    if (curTabs.length > 0)
+      Browser.api.runtime.sendMessage({cmd: 'gpt_page_content', tabId:curTabs[0].id, url:curTabs[0].url});
+  }
 
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(gData.tab_index); }
   DOM.iSel("rest_exit").onclick = (e) => { 
@@ -666,7 +670,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       } 
     }
 
-//??    sendResponse({}); /* stop */
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }

@@ -211,9 +211,6 @@ OidcWeb.prototype = {
         this.IdP = this.extractIdp(data.url, data);
 
         const ret = await this.authClient.handleIncomingRedirect({url:data.url, restorePreviousSession: true});
-        //??console.log('ret = ', ret);
-        //??if (ret && ret.tokens)
-        //??  localStorage.setItem('myTokens', JSON.stringify(ret.tokens));
 
         const session = this.authClient.getDefaultSession();
         if (session.info && session.info.isLoggedIn && session.info.webId)

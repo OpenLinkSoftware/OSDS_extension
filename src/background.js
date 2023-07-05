@@ -645,25 +645,34 @@ async function openChatWin()
 function askChatGPT(ask, tab, mode) 
 {
   ask["mode"] = mode;
+
+  function handle_resp(resp)
+  {
+    if (resp && resp.ping === 1) {
+      // GPT window opened
+      if (resp.winId && resp.tabId) {
+        activateChatWin(resp.winId, resp.tabId, ask);
+      }
+      else {
+        g_waited_ask = ask;
+        openChatWin();
+      }
+    }
+    else {
+      g_waited_ask = ask;
+      openChatWin();
+    }
+  }
+  
   if (g_chatTab) {
-    Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"}, 
-      function(resp)
-      {
-        if (resp && resp.ping === 1) {
-          // GPT window opened
-          if (resp.winId && resp.tabId) {
-            activateChatWin(resp.winId, resp.tabId, ask);
-          }
-          else {
-            g_waited_ask = ask;
-            openChatWin();
-          }
-        }
-        else {
-          g_waited_ask = ask;
-          openChatWin();
-        }
-      });
+    if (Browser.is_ff)
+      Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"})
+        .then(resp => { handle_resp(resp)})
+        .catch(err => {
+          console.log(err);
+        });
+    else
+      Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"}, handle_resp);
   }
   else {
     g_waited_ask = ask;
@@ -678,14 +687,22 @@ function askChatGPT_selection(info, tab)
 
 function askChatGPT_page_content(info, tab) 
 {
-  Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"},
-    function(resp)
-    {
-      if (resp && resp.page_content) {
-        console.log(resp);
-        askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
-      }
-    });
+  function handle_resp(resp)
+  {
+    if (resp && resp.page_content) {
+      console.log(resp);
+      askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
+    }
+  }
+
+  if (Browser.is_ff)
+    Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"})
+      .then(resp => { handle_resp(resp)})
+      .catch(err => {
+          console.log(err);
+      });
+  else
+    Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"}, handle_resp);
 }
 
 Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
@@ -706,6 +723,10 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       const tab = sender.tab;
       g_waited_ask = null;
       g_chatTab = null;
+    }
+    else if (request.cmd === "gpt_page_content" && request.tabId)  {
+      console.log(request);
+      askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
     }
   } catch(e) {
     console.log("OSDS: onMsg="+e);

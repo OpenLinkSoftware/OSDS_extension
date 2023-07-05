@@ -1286,6 +1286,7 @@
                     if (!page_content|| (page_content && page_content.length == 0))
                       page_content = getSelectionString(document.body, window);
 
+                    page_content = cleanText(page_content);
                     sendResponse({page_content});
                     return true;
                 }
@@ -1296,6 +1297,20 @@
             console.log("OSDS:" + e);
         }
     });
+
+    function cleanText(text)
+    {
+      if (!text)
+        return text;
+
+      return text.trim()
+        .replace(/(\n){4,}/g, "\n\n\n")
+        // .replace(/\n\n/g, " ")
+        .replace(/ {3,}/g, "  ")
+        .replace(/\t/g, "")
+        .replace(/\n+(\s*\n)*/g, "\n")
+    }
+
 
 
 })();
