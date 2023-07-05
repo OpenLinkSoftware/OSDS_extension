@@ -670,7 +670,7 @@ async function openChatWin()
   const chat_url = "https://chat.openai.com";
   // Open GPT window
   if (Browser.is_ff)
-    Browser.api.tabe.create({url:chat_url});
+    Browser.api.tabs.create({url:chat_url});
   else {
     const model = await setting.getValue('ext.osds.gpt-model');
     const _url = chat_url+(model==='gpt4'?'/?model=gpt-4':'/?model=text-davinci-002-render-sha')
