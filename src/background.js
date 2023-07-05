@@ -25,17 +25,38 @@
 var pages = {};
 var setting = new Settings();
 var page_panel_url = Browser.api.extension.getURL("page_panel.html");
+var chk_setting = {
+      "ext.osds.handle_all" : "1",
+      "ext.osds.handle_csv": "1",
+      "ext.osds.handle_json": "1",
+      "ext.osds.handle_xml": "1",
+      "ext.osds.pref.user.chk": "0",
+      "ext.osds.pref.user": ""
+    };
 
-
-  async function onBeforeLoadName(url, tabId)
+  async function reload_settings()
   {
-    var chk_all = await setting.getValue("ext.osds.handle_all");
+    chk_setting["ext.osds.handle_all"] = await setting.getValue("ext.osds.handle_all");
+    chk_setting["ext.osds.handle_csv"] = await setting.getValue("ext.osds.handle_csv");
+    chk_setting["ext.osds.handle_json"] = await setting.getValue("ext.osds.handle_json");
+    chk_setting["ext.osds.handle_xml"] = await setting.getValue("ext.osds.handle_xml");
 
-    var chk_csv = await setting.getValue("ext.osds.handle_csv");
+  
+    chk_setting['ext.osds.pref.user.chk'] = await setting.getValue('ext.osds.pref.user.chk');
+    chk_setting['ext.osds.pref.user'] = await setting.getValue('ext.osds.pref.user');
+  }
+
+  reload_settings();
+
+  function onBeforeLoadName(url, tabId)
+  {
+    var chk_all = chk_setting["ext.osds.handle_all"];
+
+    var chk_csv = chk_setting["ext.osds.handle_csv"];
     var handle_csv = (chk_csv && chk_csv==="1");
-    var chk_json = await setting.getValue("ext.osds.handle_json");
+    var chk_json = chk_setting["ext.osds.handle_json"];
     var handle_json = (chk_json && chk_json==="1");
-    var chk_xml = await setting.getValue("ext.osds.handle_xml");
+    var chk_xml = chk_setting["ext.osds.handle_xml"];
     var handle_xml = (chk_xml && chk_xml==="1");
 
     var handle = false;
@@ -135,32 +156,32 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
 
   if (Browser.is_safari) {
       Browser.api.webNavigation.onBeforeNavigate.addListener(
-        async (d) => {
-           return await onBeforeLoadName(d.url, d.tabId);
+        (d) => {
+           return onBeforeLoadName(d.url, d.tabId);
         });
   }
 
 
 
   Browser.api.webRequest.onBeforeRequest.addListener(
-        async (d) => {
-           return await onBeforeLoadName(d.url, d.tabId);
+        (d) => {
+           return onBeforeLoadName(d.url, d.tabId);
         },
         {types: ["main_frame"], urls: ["file:///*"]}, 
         ["blocking"]);
 
-  async function onBeforeRequestLocal(d)
+  function onBeforeRequestLocal(d)
   {
-    return await onBeforeLoadName(d.url, d.tabId);
+    return onBeforeLoadName(d.url, d.tabId);
   }
 
 
 
   Browser.api.webRequest.onBeforeSendHeaders.addListener(
-        async function(details) {
-          var chk = await setting.getValue('ext.osds.pref.user.chk');
+        function(details) {
+          var chk = chk_setting['ext.osds.pref.user.chk'];
           if (chk && chk==="1") {
-            var pref_user = await setting.getValue('ext.osds.pref.user');
+            var pref_user = chk_setting['ext.osds.pref.user'];
             if (pref_user && pref_user.length> 0) {
               details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
 /***
@@ -195,7 +216,7 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         ["responseHeaders", "blocking"]);
 
 
-  async function onHeadersReceived(d)
+  function onHeadersReceived(d)
   {
       
     if (d.method && d.method!=="GET")
@@ -210,17 +231,17 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       }
     }
 
-    var chk_all = await setting.getValue("ext.osds.handle_all");
+    var chk_all = chk_setting["ext.osds.handle_all"];
 
-    var chk_xml = await setting.getValue("ext.osds.handle_xml");
-    var chk_csv = await setting.getValue("ext.osds.handle_csv");
-    var chk_json = await setting.getValue("ext.osds.handle_csv");
+    var chk_xml = chk_setting["ext.osds.handle_xml"];
+    var chk_csv = chk_setting["ext.osds.handle_csv"];
+    var chk_json = chk_setting["ext.osds.handle_csv"];
+
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
     var handle_json = (chk_json && chk_json==="1");
 
     var handle = false;
-    var v_cancel = false;
     var type = null;
     var ext = "";
     var content_type = null;
@@ -248,7 +269,6 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       else if (headerContent.value.match(/\/(n-triples)/)) {
         handle = true;
         type = "turtle";
-        v_cancel = true;
         header.value = "text/plain";
         could_handle = true;
       }
@@ -264,20 +284,17 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       //application/rdf+xml
       else if (headerContent.value.match(/\/(rdf\+xml)/)) {
         handle = true;
-        v_cancel = true;
         type = "rdf";
         headerContent.value = "text/plain";
         could_handle = true;
       }
       else if (headerContent.value.match(/\/(rss\+xml)/)) {
         handle = true;
-        v_cancel = true;
         type = "rss";
         could_handle = true;
       }
       else if (headerContent.value.match(/\/(atom\+xml)/)) {
         handle = true;
-        v_cancel = true;
         type = "atom";
         could_handle = true;
       }
@@ -366,7 +383,6 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         else if (url_path.endsWith(".xml")) {
           handle = handle_xml;
           type = "xml";
-          v_cancel = true;
           could_handle = true;
         }
     }
@@ -376,7 +392,6 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
     {
         handle = handle_xml;
         type = "xml";
-        v_cancel = true;
         could_handle = true;
     }
 
@@ -494,6 +509,10 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       else {
         sendResponse({'cmd': request.cmd, 'opened':false});
       }
+    }
+    else if (request.cmd === "reloadSettings")
+    {
+      reload_settings();
     }
 /**
     else

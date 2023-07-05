@@ -441,6 +441,7 @@ async function savePref()
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
+   Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});
    closeOptions();
 }
 
