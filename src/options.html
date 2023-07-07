@@ -59,6 +59,13 @@
 	.align_end {
 	  text-align: end;
 	}
+	.btn-p {
+	  font-size: 14px;
+	  padding: 6px 12px;
+	  border-radius: 4px;
+	  border: 1px solid grey;
+	  background-color: white;
+	}
 
 	tbody#prompt-list tr.prompt_checked{
 	  background: cyan;
@@ -124,7 +131,7 @@
                Preferred&nbsp;User&nbsp;ID:
                <SELECT class="ml5" id="pref_user" style="WIDTH: 350px" >
                </SELECT>
-               <input class="ml5" id="call_edit_users" value="Edit" type="button">
+               <input class="ml5" id="call_edit_users" value="Edit" type="button" class="btn-p">
              </div>
              <div class="ritem">
                <input id="chk_show_action_for_url_with_params" type="checkbox">
@@ -201,7 +208,7 @@
              </div>
 
              <p>
-             <input id="import-set-def" value="Revert to Defaults" type="button">
+             <input id="import-set-def" value="Revert to Defaults" type="button" class="btn-p">
              </p>
 
              <hr/>
@@ -221,7 +228,7 @@
               </textarea>
              </div>
              <p>
-               <input id="rww-set-def" value="Revert to Defaults" type="button">
+               <input id="rww-set-def" value="Revert to Defaults" type="button" class="btn-p">
              </p>
            </div>
 
@@ -248,7 +255,7 @@
                 </textarea>
             </div>
             <p>
-            <input id="sparql-set-def" value="Revert to Defaults" type="button">
+            <input id="sparql-set-def" value="Revert to Defaults" type="button" class="btn-p">
             </p>
           </div>
         </div>
@@ -318,7 +325,7 @@
            </div>
 
            <p>
-             <input id="super-links-set-def" value="Revert to Defaults" type="button">
+             <input id="super-links-set-def" value="Revert to Defaults" type="button" class="btn-p">
            </p>
 
            <table>
@@ -379,7 +386,7 @@
               </div>
             </div>
             <p>
-            <input id="prompt-set-def" value="Revert to Defaults" type="button">
+            <input id="prompt-set-def" value="Revert to Defaults" type="button" class="btn-p">
             </p>
           </div>
         </div>
@@ -402,8 +409,8 @@
     </div>
     <p/>
 
-    <input id="OK_btn" value=" Save " type="button">
-    <input id="Cancel_btn" value=" Cancel " type="button">
+    <input id="OK_btn" value=" Save " type="button" class="btn-p">
+    <input id="Cancel_btn" value=" Cancel " type="button" class="btn-p">
 
   </body>
 </html>
