@@ -38,6 +38,7 @@ var gData = {
         rdf: null,
         rdfa: null,
         json: null,
+        jsonl: null,
         csv: null,
         rss: null,
         atom: null,
@@ -143,7 +144,11 @@ function showPopup(tabId)
   if (doc_URL)
     g_RestCons.load(doc_URL);
 
-  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
+  DOM.iSel("chat_btn").onclick = async (e) =>{ 
+    const curTabs = await getCurTab();
+    if (curTabs.length > 0)
+      Browser.api.runtime.sendMessage({cmd: 'gpt_page_content', tabId:curTabs[0].id, url:curTabs[0].url});
+  }
 
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(gData.tab_index); }
   DOM.iSel("rest_exit").onclick = (e) => { 
@@ -376,6 +381,7 @@ async function show_Data()
   var rdf = false;
   var posh = false;
   var json = false;
+  var jsonl = false;
   var csv = false;
   var rss = false;
   var atom = false;
@@ -408,6 +414,9 @@ async function show_Data()
 
   if (gData.json)
     json = await update_tab_exec('json', 'JSON', gData.json, err_tabs);
+
+  if (gData.jsonl)
+    jsonl = await update_tab_exec('jsonl', 'JSONL', gData.jsonl, err_tabs);
 
   if (gData.csv)
     csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
@@ -452,8 +461,14 @@ async function show_Data()
   }
   if (!json) {
     $('#tab-json').hide();
+  }
+  if (!jsonl) {
+    $('#tab-jsonl').hide();
+  }
+  if (!jsonl && !json) {
     $('#json-save').hide();
   }
+
   if (!csv) {
     $('#tab-csv').hide();
     $('#csv-save').hide();
@@ -522,6 +537,7 @@ async function parse_Data(dData)
     gData.jsonld.add_nano(dData.jsonld_nano.text);
 
     gData.json = new JSON_Block(gData.baseURL, dData.json_nano.text);
+    gData.jsonl = new JSONL_Block(gData.baseURL, dData.jsonl_nano.text);
 
     gData.turtle = new TTL_Block(gData.baseURL, dData.turtle.text);
     await gData.turtle.add_nano(dData.ttl_nano.text);
@@ -654,7 +670,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       } 
     }
 
-    sendResponse({}); /* stop */
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
@@ -858,7 +873,7 @@ async function Download_exec()
     filename = "posh_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="json") {
+  else if (selectedTab==="json" || selectedTab==="jsonl") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
@@ -1048,6 +1063,8 @@ async function prepare_data(for_query, curTab, fmt)
       block = gData.jsonld;
     else if (curTab==="json")
       block = gData.json;
+    else if (curTab==="jsonl")
+      block = gData.jsonl;
     else if (curTab==="turtle")
       block = gData.turtle;
     else if (curTab==="micro")

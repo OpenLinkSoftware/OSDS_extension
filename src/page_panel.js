@@ -98,8 +98,6 @@ DOM.ready(() =>
 
   $("#query_place").hide();
 
-  DOM.iSel("chat_btn").onclick = (e) =>{ Browser.openTab("chat_page.html", gData.tab_index); }
-
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(); }
   DOM.iSel("rest_exit").onclick = (e) => { 
       gMutationObserver.disconnect();
@@ -129,8 +127,6 @@ DOM.ready(() =>
             showSnackbar(request.msg1, request.msg2);
           }
       }
-
-      sendResponse({});  // stop
   });
 
 });
@@ -220,6 +216,8 @@ function load_data_from_url(loc)
       hdr_accept = 'application/xml;text/xml;q=0.9,text/html;application/xhtml+xml;q=0.5,*/*;q=0.1';
     else if (type==="json")
       hdr_accept = 'application/sparql-results+json;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
+    else if (type==="jsonl")
+      hdr_accept = 'application/jsonl;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
     else if (type==="csv")
       hdr_accept = 'text/csv,application/csv;q=1.0,text/plain;q=0.5,text/html;q=0.5,*/*;q=0.1';
 
@@ -249,7 +247,8 @@ function load_data_from_url(loc)
       })
 
     }
-    else {
+    else 
+    {
 
       jQuery.ajaxSetup({
          dataType: "text",
@@ -331,6 +330,10 @@ async function start_parse_data(data_text, data_type, data_url, ext)
   else if (data_type==="json")
     {
       gData.block = new JSON_Block(gData.baseURL, [data_text]);
+    }
+  else if (data_type==="jsonl")
+    {
+      gData.block = new JSONL_Block(gData.baseURL, [data_text]);
     }
   else if (data_type==="csv")
     {
@@ -454,6 +457,8 @@ function show_Data(data_error, html_data)
     show_item('rdf', 'RDF/XML');
   else if (gData.type === "json")
     show_item('json', 'JSON');
+  else if (gData.type === "jsonl")
+    show_item('jsonl', 'JSONL');
   else if (gData.type === "csv")
     show_item('csv', 'CSV');
   else if (gData.type === "rss")
@@ -620,7 +625,7 @@ async function Download_exec()
     filename = "rdf_data.rdf";
     fmt = "rdf";
   }
-  else if (gData.type == "json") {
+  else if (gData.type == "json" || gData.type == "jsonl") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
@@ -831,7 +836,6 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
       Download_exec_update_state(); 
     }
  
-    sendResponse({}); /* stop */
 
   } catch(e) {
     console.log("OSDS: onMsg="+e);

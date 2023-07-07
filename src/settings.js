@@ -102,6 +102,24 @@ class Settings {
   +'  } \n'
   +'} \n'
   +'order by ?extractLabel ?entityType \n';
+
+
+    this.def_prompt_query_turtle = ''
+  +'Disregard any previous instructions. \n'
+  +'Using a code-block, generate a representation of this information in RDF-Turtle using schema.org terms, relative hash-based hyperlinks for subject and object denotation.\n'
+  +'"""\n'
+  +'{selected_text}\n'
+  +'"""\n\n';
+
+
+    this.def_prompt_query_jsonld = ''
+  +'Disregard any previous instructions. \n'
+  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note, I don\'t want any HTML tags included in the output. \n'
+  +'"""\n'
+  +'{selected_text}\n'
+  +'"""\n\n';
+  
+
     this._data = (data!== undefined && data!==null) ? data:null;
   }
 
@@ -269,6 +287,19 @@ class Settings {
           break;
       case "ext.osds.super-links-sponge":
           val = "describe-ssl";
+          break;
+
+      case "ext.osds.prompt-query":
+          val = this.def_prompt_query_jsonld;
+          break;
+      case "ext.osds.gpt-model":
+          val = 'gpt35';
+          break;
+      case "ext.osds.gpt-tokens":
+          val = '4096';
+          break;
+      case "ext.osds.prompt-lst":
+          val = [];
           break;
     }
     return val;

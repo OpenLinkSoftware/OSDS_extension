@@ -22,7 +22,7 @@
   TTL_Gen = function(_docURI, for_query, bnode_types, skip_docpref, _add_base) {
     this.ns = new Namespace();
     this.docURI = _docURI;
-    this.add_base = _add_base || false;
+    this.add_base = _add_base || true;
 
     this.skip_docpref = skip_docpref;
 

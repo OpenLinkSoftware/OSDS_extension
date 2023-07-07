@@ -25,17 +25,38 @@
 var pages = {};
 var setting = new Settings();
 var page_panel_url = Browser.api.extension.getURL("page_panel.html");
+var chk_setting = {
+      "ext.osds.handle_all" : "1",
+      "ext.osds.handle_csv": "1",
+      "ext.osds.handle_json": "1",
+      "ext.osds.handle_xml": "1",
+      "ext.osds.pref.user.chk": "0",
+      "ext.osds.pref.user": ""
+    };
 
-
-  async function onBeforeLoadName(url, tabId)
+  async function reload_settings()
   {
-    var chk_all = await setting.getValue("ext.osds.handle_all");
+    chk_setting["ext.osds.handle_all"] = await setting.getValue("ext.osds.handle_all");
+    chk_setting["ext.osds.handle_csv"] = await setting.getValue("ext.osds.handle_csv");
+    chk_setting["ext.osds.handle_json"] = await setting.getValue("ext.osds.handle_json");
+    chk_setting["ext.osds.handle_xml"] = await setting.getValue("ext.osds.handle_xml");
 
-    var chk_csv = await setting.getValue("ext.osds.handle_csv");
+  
+    chk_setting['ext.osds.pref.user.chk'] = await setting.getValue('ext.osds.pref.user.chk');
+    chk_setting['ext.osds.pref.user'] = await setting.getValue('ext.osds.pref.user');
+  }
+
+  reload_settings();
+
+  function onBeforeLoadName(url, tabId)
+  {
+    var chk_all = chk_setting["ext.osds.handle_all"];
+
+    var chk_csv = chk_setting["ext.osds.handle_csv"];
     var handle_csv = (chk_csv && chk_csv==="1");
-    var chk_json = await setting.getValue("ext.osds.handle_json");
+    var chk_json = chk_setting["ext.osds.handle_json"];
     var handle_json = (chk_json && chk_json==="1");
-    var chk_xml = await setting.getValue("ext.osds.handle_xml");
+    var chk_xml = chk_setting["ext.osds.handle_xml"];
     var handle_xml = (chk_xml && chk_xml==="1");
 
     var handle = false;
@@ -94,6 +115,12 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       ext = "json";
       could_handle = true;
     }
+    else if (path_name.endsWith(".jsonl")) {
+      handle = true;
+      type = "jsonl";
+      ext = "jsonl";
+      could_handle = true;
+    }
     else if (handle_csv && path_name.endsWith(".csv")) {
       handle = handle_csv;
       type = "csv";
@@ -129,32 +156,32 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
 
   if (Browser.is_safari) {
       Browser.api.webNavigation.onBeforeNavigate.addListener(
-        async (d) => {
-           return await onBeforeLoadName(d.url, d.tabId);
+        (d) => {
+           return onBeforeLoadName(d.url, d.tabId);
         });
   }
 
 
 
   Browser.api.webRequest.onBeforeRequest.addListener(
-        async (d) => {
-           return await onBeforeLoadName(d.url, d.tabId);
+        (d) => {
+           return onBeforeLoadName(d.url, d.tabId);
         },
         {types: ["main_frame"], urls: ["file:///*"]}, 
         ["blocking"]);
 
-  async function onBeforeRequestLocal(d)
+  function onBeforeRequestLocal(d)
   {
-    return await onBeforeLoadName(d.url, d.tabId);
+    return onBeforeLoadName(d.url, d.tabId);
   }
 
 
 
   Browser.api.webRequest.onBeforeSendHeaders.addListener(
-        async function(details) {
-          var chk = await setting.getValue('ext.osds.pref.user.chk');
+        function(details) {
+          var chk = chk_setting['ext.osds.pref.user.chk'];
           if (chk && chk==="1") {
-            var pref_user = await setting.getValue('ext.osds.pref.user');
+            var pref_user = chk_setting['ext.osds.pref.user'];
             if (pref_user && pref_user.length> 0) {
               details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
 /***
@@ -189,7 +216,7 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
         ["responseHeaders", "blocking"]);
 
 
-  async function onHeadersReceived(d)
+  function onHeadersReceived(d)
   {
       
     if (d.method && d.method!=="GET")
@@ -204,17 +231,17 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       }
     }
 
-    var chk_all = await setting.getValue("ext.osds.handle_all");
+    var chk_all = chk_setting["ext.osds.handle_all"];
 
-    var chk_xml = await setting.getValue("ext.osds.handle_xml");
-    var chk_csv = await setting.getValue("ext.osds.handle_csv");
-    var chk_json = await setting.getValue("ext.osds.handle_csv");
+    var chk_xml = chk_setting["ext.osds.handle_xml"];
+    var chk_csv = chk_setting["ext.osds.handle_csv"];
+    var chk_json = chk_setting["ext.osds.handle_csv"];
+
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
     var handle_json = (chk_json && chk_json==="1");
 
     var handle = false;
-    var v_cancel = false;
     var type = null;
     var ext = "";
     var content_type = null;
@@ -242,7 +269,6 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       else if (headerContent.value.match(/\/(n-triples)/)) {
         handle = true;
         type = "turtle";
-        v_cancel = true;
         header.value = "text/plain";
         could_handle = true;
       }
@@ -258,20 +284,17 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       //application/rdf+xml
       else if (headerContent.value.match(/\/(rdf\+xml)/)) {
         handle = true;
-        v_cancel = true;
         type = "rdf";
         headerContent.value = "text/plain";
         could_handle = true;
       }
       else if (headerContent.value.match(/\/(rss\+xml)/)) {
         handle = true;
-        v_cancel = true;
         type = "rss";
         could_handle = true;
       }
       else if (headerContent.value.match(/\/(atom\+xml)/)) {
         handle = true;
-        v_cancel = true;
         type = "atom";
         could_handle = true;
       }
@@ -290,6 +313,12 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
       {
         handle = handle_json;
         type = "json";
+        could_handle = true;
+      }
+      else if (headerContent.value.match(/(application\/jsonl)/)) 
+      {
+        handle = true;
+        type = "jsonl";
         could_handle = true;
       }
       else {
@@ -345,10 +374,15 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
           ext = "jsonld";
           could_handle = true;
         }
+        else if (url_path.endsWith(".jsonl")) {
+          handle = true;
+          type = "jsonl";
+          ext = "jsonl";
+          could_handle = true;
+        }
         else if (url_path.endsWith(".xml")) {
           handle = handle_xml;
           type = "xml";
-          v_cancel = true;
           could_handle = true;
         }
     }
@@ -358,7 +392,6 @@ var page_panel_url = Browser.api.extension.getURL("page_panel.html");
     {
         handle = handle_xml;
         type = "xml";
-        v_cancel = true;
         could_handle = true;
     }
 
@@ -472,10 +505,16 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
           Browser.openTab(url);
         }
         sendResponse({'cmd': request.cmd, 'opened':true, url});
+        return true;
       } 
       else {
         sendResponse({'cmd': request.cmd, 'opened':false});
+        return true;
       }
+    }
+    else if (request.cmd === "reloadSettings")
+    {
+      reload_settings();
     }
 /**
     else
@@ -552,9 +591,185 @@ if (Browser.is_ff || Browser.is_chrome) {
         {"title": "Super Links", 
          "contexts":["page"],
          "onclick": actionSuperLinks});
-  
-  } catch(e) {}
+
+    Browser.api.contextMenus.create(
+        {"title": "Ask ChatGPT", 
+         "contexts":["selection"],
+         "onclick": askChatGPT_selection});
+
+    Browser.api.contextMenus.create(
+        {"title": "Ask ChatGPT for Page Content", 
+         "contexts":["page"],
+         "onclick": askChatGPT_page_content});
+
+         
+  } catch(e) {
+    console.log(e);
+  }
 }
+
+var g_chatTab = null;
+var g_waited_ask = null;
+
+async function activateChatWin(winId, tabId, ask, timeout)
+{
+  if (Browser.is_ff) {
+    await Browser.api.windows.update(winId, {focused: true});
+    await Browser.api.tabs.update(tabId, {active: true});
+  } 
+  else {
+    Browser.api.windows.update(winId, {focused: true}, (window) => {
+      Browser.api.tabs.update(tabId, {active: true})
+    })
+  }
+
+  if (timeout > 0)
+    await sleep(timeout);
+
+  const model = await setting.getValue('ext.osds.gpt-model');
+  var max_len = parseInt(await setting.getValue('ext.osds.gpt-tokens'), 10);
+  if (max_len == 0)
+    max_len = 4096;
+  
+///gpt-35 max_tokens = 4096
+// gpt4 max-tokens = 8192  // 32768
+  const myprompt = await setting.getValue('ext.osds.prompt');
+
+  var prompt_query = setting.def_prompt_query_jsonld;
+
+  if (myprompt) {
+    if (myprompt.myid === 'jsonld')
+      prompt_query = setting.def_prompt_query_jsonld;
+    else if (myprompt.myid === 'turtle')
+      prompt_query = setting.def_prompt_query_turtle;
+    else if (myprompt.text && myprompt.text.length > 1)
+      prompt_query = myprompt.text;
+  }
+
+  prompt_query = prompt_query.replace("{page_url}", ask.url);
+
+  const pattern_len = gpt3encoder.countTokens(prompt_query);
+
+  var text = ask.text; 
+  var txt_encoded = gpt3encoder.encode(text);
+
+  if (pattern_len + txt_encoded.length > max_len) {
+    const len = Math.max(1, max_len - pattern_len);
+    txt_encoded.splice(len);
+    text = gpt3encoder.decode(txt_encoded);
+  }
+
+  prompt_query = prompt_query.replace("{selected_text}", text);
+//  console.log(prompt_query);
+
+  Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:prompt_query});
+}
+
+async function openChatWin()
+{
+  const chat_url = "https://chat.openai.com";
+  // Open GPT window
+  if (Browser.is_ff)
+    Browser.api.tabs.create({url:chat_url});
+  else {
+    const model = await setting.getValue('ext.osds.gpt-model');
+    const _url = chat_url+(model==='gpt4'?'/?model=gpt-4':'/?model=text-davinci-002-render-sha')
+    window.open(_url);
+  }
+}
+
+function askChatGPT(ask, tab, mode) 
+{
+  ask["mode"] = mode;
+
+  function handle_resp(resp)
+  {
+    if (resp && resp.ping === 1) {
+      // GPT window opened
+      if (resp.winId && resp.tabId) {
+        activateChatWin(resp.winId, resp.tabId, ask);
+      }
+      else {
+        g_waited_ask = ask;
+        openChatWin();
+      }
+    }
+    else {
+      g_waited_ask = ask;
+      openChatWin();
+    }
+  }
+  
+  if (g_chatTab) {
+    if (Browser.is_ff)
+      Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"})
+        .then(resp => { handle_resp(resp)})
+        .catch(err => {
+          console.log(err);
+        });
+    else
+      Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"}, handle_resp);
+  }
+  else {
+    g_waited_ask = ask;
+    openChatWin();
+  }
+}
+
+function askChatGPT_selection(info, tab) 
+{
+  askChatGPT({text:info.selectionText, url:info.pageUrl}, tab, 'selection');
+}
+
+function askChatGPT_page_content(info, tab) 
+{
+  function handle_resp(resp)
+  {
+    if (resp && resp.page_content) {
+//      console.log(resp);
+      askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
+    }
+  }
+
+  if (Browser.is_ff)
+    Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"})
+      .then(resp => { handle_resp(resp)})
+      .catch(err => {
+          console.log(err);
+      });
+  else
+    Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"}, handle_resp);
+}
+
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "gpt_window_reg")  {  //receive that chat is opened
+      const tab = g_chatTab = sender.tab; //??TODO reg win
+      // send back tabId and winId
+      Browser.api.tabs.sendMessage(tab.id, {cmd:"gpt_win_tab", tabId:tab.id, winId:tab.windowId});
+
+      if (g_waited_ask) {
+        activateChatWin(g_chatTab.windowId, g_chatTab.id, g_waited_ask, 3000)
+        g_waited_ask = null;
+      }
+
+    }
+    else if (request.cmd === "gpt_window_unreg")  {  //receive that chat is opened
+      const tab = sender.tab;
+      g_waited_ask = null;
+      g_chatTab = null;
+    }
+    else if (request.cmd === "gpt_page_content" && request.tabId)  {
+      askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
+
 
 var gSuperLinks = null;
 var gSPARQL_Upload = null;

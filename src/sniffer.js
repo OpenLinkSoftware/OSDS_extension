@@ -31,12 +31,13 @@
     var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, csv:null, md:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, jsonl:null, csv:null, md:null};
     var data_found = false;
 
     var ttl_nano_pattern = /(^\s*## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(^\s*## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
     var jsonld_nano_pattern = /(^\s*## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON-LD +(End|Stop) ##))(.*)/gmi;
     var json_nano_pattern = /(^\s*## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON +(End|Stop) ##))(.*)/gmi;
+    var jsonl_nano_pattern = /(^\s*## JSONL +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSONL +(End|Stop) ##))(.*)/gmi;
     var csv_nano_pattern = /(^\s*## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## CSV +(End|Stop) ##))(.*)/gmi;
     var rdf_nano_pattern = /(^\s*## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
     var md_nano_pattern = /(^\s*## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Markdown +(End|Stop) ##))(.*)/gmi;
@@ -158,7 +159,7 @@
         var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
         var comment = /^ *#/;
         var doc_Texts = [];
-        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[]};
 
         function isWhitespace(c) 
         {
@@ -304,6 +305,29 @@
                 }
 
 
+                //try get JSONL Nano
+                while (true) {
+                    var ndata = jsonl_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        var add = false;
+                        for (var c = 0; c < str.length; c++) {
+                            add = (str[c] === "{" || str[c] === "[") ? true : false;
+                            if (add)
+                                break;
+                            if (!isWhitespace(str[c]))
+                                break;
+                        }
+
+                        if (add)
+                            ret.jsonl.push(str);
+                    }
+                }
+
+
                 //try get CSV Nano
                 while (true) {
                     var ndata = csv_nano_pattern.exec(s_doc);
@@ -333,11 +357,87 @@
 
 
         if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 
-            || ret.rdf.length > 0|| ret.json.length > 0 || ret.csv.length > 0 || ret.md.length > 0)
+            || ret.rdf.length > 0|| ret.json.length > 0 || ret.jsonl.length > 0 
+            || ret.csv.length > 0 || ret.md.length > 0)
             return {exists: true, data: ret}; 
         else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], rdf:[], csv:[], md:[]}};
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[]}};
     }
+
+
+    function sniff_nanotation2(nano) 
+    {
+        var el_pre, el_code;
+      
+        var lst = DOM.qSelAll('div#__next main pre select#code_type option:checked');
+        for (var el of lst) {
+          var el_type = el.id;
+
+          if (el_type === 'turtle') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.ttl.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'jsonld') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.jsonld.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'json') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.json.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'csv') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.csv.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'rdfxml') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.rdf.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'markdown') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.md.push(el_code.textContent);
+              }
+            }
+          }
+        }
+
+      return nano;
+    }
+
 
 
     function is_data_exist() 
@@ -413,6 +513,12 @@
                 var ret = sniff_nanotation();
                 data_found = ret.exists;
                 nano = ret.data;
+
+                if (!data_found && location.href.startsWith('https://chat.openai.com')) {
+                  ret = sniff_nanotation2(ret);
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
             }
 
 
@@ -504,6 +610,11 @@
 
             var ret = sniff_nanotation();
             nano = ret.data;
+            
+            if (location.href.startsWith('https://chat.openai.com')) {
+               ret = sniff_nanotation2(ret);
+               nano = ret.data;
+            }
 
         } catch (e) {
             console.log("OSDS:" + e);
@@ -996,6 +1107,7 @@
                     ttl_curly_nano: {text: null},
                     jsonld_nano: {text: null},
                     json_nano: {text: null},
+                    jsonl_nano: {text: null},
                     rdf_nano: {text: null},
                     csv_nano: {text: null},
                     md_nano: {text: null},
@@ -1069,6 +1181,7 @@
                 docData.ttl_curly_nano.text = nano.ttl_curly;
                 docData.jsonld_nano.text = nano.jsonld;
                 docData.json_nano.text = nano.json;
+                docData.jsonl_nano.text = nano.jsonl;
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
                 docData.md_nano.text = nano.md;
@@ -1104,6 +1217,7 @@
                     || (nano.ttl_curly && nano.ttl_curly.length > 0)
                     || (nano.jsonld  && nano.jsonld.length > 0)
                     || (nano.json    && nano.json.length > 0)
+                    || (nano.jsonl   && nano.jsonl.length > 0)
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
                     || (nano.md      && nano.md.length > 0)
@@ -1125,49 +1239,57 @@
             // wait data req from extension
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                if (request.property == "req_doc_data") {
+                if (request.property === "req_doc_data") {
                     request_doc_data();
                     sendResponse({ping:1});
-                    return;
+                    return true;
                  }
-                else if (request.property == "open_tab")
+                else if (request.property === "open_tab")
                     request_open_tab(request.url, sender);
                 else if (request.property == "super_links_data") {
                     inject_super_links_popup();
                     add_super_links(sender, request.data);
                 }
-                else if (request.property == "super_links_msg_show") {
+                else if (request.property === "super_links_msg_show") {
                     if (request.message) {
                       inject_super_links_popup();
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
                       DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
-                else if (request.property == "super_links_msg_hide") {
+                else if (request.property === "super_links_msg_hide") {
                     var el = DOM.qSel('.super_links_msg');
                     if (el)
                       el.style.display = 'none';
                 }
-                else if (request.property == "super_links_snackbar") {
+                else if (request.property === "super_links_snackbar") {
                     inject_super_links_popup();
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
                 }
-                else if (request.property == "osds_msg_show") {
+                else if (request.property === "osds_msg_show") {
                     if (request.message) {
                       inject_osds_popup();
                       DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
                       DOM.qSel('.osds_popup').style.display = 'block';
                     }
                 }
-                else if (request.property == "osds_msg_hide") {
+                else if (request.property === "osds_msg_hide") {
                     var el = DOM.qSel('.osds_popup');
                     if (el)
                       el.style.display = 'none';
                 }
+                else if (request.cmd === "page_content") {
+                    var page_content = document.body.innerText;
 
-                sendResponse({});  // stop
+                    if (!page_content|| (page_content && page_content.length == 0))
+                      page_content = getSelectionString(document.body, window);
+
+                    page_content = cleanText(page_content);
+                    sendResponse({page_content});
+                    return true;
+                }
             });
 
 
@@ -1175,6 +1297,20 @@
             console.log("OSDS:" + e);
         }
     });
+
+    function cleanText(text)
+    {
+      if (!text)
+        return text;
+
+      return text.trim()
+        .replace(/(\n){4,}/g, "\n\n\n")
+        // .replace(/\n\n/g, " ")
+        .replace(/ {3,}/g, "  ")
+        .replace(/\t/g, "")
+        .replace(/\n+(\s*\n)*/g, "\n")
+    }
+
 
 
 })();

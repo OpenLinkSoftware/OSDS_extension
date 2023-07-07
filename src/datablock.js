@@ -686,6 +686,31 @@ class JSON_Block extends DataBlock_Prepare {
 }
 
 
+class JSONL_Block extends DataBlock_Prepare {
+  constructor(_baseURL, _text)
+  {
+    super(_baseURL, _text);
+    this.fmt = "json";
+    this.content_type = "application/json;charset=utf-8";
+  }
+
+
+  async _prepare_ttl()
+  {
+    var conv = new Convert_JSONL();
+    var rc = conv.to_ttl(this.text, this.baseURL);
+    this.text = rc.json_text;
+    return {ttl:rc.ttl, error: rc.error};
+  }
+
+
+  async to_json()
+  {
+    return {txt: this.text, error: ""};
+  }
+}
+
+
 class CSV_Block extends DataBlock_Prepare {
   constructor(_baseURL, _text)
   {

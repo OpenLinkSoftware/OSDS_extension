@@ -21,6 +21,7 @@
 var gPref = null;
 var yasqe_slinks = null;
 var yasqe_srv = null;
+var gPromptId = 0;
 
 
 DOM.ready(() => { init(); })
@@ -85,36 +86,55 @@ async function init()
     console.log(e);
   }
 
-  $('#uiterm-mode').change(function() {
-      var cmd = $('#sparql-cmd option:selected').attr('id');
-      yasqe_srv.setValue(createSparqlQuery(cmd));
-  });
+  DOM.iSel('uiterm-mode').onchange = async (e) => {
+      var cmd = DOM.qSel('#sparql-cmd option:checked').id;
+      yasqe_srv.setValue(await createSparqlQuery(cmd));
+  };
 
-  $('#import-srv').change(function() {
+  DOM.iSel('import-srv').onchange = (e) => {
 	setTimeout(enableCtrls,200);
-  });
+  };
 
-  $('#sparql-cmd').change(function() {
-	var cmd = $('#sparql-cmd option:selected').attr('id');
-	 yasqe_srv.setValue(createSparqlQuery(cmd));
-  });
+  DOM.iSel('sparql-cmd').onchange = async (e) => {
+	var cmd = DOM.qSel('#sparql-cmd option:checked').id;
+	yasqe_srv.setValue(await createSparqlQuery(cmd));
+  };
 
-  $('#chk_try_handle_all').change(changeHandleAll);
-  $('#OK_btn').click(savePref);
-  $('#Cancel_btn').click(closeOptions);
+  DOM.iSel('chk_try_handle_all').onchange = () => { changeHandleAll() };
+  DOM.iSel('OK_btn').onclick = () => { savePref() }
+  DOM.iSel('Cancel_btn').onclick = () => { closeOptions() }
 
-  $('#import-set-def').click(setImportDefaults);
-  $('#rww-set-def').click(setRWWDefaults);
-  $('#sparql-set-def').click(setSparqlDefaults);
-  $('#super-links-set-def').click(setSuperLinksDefaults);
+  DOM.iSel('import-set-def').onclick = () => { setImportDefaults() }
+  DOM.iSel('rww-set-def').onclick = () => { setRWWDefaults() }
+  DOM.iSel('sparql-set-def').onclick = () => { setSparqlDefaults() }
+  DOM.iSel('super-links-set-def').onclick = () => { setSuperLinksDefaults() }
 
-  $('#call_edit_users').click(call_edit_users);
+  DOM.iSel('call_edit_users').onclick = () => { call_edit_users() }
 
+  DOM.iSel('prompt_add').onclick = click_prompt_add;
+  DOM.iSel('prompt-set-def').onclick = click_prompt_default;
+  DOM.iSel('prompt-query').onfocusout = prompt_out;
+
+  DOM.iSel('add_selection').onclick = () => {
+   typeInTextarea('{selected_text}', DOM.qSel('#prompt-query'));
+  }
+  DOM.iSel('add_page_url').onclick = () => {
+   typeInTextarea('{page_url}', DOM.qSel('#prompt-query'));
+  }
+
+  
   await enableCtrls();
 
   $('#ext_ver').text('Version: '+ Browser.api.runtime.getManifest().version);
 
-};
+
+}
+
+function typeInTextarea(newText, el) {
+  const [start, end] = [el.selectionStart, el.selectionEnd];
+  el.setRangeText(newText, start, end, 'select');
+}
+
 
 function changeHandleAll()
 {
@@ -372,7 +392,207 @@ async function loadPref()
 
     DOM.iSel('super-links-retries').value = await gPref.getValue("ext.osds.super_links.retries");
     DOM.iSel('super-links-retries-timeout').value = await gPref.getValue("ext.osds.super_links.retries_timeout");
+
+    var model = await gPref.getValue("ext.osds.gpt-model");
+    DOM.qSel('#gpt-model #'+model).selected=true;
+
+    var tokens = await gPref.getValue("ext.osds.gpt-tokens");
+    DOM.qSel('#gpt-max-tokens').value=tokens;
+
+    var lst = await gPref.getValue("ext.osds.prompt-lst");
+    var myid_checked = lst.length == 0 ? 'jsonld': '';
+    for(const i of lst) {
+      if (i.myid && i.checked) {
+        myid_checked = i.myid;
+        break;
+      }
+    }
+
+    gPromptId = 0;
+
+    var myid = 'jsonld';
+    add_prompt_row({name:'JSON-LD', text: gPref.def_prompt_query_jsonld, myid}, myid_checked===myid);
+    gPromptId++;
+
+    myid = 'turtle';
+    add_prompt_row({name:'Turtle', text: gPref.def_prompt_query_turtle, myid}, myid_checked===myid);
+    gPromptId++;
+
+    for(const i of lst) {
+      if (!i.myid) {
+        add_prompt_row({name:i.name, text:i.text, myid:''}, i.checked);
+        gPromptId++;
+      }
+    }
 }
+
+
+function add_prompt_row(item, selected)
+{
+  const checked = selected ? 'checked="checked"' : '';
+
+  const tbody = DOM.qSel('#prompt-list');
+  var r = tbody.insertRow(-1);
+  var readonly = '';
+  var del = '<button id="prompt_del" class="prompt_del" width="21" height="21"><img src="lib/css/img/trash.png"/></button>';
+
+  if (item.myid === 'jsonld' || item.myid === 'turtle') {
+    readonly = 'readonly="readonly"';
+    del = '';
+  }
+
+  r.innerHTML = `<td><input id="chk" class="prompt_chk" type="checkbox" ${checked}></td>`
+               +`<td><input style="width:100px" id="name" ${readonly} value="${item.name}"></td>`
+               +`<td>${del}</td>`;
+  r.setAttribute('myid', item.myid);
+  r.setAttribute('name', item.name);
+  r.setAttribute('text', item.text);
+  r.querySelector('.prompt_chk').onclick = click_prompt;
+  r.onclick = click_prompt_row;
+
+  if (checked) 
+    r.classList.add('prompt_checked');
+
+  if (selected)
+    r.querySelector('.prompt_chk').dispatchEvent(new Event('click'));
+
+  if (del) {
+    r.querySelector('.prompt_del').onclick = click_prompt_del;
+    r.querySelector('input#name').onfocusout = prompt_name_out;
+  }
+}
+
+function click_prompt_row(ev) 
+{
+  const row = ev.target.closest('tr');
+  if (row && row.parentNode) {
+    const chk = row.querySelector('input.prompt_chk');
+    chk.checked = true;
+    chk.dispatchEvent(new Event('click'));
+  }
+}
+
+function click_prompt(ev) 
+{
+  var chk = ev.target;
+  var row;
+
+  if (chk.checked) {
+    const tbody = DOM.qSel('#prompt-list');
+    var lst = tbody.querySelectorAll('.prompt_chk');
+    for(const i of lst) {
+      if (i !== chk) {
+        i.checked = false;
+        row = i.closest('table tr');
+        row.classList.remove('prompt_checked');
+      }
+    }
+
+    row = chk.closest('table tr');
+    if (row) {
+      row.classList.add('prompt_checked');
+
+      const prompt_query = DOM.iSel('prompt-query');
+      const myid = row.attributes.myid.value;
+
+      prompt_query.value = row.attributes.text.value;
+      if (myid === 'jsonld' || myid === 'turtle')
+        prompt_query.setAttribute('readonly', true);
+      else
+        prompt_query.removeAttribute('readonly');
+    }
+  }
+  else {
+    ev.preventDefault();
+  }
+}
+
+
+function click_prompt_add(ev) 
+{
+  gPromptId++;
+  const text = 'Disregard any previous instructions. \n'
+            +'.....\n'
+            +'"""\n'
+            +'{selected_text}\n'
+            +'"""\n\n';
+  const prompt = {name:'New_'+gPromptId, text, myid:''};
+  add_prompt_row(prompt, true);
+}
+
+function click_prompt_del(ev) 
+{
+  var btn = ev.target;
+  var row = btn.closest('table tr');
+  var checked = row.querySelector('input.prompt_chk').checked;
+  row.remove();
+  if (checked) {
+    const lst = DOM.qSelAll('tbody#prompt-list input.prompt_chk');
+    if (lst.length > 1) {
+      lst[0].checked = true;
+      lst[0].dispatchEvent(new Event('click'));
+    }
+  }
+}
+
+function click_prompt_default(ev) 
+{
+  const lst = DOM.qSelAll('tbody#prompt-list input.prompt_chk');
+  if (lst.length > 1) {
+    lst[0].checked = true;
+    lst[0].dispatchEvent(new Event('click'));
+  }
+
+  DOM.qSel('#gpt-model #gpt35').selected=true;
+  DOM.qSel('#gpt-max-tokens').value='4096';
+}
+
+function prompt_out(ev)
+{
+ const row = DOM.qSel('tbody#prompt-list tr.prompt_checked');
+ row.attributes.text.value = DOM.qSel('#prompt-query').value;
+}
+
+function prompt_name_out(ev)
+{
+  const name = ev.target;
+  const lst = DOM.qSelAll('tbody#prompt-list tr input#name');
+  for(const i of lst ) {
+    if (i !== name && i.value === name.value) {
+      ev.preventDefault();
+      alert(`Prompt name ${name.value} exists already in list`);
+      name.focus();
+      break;
+    }
+  }
+}
+
+function prompt_to_lst()
+{
+  var myprompt;
+  var lst = [];
+  const rows = DOM.qSelAll('tbody#prompt-list tr');
+  for(const i of rows ) {
+    const name = i.querySelector('input#name').value;
+    const text = i.attributes.text.value;
+    const myid = i.attributes.myid.value;
+    const checked = i.querySelector('input.prompt_chk').checked;
+    var item = {name, checked};
+
+    if (myid)
+      item['myid'] = myid;
+    else
+      item['text'] = text;
+
+    lst.push(item);
+
+    if (checked) {
+      myprompt = item;
+    }
+  }
+  return {myprompt, lst};
+}
+
 
 
 
@@ -394,9 +614,9 @@ async function savePref()
    await gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
    await gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
-   var pref_user = $('#pref_user option:selected').text();
-   await gPref.setValue("ext.osds.pref.user", pref_user);
-
+   var pref_user = DOM.qSel('#pref_user option:checked');
+   if (pref_user)
+     await gPref.setValue("ext.osds.pref.user", pref_user.text);
 
    var import_srv = DOM.qSel('#import-srv option:checked').id;
    await gPref.setValue("ext.osds.import.srv", import_srv);
@@ -441,7 +661,15 @@ async function savePref()
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
-   closeOptions();
+   await gPref.setValue("ext.osds.gpt-model", DOM.qSel('#gpt-model option:checked').id);
+   await gPref.setValue("ext.osds.gpt-tokens", DOM.iSel('gpt-max-tokens').value);
+
+   v = prompt_to_lst();
+   await gPref.setValue("ext.osds.prompt-lst", v.lst);
+   await gPref.setValue("ext.osds.prompt", v.myprompt);
+
+
+   Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});
 }
 
 

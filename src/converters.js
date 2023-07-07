@@ -1272,3 +1272,132 @@ class Convert_JSON {
   }
 
 }
+
+
+class Convert_JSONL {
+  constructor() 
+  {
+    this.s_id = 'ex:';
+    this.id = 0;
+    this.skipped_error = [];
+    this.baseURL = '';
+  }
+
+  gen_subj() {
+    this.id++;
+    return this.s_id+this.id;
+  }
+
+  str2obj_val(s) {
+    var qv = '"';
+
+    s = s.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+    return qv+s+qv;
+  }
+
+  handle_simple(o) 
+  {
+    if (o === null )
+      return; // ignore
+
+    var xsd = 'http://www.w3.org/2001/XMLSchema';
+
+    if (typeof o === 'number') {
+      if (o % 1 === 0)
+        return `"${o}"^^<${xsd}#int>`;
+      else
+        return `"${o}"^^<${xsd}#double> .`;
+    } 
+    else if (typeof o === 'string') {
+      return `${this.str2obj_val(o)}`;
+    } 
+    else if (typeof o === 'boolean') {
+      return `"${o}"^^<${xsd}#boolean>`;
+    } 
+    else {
+      return `${this.str2obj_val(o)}`;
+    }
+  }
+
+  handle_obj(prop, obj)
+  {
+    var prop_id = 0;
+    if (Array.isArray(obj)) {
+      var lst = [];
+      for(const v of obj) {
+        if (Array.isArray(v)) {
+          const s = this.handle_obj(prop+'_',v);
+          if (s && s.length > 1) {
+            prop_id++;
+            lst.push(` [ ex:${prop}_${prop_id}  ${s} ]`);
+          }
+          else
+            lst.push(` ""`);
+        }
+        else {
+          lst.push(` ${this.handle_simple(v)}`);
+        }
+      }
+
+      const v = lst.join(',');
+      return v ? v : '""';
+    }
+    else {
+      return ' '+this.handle_simple(obj);
+    }
+
+  }
+  
+  
+  to_ttl(textData, baseURL) 
+  {
+    this.baseURL = baseURL;
+    var output_ttl = [];
+    var json_text = [];
+
+    for(var x=0; x < textData.length; x++)
+    {
+      try {
+        if (textData[x] < 1)
+          continue;
+
+        var buf = [];
+        var lst = textData[x].split('\n');
+
+        for(const s of textData[x].split('\n')) {
+          if (s.length==0)
+            continue;
+
+          const json_line = JSON.parse(s);
+          var p_list = []
+          for(const prop in json_line) {
+            p_list.push(`    ex:${prop} ${this.handle_obj(prop, json_line[prop])} `);
+          }
+
+          if (p_list.length==0)
+            continue;
+
+          buf.push(`${this.gen_subj()} rdf:type ex:Object ;`);
+          buf.push(p_list.join(';\n')+' .\n\n');
+        }
+
+        if (buf.length==0)
+          continue;
+
+        var ttl_data = '@prefix ex: <#> .\n' 
+                      +'@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n'
+                      +'@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n\n'
+                      + buf.join('\n');
+
+        output_ttl.push(ttl_data);
+        json_text.push(textData[x]);
+
+      } catch (ex) {
+        json_text.push(textData[x]);
+        this.skipped_error.push(""+ex.toString());
+      }
+    }
+    return {ttl:output_ttl, json_text, error: this.skipped_error};
+  }
+
+}

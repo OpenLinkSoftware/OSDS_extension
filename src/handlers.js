@@ -546,12 +546,19 @@ class Handle_JSONLD {
               textData[i] = txt;
           } catch (e) {}
 
-          var expanded = await jsonld.expand(jsonld_data, {base:docURL});
-          var nquads = await jsonld.toRDF(expanded, {base:docURL, format: 'application/nquads', includeRelativeUrls: true});
+          var _base = docURL;
+
+          if (jsonld_data["@context"] && jsonld_data["@context"]["@base"])
+            _base = jsonld_data["@context"]["@base"];
+          else if (jsonld_data["@base"])
+            _base = jsonld_data["@base"];
+
+          var expanded = await jsonld.expand(jsonld_data, {base:_base});
+          var nquads = await jsonld.toRDF(expanded, {base:_base, format: 'application/nquads', includeRelativeUrls: true});
 
           var handler = new Handle_Quads(this.start_id, this._make_ttl, false, bnode_types);
           handler.skip_error = false;
-          var ret = await handler.parse([nquads], docURL);
+          var ret = await handler.parse([nquads], _base);
           if (ret.errors.length > 0) {
             this.skipped_error = this.skipped_error.concat(ret.errors);
           } else {
