@@ -38,7 +38,10 @@ original GNU General Public License Version 2, dated June 1991.
 ## Deployment
 To deploy this extension on your local machine you can either *clone the git source tree* or
 *download a source archive* and then *install the extension* into your Chrome or Opera browser on
-the same system.
+the same system. In most cases, you can also download a prebuilt extension binary from the store 
+for your browser (Chromium-based browsers use the extension from the Chrome store; Safari uses 
+the extension from the Apple App Store; Firefox uses the extension from the Firefox store; and
+Microsoft Edge uses the extension from the Microsoft store.)
 
 ### Clone the git source tree
 Clone the sources from github using the following commands, which will automatically download the latest develop branch:
