@@ -49,7 +49,7 @@ $ git clone https://github.com/OpenLinkSoftware/OSDS_extension
 
 ### Download a source archive
 Download and extract a `.tar.gz` or `.zip`, either from one of the
-[stable releases](https://github.com/OpenLinkSoftware/OSDS_extension/releases/latest),
+[stable releases](https://github.com/OpenLinkSoftware/OSDS_extension/tags),
 or directly from one of the following links:
 
 - [latest stable `.tar.gz`](https://github.com/OpenLinkSoftware/OSDS_extension/archive/master.tar.gz)
