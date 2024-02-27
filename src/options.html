@@ -59,13 +59,6 @@
 	.align_end {
 	  text-align: end;
 	}
-	.btn-p {
-	  font-size: 14px;
-	  padding: 6px 12px;
-	  border-radius: 4px;
-	  border: 1px solid grey;
-	  background-color: white;
-	}
 
 	tbody#prompt-list tr.prompt_checked{
 	  background: cyan;
@@ -115,6 +108,7 @@
       <li><a href="#tabs-5">About</a></li>
       </ul>
 
+        <!-- Settings -->
         <div id="tabs-1">
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
 
@@ -131,7 +125,7 @@
                Preferred&nbsp;User&nbsp;ID:
                <SELECT class="ml5" id="pref_user" style="WIDTH: 350px" >
                </SELECT>
-               <input class="ml5" id="call_edit_users" value="Edit" type="button" class="btn-p">
+               <input class="ml5" id="call_edit_users" value="Edit" type="button">
              </div>
              <div class="ritem">
                <input id="chk_show_action_for_url_with_params" type="checkbox">
@@ -208,7 +202,7 @@
              </div>
 
              <p>
-             <input id="import-set-def" value="Revert to Defaults" type="button" class="btn-p">
+             <input id="import-set-def" value="Revert to Defaults" type="button">
              </p>
 
              <hr/>
@@ -228,13 +222,14 @@
               </textarea>
              </div>
              <p>
-               <input id="rww-set-def" value="Revert to Defaults" type="button" class="btn-p">
+               <input id="rww-set-def" value="Revert to Defaults" type="button">
              </p>
            </div>
 
           </div>
         </div>
 
+        <!-- SPARQL Query Service -->
         <div id="tabs-2">
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
              <div class="ritem">
@@ -255,11 +250,12 @@
                 </textarea>
             </div>
             <p>
-            <input id="sparql-set-def" value="Revert to Defaults" type="button" class="btn-p">
+            <input id="sparql-set-def" value="Revert to Defaults" type="button">
             </p>
           </div>
         </div>
 
+        <!-- SUPER Links -->
         <div id="tabs-3">
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
 
@@ -319,13 +315,13 @@
 
            <div>SPARQL query:</div>
 
-           <div style="width: 660px; height: 500px">
+           <div style="width: 660px; height: 300px">
              <textarea id="super-links-query" style="white-space:nowrap">
              </textarea>
            </div>
 
            <p>
-             <input id="super-links-set-def" value="Revert to Defaults" type="button" class="btn-p">
+             <input id="super-links-set-def" value="Revert to Defaults" type="button">
            </p>
 
            <table>
@@ -342,29 +338,58 @@
             </tr>
            </table>
 
+           <hr style="width:100%"/>
+           <div style="margin-bottom:5px;"><b>ChatGPT request</b></div>
+           <div class="ritem">
+             <div>&nbsp;&nbsp;&nbsp;GPT Model:</div>
+             <SELECT class="ml5" id="chatgpt-model" style="WIDTH: 100px" >
+                   <OPTION id="gpt-3.5-turbo" selected>GPT-3.5</OPTION>
+                   <OPTION id="gpt-4">GPT-4</OPTION>
+             </SELECT>
+             <div style="text-align:right;margin-left:15px"> Max tokens:</div>
+             <input id="chatgpt_max_tokens" style="WIDTH: 80px" type="number" value="4096">
+             <div style="text-align:right;margin-left:15px">Temperature:</div>
+             <input id="chatgpt_temp" style="WIDTH: 60px" type="number" value="1">
+           </div>
+           <div class="ritem">
+             OpenAI token:
+             <input id="chatgpt_token" style="WIDTH:500px" value="sk-xxxxxxxx">
+           </div>
+           <div>Prompt:</div>
+
+           <textarea id="chatgpt_prompt" style="white-space:nowrap;width: 660px; height: 40px">
+           </textarea>
+           <div class="ritem">
+             <div>
+             &#x25cf <span style="color:red">{words}</span>
+               token will be replaced with the words from SuperLink item
+             </div>
+           </div>
           </div>
         </div>
 
 
+        <!-- Chat GPT -->
 	<div id="tabs-4">
           <div style="display:flex; flex-direction: column; align-self: flex-start;">
-            <table>
-              <tr>
-                <td style="width:100px; text-align:right;">GPT Model: </td>
-                <td style="width:120px;"> 
-                  <SELECT class="ml5" id="gpt-model" style="WIDTH: 100px" >
-                    <OPTION id="gpt35" selected>GPT 3.5</OPTION>
-                    <OPTION id="gpt4">GPT 4</OPTION>
-                  </SELECT>
-                </td>
-                <td style="width:120px; text-align:right;">Max tokens: </td>
-                <td> 
-                  <input id="gpt-max-tokens" style="WIDTH: 80px" type="number" value="4096">
-                </td>
-              </tr>
-            </table>
-          
-            <div style="display:grid; grid-template-rows: 1fr; grid-template-columns:220px auto; grid-gap:10px; padding-top:15px">
+            <div class="ritem">
+              <div>Chat Service:</div>
+              <SELECT class="ml5" id="chat-srv" style="WIDTH: 300px" >
+                 <OPTION id="ch_openai" selected>ChatGPT</OPTION>
+                 <OPTION id="ch_opal_qa">Chat OPAL (net-qa)</OPTION>
+              </SELECT>
+              <div class="ml5"> Max tokens:</div>
+              <input id="gpt-max-tokens" style="WIDTH: 80px; margin-left:5px" type="number" value="4096">
+            </div>
+            <div class="ritem">
+                <textarea id="prompt-injects" style="width: 100%; height: 250px">
+                </textarea>
+            </div>
+            <div class="ritem">
+              <input id="prompt-validate" value="Validate services description" type="button">
+            </div>
+
+            <div style="display:grid; grid-template-rows: 1fr; grid-template-columns:200px auto; grid-gap:10px; padding-top:15px">
               <div>
                 <table class="footable">
                   <tbody id="prompt-list">
@@ -386,12 +411,13 @@
               </div>
             </div>
             <p>
-            <input id="prompt-set-def" value="Revert to Defaults" type="button" class="btn-p">
+            <input id="prompt-set-def" value="Revert to Defaults" type="button">
             </p>
           </div>
         </div>
 
 
+        <!-- About -->
 	<div id="tabs-5">
             <IMG alt="" src="images/icon48.png">
             <h3>OpenLink Structured Data Sniffer</h3>
@@ -409,8 +435,8 @@
     </div>
     <p/>
 
-    <input id="OK_btn" value=" Save " type="button" class="btn-p">
-    <input id="Cancel_btn" value=" Cancel " type="button" class="btn-p">
+    <input id="OK_btn" value=" Save " type="button">
+    <input id="Cancel_btn" value=" Cancel " type="button">
 
   </body>
 </html>

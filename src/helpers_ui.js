@@ -90,6 +90,8 @@
 
   function dragElement(el, elHeader) {
     var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    var vpH = 0, vpW = 0;
+
 
     if (elHeader) {
       // if present, the header is where you move the DIV from:
@@ -105,6 +107,11 @@
       // get the mouse cursor position at startup:
       pos3 = e.clientX;
       pos4 = e.clientY;
+
+      vpWH = getViewPortWidthHeight();
+      vpW = vpWH[0];
+      vpH = vpWH[1];
+
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
     }
@@ -118,8 +125,16 @@
       pos3 = e.clientX;
       pos4 = e.clientY;
       // set the element's new position:
-      el.style.top = (el.offsetTop - pos2) + "px";
-      el.style.left = (el.offsetLeft - pos1) + "px";
+      var top = (el.offsetTop - pos2);
+      var left = (el.offsetLeft - pos1);
+
+      top = top<0? 0: top;
+      top = top>vpH-20? vpH-20: top;
+      left = left<0? 0: left;
+      left = left>vpW-30? vpW-30: left;
+
+      el.style.top = top + "px";
+      el.style.left = left + "px";
     }
 
     function onMouseUp() {
@@ -156,5 +171,68 @@
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     }
+  }
+
+  function positionPopupOnPage(popupId, evt )
+  {
+      var vpWH = [];
+      var vpW, vpH;
+      var intCoordX = evt.clientX;
+      var intCoordY = evt.clientY;
+      var intXOffset = intCoordX;
+      var intYOffset = intCoordY;
+
+      vpWH = getViewPortWidthHeight();
+      vpW = vpWH[0];
+      vpH = vpWH[1];
+
+      var popup = $(popupId);
+      popup.css("position","fixed");
+      // if not display: block, .offsetWidth & .offsetHeight === 0
+      popup.css("display","block");
+      popup.css("zIndex","2147483647");
+
+      if ( intCoordX > vpW/2 )
+        intXOffset -= popup.width();
+
+      if ( intCoordY > vpH/2 )
+        intYOffset -= popup.height();
+
+      if ( vpW <= 500 )
+        intXOffset = ( vpW - popup.width() ) / 2;
+
+      if ( vpH <= 500 )
+        intYOffset = (vpH - popup.height() ) / 2;
+
+      var rpos = intXOffset + popup.outerWidth() + 5;
+      if (rpos > vpW)
+        intXOffset -= rpos - vpW;
+
+      if (intXOffset < 0 )
+        intXOffset = 2;
+
+      if (intYOffset < 0 )
+        intYOffset = 2;
+
+      popup.css("top", intYOffset + 'px');
+      popup.css("left", intXOffset + 'px');
+      popup.css("visibility", 'visible');
+  }
+
+
+  function getViewPortWidthHeight()
+  {
+      var viewPortWidth;
+      var viewPortHeight;
+
+ 	// the more standards compliant browsers (mozilla/netscape/opera/IE7)
+ 	// use window.innerWidth and window.innerHeight
+      if (typeof window.innerWidth != 'undefined')
+      {
+        viewPortWidth = window.innerWidth;
+        viewPortHeight = window.innerHeight;
+      }
+      
+      return [viewPortWidth, viewPortHeight];
   }
 

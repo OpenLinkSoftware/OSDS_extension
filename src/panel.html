@@ -82,14 +82,6 @@
           }
  	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
 
-	  .btn-p {
-	    font-size: 14px;
-	    padding: 6px 12px;
-	    border-radius: 4px;
-	    border: 1px solid grey;
-	    background-color: white;
-	  }
-
         </style>
 
     </head>
@@ -137,6 +129,10 @@
             </SELECT>
         </div>
 
+        <div id="login-fmt-item" class="popup_frm_row">
+          <button id="oidc-login-btn">Login </button>
+          <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> 
+        </div>
 
         <div id="save-sparql-item" style="display:flex; flex-direction:column">
           <div class="popup_frm_row">
@@ -174,11 +170,23 @@
         </div>
       </div>
 
+      <div class="popup" id="login-dlg" title="Login via OIDC provider">
+        <p/>
+        <table id="oidc-login1" style="font-size: 14px;">
+         <tr >
+          <td> <button id="oidc-login-btn1">Login</button> </td>
+          <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
+         </tr>
+
+        </table>
+      </div>
+
 <!---------END POPUP --------------------->
 
       <div class="top"></div>
 
       <div class="btn_block">
+         <input type="image" id="login_btn" class="image_btn" src="images/slogin24.png" title="Solid Login">
          <input type="image" id="chat_btn" class="image_btn" src="images/chat.png" title="ChatGPT">
          <input type="image" id="slink_btn" class="image_btn" src="images/slink24.png" title="Super Links">
          <input type="image" id="sparql_btn" class="image_btn" src="images/osds-icon-query-24.png" title="LOD Cloud Lookup Query using SPARQL Query Language">
@@ -220,19 +228,19 @@
                 <td>Processing data...</td>
               </tr>
             </table>
-          </div>
-          <table class="loader" style="display:none">
-            <tr>
-              <td>
+            <table class="loader" style="display:none">
+              <tr>
+                <td>
                   <br>&nbsp;&nbsp;
                   <button id="load_jsonld" style="display:none">Load JSON-LD data</button> &nbsp; 
                   <span id="throbber" style="display:none">
                     <img src="images/throbber.gif" width="16"/>Loading...
                   </span>
-              </td>
-              <td></td>
-            </tr>
-          </table>
+                </td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
         </li>
 
         <li id="tab-turtle">
@@ -246,6 +254,18 @@
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
                 <td>Processing data...</td>
+              </tr>
+            </table>
+            <table class="loader" style="display:none">
+              <tr>
+                <td>
+                  <br>&nbsp;&nbsp;
+                  <button id="load_turtle" style="display:none">Load Turtle data</button> &nbsp; 
+                  <span id="throbber" style="display:none">
+                    <img src="images/throbber.gif" width="16"/>Loading...
+                  </span>
+                </td>
+                <td></td>
               </tr>
             </table>
           </div>
@@ -366,7 +386,13 @@
             RSS
           </label>
           <div id="rss_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="loader">
+            <table class="wait" style="display:none">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+            <table class="loader" style="display:none">
               <tr>
                 <td>
                     <br>&nbsp;&nbsp;
@@ -388,7 +414,13 @@
             Atom
           </label>
           <div id="atom_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="loader">
+            <table class="wait" style="display:none">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+            <table class="loader" style="display:none">
               <tr>
                 <td>
                     <br>&nbsp;&nbsp;
@@ -428,7 +460,7 @@
             <table style="width: 100%;height:40px;">
               <tr>
                 <td>
-                  <button id="src_exit" style="margin:5px; margin-left:10px;" class="btn-p">Exit</button>
+                  <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
                 </td>
               </tr>
             </table>
@@ -444,8 +476,8 @@
           <div id="cons_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
 
             <div style="display:flex; flex-direction:row; align-items:baseline;">
-              <button id="rest_exec" style="margin:10px; margin-left:15px;" class="btn-p">Run</button>
-              <button id="rest_exit" class="btn-p">Exit</button>
+              <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
+              <button id="rest_exit" >Exit</button>
             </div>
             <div class="rest_path">
               <span class="rest_frm_label5">URL</span>

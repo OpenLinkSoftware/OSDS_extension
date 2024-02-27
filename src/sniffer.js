@@ -23,6 +23,7 @@
 
     window._osds_isTop = true;
     window._osds_frames = {};
+    let g_chat_cache = {};
 
     var g_super_links = null;
     var micro_items = 0;
@@ -31,7 +32,8 @@
     var posh_Data = null;
     var rdfa_subjects = null;
     var rdf_Text = null;
-    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, jsonl:null, csv:null, md:null};
+    var nano = {ttl:null, ttl_curly:null, jsonld:null, rdf:null, json:null, jsonl:null, csv:null, md:null, 
+    		rss:null, atom:null};
     var data_found = false;
 
     var ttl_nano_pattern = /(^\s*## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(^\s*## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
@@ -41,6 +43,8 @@
     var csv_nano_pattern = /(^\s*## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## CSV +(End|Stop) ##))(.*)/gmi;
     var rdf_nano_pattern = /(^\s*## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
     var md_nano_pattern = /(^\s*## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Markdown +(End|Stop) ##))(.*)/gmi;
+    var rss_nano_pattern = /(^\s*## RSS +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RSS +(End|Stop) ##))(.*)/gmi;
+    var atom_nano_pattern = /(^\s*## Atom +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Atom +(End|Stop) ##))(.*)/gmi;
 
 
     function getSelectionString(el, win) {
@@ -159,7 +163,7 @@
         var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
         var comment = /^ *#/;
         var doc_Texts = [];
-        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[]};
+        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[], rss:[], atom:[]};
 
         function isWhitespace(c) 
         {
@@ -352,20 +356,45 @@
                     }
                 }
 
+                //try get Rss Nano
+                while (true) {
+                    var ndata = rss_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        ret.rss.push(str);
+                    }
+                }
+
+                //try get Atom Nano
+                while (true) {
+                    var ndata = atom_nano_pattern.exec(s_doc);
+                    if (ndata == null)
+                        break;
+
+                    var str = ndata[2];
+                    if (str.length > 0) {
+                        ret.atom.push(str);
+                    }
+                }
+
             }
         }
 
 
         if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 
             || ret.rdf.length > 0|| ret.json.length > 0 || ret.jsonl.length > 0 
-            || ret.csv.length > 0 || ret.md.length > 0)
+            || ret.csv.length > 0 || ret.md.length > 0|| ret.rss.length > 0 || ret.atom.length > 0)
             return {exists: true, data: ret}; 
         else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[]}};
+            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], 
+                    csv:[], md:[], rss:[], atom:[]}};
     }
 
 
-    function sniff_nanotation2(nano) 
+    function sniff_nanotation_openai(nano) 
     {
         var el_pre, el_code;
       
@@ -433,11 +462,94 @@
               }
             }
           }
+          else if (el_type === 'rss') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.rss.push(el_code.textContent);
+              }
+            }
+          }
+          else if (el_type === 'atom') {
+            el_pre = el.closest('pre');
+            if (el_pre) {
+              el_code = el_pre.querySelector('code');
+              if (el_code) {
+                nano.exists = true;
+                nano.data.atom.push(el_code.textContent);
+              }
+            }
+          }
+
         }
 
       return nano;
     }
 
+ 
+    function sniff_nanotation_ms_copilot(nano) 
+    {
+      _top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot;
+
+      if (!_top)
+        return nano;
+
+      for(const c0 of _top.querySelectorAll('cib-chat-turn[mode="conversation"]'))
+      {
+        for(const c1 of c0.shadowRoot.querySelectorAll('cib-message-group[mode=conversation]')) 
+        {
+          for(const c2 of c1.shadowRoot.querySelectorAll('cib-message[type="text"]'))
+          {
+            for(const v of c2.shadowRoot.querySelectorAll('cib-shared cib-code-block'))
+            {
+              const text = v.getAttribute('clipboard-data');
+              //const dd_el = e_hdr.querySelector('#code_type');
+              const dd_el = v.shadowRoot.querySelector('select#code_type option:checked');
+              if (text && dd_el) {
+                let lst = null;
+                switch(dd_el.id) {
+                  case 'turtle': 
+                    nano.exists = true;
+                    nano.data.ttl.push(text);
+                    break;
+                  case 'jsonld':
+                    nano.exists = true;
+                    nano.data.jsonld.push(text);
+                    break;
+                  case 'json':
+                    nano.exists = true;
+                    nano.data.json.push(text);
+                    break;
+                  case 'csv':
+                    nano.exists = true;
+                    nano.data.csv.push(text);
+                    break;
+                  case 'rdfxml':
+                    nano.exists = true;
+                    nano.data.rdf.push(text);
+                    break;
+                  case 'markdown':
+                    nano.exists = true;
+                    nano.data.md.push(text);
+                    break;
+                  case 'rss':
+                    nano.exists = true;
+                    nano.data.rss.push(text);
+                    break;
+                  case 'atom':
+                    nano.exists = true;
+                    nano.data.atom.push(text);
+                    break;
+                }
+              }
+            }
+          }
+        }
+      }
+      return nano;
+    }
 
 
     function is_data_exist() 
@@ -515,7 +627,12 @@
                 nano = ret.data;
 
                 if (!data_found && location.href.startsWith('https://chat.openai.com')) {
-                  ret = sniff_nanotation2(ret);
+                  ret = sniff_nanotation_openai(ret);
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
+                else if (!data_found && location.href.startsWith('https://copilot.microsoft.com')) {
+                  ret = sniff_nanotation_ms_copilot(ret);
                   data_found = ret.exists;
                   nano = ret.data;
                 }
@@ -612,7 +729,11 @@
             nano = ret.data;
             
             if (location.href.startsWith('https://chat.openai.com')) {
-               ret = sniff_nanotation2(ret);
+               ret = sniff_nanotation_openai(ret);
+               nano = ret.data;
+            }
+            else if (location.href.startsWith('https://copilot.microsoft.com')) {
+               ret = sniff_nanotation_ms_copilot(ret);
                nano = ret.data;
             }
 
@@ -811,6 +932,14 @@
            <div class="osds_revert_css super_links_popup-content"></div>
            <img class="osds_revert_css super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
           </div> 
+          <div class="osds_revert_css super_links_chatgpt" style="display:none" >
+           <div class="osds_revert_css super_links_chatgpt-title"> &nbsp;ChatGPT </div>
+           <a href="#close" title="Close" class="osds_revert_css super_links_chatgpt_close">&times;</a> 
+           <div class="osds_revert_css super_links_chatgpt-content">
+             <textarea id="osds_words"class="osds_revert_css super_links_chatgpt-content-text"></textarea>
+           </div>
+           <img class="osds_revert_css super_links_chatgpt-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
+          </div> 
           <div class="osds_revert_css super_links_msg" style="display:none" > 
             <div class="osds_revert_css" style="width:16px;">
               <img src="data:image/gif;base64,${Browser.throbber}" class="osds_revert_css super_links_img">
@@ -822,6 +951,7 @@
             <div class="osds_revert_css" id="msg2"></div>
           </div>`
         );
+
       }
     }
 
@@ -884,68 +1014,20 @@
 
 
 /**********************************************/
-    function positionPopupOnPage( evt )
+    function handle_ask(tableId)
     {
-      var vpWH = [];
-      var vpW, vpH;
-      var intCoordX = evt.clientX;
-      var intCoordY = evt.clientY;
-      var intXOffset = intCoordX;
-      var intYOffset = intCoordY;
-
-      vpWH = getViewPortWidthHeight();
-      vpW = vpWH[0];
-      vpH = vpWH[1];
-
-      inject_super_links_popup();
-
-      var popup = $(".super_links_popup");
-      popup.css("position","fixed");
-      // if not display: block, .offsetWidth & .offsetHeight === 0
-      popup.css("display","block");
-      popup.css("zIndex","2147483647");
-
-      if ( intCoordX > vpW/2 )
-        intXOffset -= popup.width();
-
-      if ( intCoordY > vpH/2 )
-        intYOffset -= popup.height();
-
-      if ( vpW <= 500 )
-        intXOffset = ( vpW - popup.width() ) / 2;
-
-      if ( vpH <= 500 )
-        intYOffset = (vpH - popup.height() ) / 2;
-
-      var rpos = intXOffset + popup.outerWidth() + 5;
-      if (rpos > vpW)
-        intXOffset -= rpos - vpW;
-
-      if (intXOffset < 0 )
-        intXOffset = 0;
-
-      popup.css("top", intYOffset + 'px');
-      popup.css("left", intXOffset + 'px');
-      popup.css("visibility", 'visible');
-    }
-
-
-    function getViewPortWidthHeight()
-    {
-      var viewPortWidth;
-      var viewPortHeight;
-
- 	// the more standards compliant browsers (mozilla/netscape/opera/IE7)
- 	// use window.innerWidth and window.innerHeight
-      if (typeof window.innerWidth != 'undefined')
+      let lst = DOM.qSelAll(tableId+' td a#osds_ask_gpt')
+      for(const el of lst) 
       {
-        viewPortWidth = window.innerWidth;
-        viewPortHeight = window.innerHeight;
+        el.onclick = (ev) => {
+          ev.preventDefault();
+          const words = ev.target.attributes.getNamedItem('words');
+          if (words && words.value) {
+             ask_ChatGPT(ev, words.value);
+          }
+        }
       }
-      
-      return [viewPortWidth, viewPortHeight];
     }
-
 
     async function create_popup_table(lst, ev)
     {
@@ -987,6 +1069,7 @@
               ` <td> <a target="_blank" href="${association}">${associationLabel}</a> </td>`+
               ` <td> <a target="_blank" href="${prov}">${provName}</a></td>`+
               ` <td> <a target="_blank" href="${entityType}">${entityTypeLabel}</a></td>`+
+              ` <td> <a id="osds_ask_gpt" target="_blank" href="#osds_ask_gpt" words="${extLabel}">Ask</a></td>`+
               `</tr>`;
             }
           } catch(e) {}
@@ -1000,19 +1083,22 @@
                +'<th class="osds_revert_css"> Association <span class="super_links_table-resize-handle"/></th>'
                +'<th class="osds_revert_css"> Source <span class="super_links_table-resize-handle"/></th>'
                +'<th class="osds_revert_css"> Type <span class="super_links_table-resize-handle"/></th>'
+               +'<th class="osds_revert_css"> ChatGPT <span class="super_links_table-resize-handle"/></th>'
                +'</tr></thead>'
                 +'<tbody>'+tdata+'</tbody>'
                 +'</table>');
         $('.super_links_popup').show();
 
         var popup = DOM.qSel('.super_links_popup');
-        const columns_css = ['minmax(100px, 1.5fr)', 'minmax(100px, 2.5fr)', 'minmax(100px, 4fr)', 'minmax(100px, 2fr)'];
+        const columns_css = ['minmax(100px, 1.5fr)', 'minmax(100px, 2.5fr)', 'minmax(100px, 4fr)', 'minmax(100px, 2fr)', 'minmax(100px, 2fr)'];
         makeResizableTable('table.super_links_table', columns_css, '.super_links_popup');
 
         dragElement(popup, DOM.qSel('.super_links_popup-title'));
         makeResizable(popup, DOM.qSel('.super_links_popup-resizer'));
 
-        positionPopupOnPage(ev);
+        handle_ask('table.super_links_table');
+
+        positionPopupOnPage(".super_links_popup", ev);
       }
     }
 
@@ -1076,6 +1162,57 @@
     }
 
 
+    
+    async function ask_ChatGPT(ev, words)
+    {
+      let event = {clientX: ev.clientX, clientY:ev.clientY};
+      const settings = new Settings();
+      let chatgpt_req = await settings.getValue("osds.chatgpt_prompt");
+      if (!chatgpt_req)
+        chatgpt_req = "What do you know about '{words}' ?";
+
+      chatgpt_req = chatgpt_req.replace("{words}", "'"+words+"'");
+
+      const chat_resp = g_chat_cache[chatgpt_req];
+      if (chat_resp) {
+        add_chatgpt_data({resp:chat_resp, event});
+      } 
+      else {
+        Browser.api.runtime.sendMessage({cmd: "super_links_chatgpt", req:chatgpt_req, event });
+      }
+    }
+
+    function add_chatgpt_data(resp)
+    {
+      if (resp.err) {
+        showSnackbar("Error", resp.err);
+        return;
+      }
+
+      const chat_req = resp.req;
+      let chat_resp = resp.resp;
+
+      if (chat_resp) 
+        g_chat_cache[chat_req] = chat_resp;
+
+      if (chat_resp) {
+        const el = DOM.qSel('#osds_words');
+        el.value = chat_resp;
+
+        const popup = DOM.qSel('.super_links_chatgpt');
+        dragElement(popup, DOM.qSel('.super_links_chatgpt-title'));
+        makeResizable(popup, DOM.qSel('.super_links_chatgpt-resizer'));
+
+        $('.super_links_chatgpt_close').click(function(e){
+            $('.super_links_chatgpt').hide();
+            return false;
+         });
+
+        positionPopupOnPage('.super_links_chatgpt', resp.event);
+      }
+    }
+
+
     DOM.ready(() => {
 
         try {
@@ -1111,6 +1248,8 @@
                     rdf_nano: {text: null},
                     csv_nano: {text: null},
                     md_nano: {text: null},
+                    rss_nano: {text: null},
+                    atom_nano: {text: null},
                     posh: {text: null}
                 };
 
@@ -1185,6 +1324,8 @@
                 docData.rdf_nano.text = nano.rdf;
                 docData.csv_nano.text = nano.csv;
                 docData.md_nano.text = nano.md;
+                docData.rss_nano.text = nano.rss;
+                docData.atom_nano.text = nano.atom;
 
 //??--                var list = document.querySelectorAll('a[href$="/rss"], a[href$=".rss"]');
                 var list = document.querySelectorAll('a[href$=".rss"]');
@@ -1221,6 +1362,8 @@
                     || (nano.rdf     && nano.rdf.length > 0)
                     || (nano.csv     && nano.csv.length > 0)
                     || (nano.md      && nano.md.length > 0)
+                    || (nano.rss      && nano.rss.length > 0)
+                    || (nano.atom     && nano.atom.length > 0)
                     || (posh_Data    && posh_Data.triples.length > 0)
                     || (posh_Data    && posh_Data.links.length > 0)
                    )
@@ -1239,55 +1382,55 @@
             // wait data req from extension
         
             Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                if (request.property === "req_doc_data") {
+                if (request.cmd === "req_doc_data") {
                     request_doc_data();
                     sendResponse({ping:1});
                     return true;
                  }
                 else if (request.property === "open_tab")
                     request_open_tab(request.url, sender);
-                else if (request.property == "super_links_data") {
+                else if (request.cmd == "super_links_chatgpt_return") {
+                    add_chatgpt_data(request);
+                }
+                else if (request.cmd == "super_links_data") {
                     inject_super_links_popup();
                     add_super_links(sender, request.data);
                 }
-                else if (request.property === "super_links_msg_show") {
+                else if (request.cmd === "super_links_msg_show") {
                     if (request.message) {
                       inject_super_links_popup();
                       DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
                       DOM.qSel('.super_links_msg').style.display = 'flex';
                     }
                 }
-                else if (request.property === "super_links_msg_hide") {
+                else if (request.cmd === "super_links_msg_hide") {
                     var el = DOM.qSel('.super_links_msg');
                     if (el)
                       el.style.display = 'none';
                 }
-                else if (request.property === "super_links_snackbar") {
+                else if (request.cmd === "super_links_snackbar") {
                     inject_super_links_popup();
                     if (request.msg1) {
                       showSnackbar(request.msg1, request.msg2);
                     }
                 }
-                else if (request.property === "osds_msg_show") {
+                else if (request.cmd === "osds_msg_show") {
                     if (request.message) {
                       inject_osds_popup();
                       DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
                       DOM.qSel('.osds_popup').style.display = 'block';
                     }
                 }
-                else if (request.property === "osds_msg_hide") {
+                else if (request.cmd === "osds_msg_hide") {
                     var el = DOM.qSel('.osds_popup');
                     if (el)
                       el.style.display = 'none';
                 }
                 else if (request.cmd === "page_content") {
-                    var page_content = document.body.innerText;
-
-                    if (!page_content|| (page_content && page_content.length == 0))
-                      page_content = getSelectionString(document.body, window);
-
-                    page_content = cleanText(page_content);
+                    const scanner = new Social();
+                    const page_content = scanner.scan(location);
                     sendResponse({page_content});
+                    //console.log(page_content);
                     return true;
                 }
             });
@@ -1297,20 +1440,6 @@
             console.log("OSDS:" + e);
         }
     });
-
-    function cleanText(text)
-    {
-      if (!text)
-        return text;
-
-      return text.trim()
-        .replace(/(\n){4,}/g, "\n\n\n")
-        // .replace(/\n\n/g, " ")
-        .replace(/ {3,}/g, "  ")
-        .replace(/\t/g, "")
-        .replace(/\n+(\s*\n)*/g, "\n")
-    }
-
 
 
 })();

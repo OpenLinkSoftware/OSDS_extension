@@ -64,7 +64,7 @@ async function init()
        createShareLink : null,
 	     persistent: null,
     });
-    yasqe_slinks.setSize("100%", 480);
+    yasqe_slinks.setSize("100%", 280);
 
     yasqe_srv = YASQE.fromTextArea(document.getElementById('sparql-query'), {
 			lineNumbers: true,
@@ -122,6 +122,7 @@ async function init()
    typeInTextarea('{page_url}', DOM.qSel('#prompt-query'));
   }
 
+  DOM.iSel('prompt-validate').onclick = () => { validate_prompt_injects(true); }
   
   await enableCtrls();
 
@@ -129,6 +130,23 @@ async function init()
 
 
 }
+
+
+function validate_prompt_injects(showOk)
+{
+    try {
+      const s = DOM.qSel('textarea#prompt-injects').value;
+      const v = gPref.validate_prompt_injects(s);
+      if (v.rc !== 1)
+        alert(v.err);
+      else {
+        if (showOk)
+          alert("Descripton is Valid!");
+      }
+      return v.rc;
+    } catch(e) { return 0;}
+}
+
 
 function typeInTextarea(newText, el) {
   const [start, end] = [el.selectionStart, el.selectionEnd];
@@ -393,8 +411,35 @@ async function loadPref()
     DOM.iSel('super-links-retries').value = await gPref.getValue("ext.osds.super_links.retries");
     DOM.iSel('super-links-retries-timeout').value = await gPref.getValue("ext.osds.super_links.retries_timeout");
 
-    var model = await gPref.getValue("ext.osds.gpt-model");
-    DOM.qSel('#gpt-model #'+model).selected=true;
+    var model = await gPref.getValue("osds.chatgpt_model");
+    model = model.replaceAll('.','\\.');
+    DOM.qSel('#chatgpt-model #'+model).selected = true; 
+    DOM.iSel('chatgpt_max_tokens').value = await gPref.getValue("osds.chatgpt_max_tokens");
+    DOM.iSel('chatgpt_temp').value = await gPref.getValue("osds.chatgpt_temp");
+    DOM.iSel('chatgpt_token').value = await gPref.getValue("osds.chatgpt_openai_token");
+    DOM.iSel('chatgpt_prompt').value = await gPref.getValue("osds.chatgpt_prompt");
+
+    // tab ChatGPT
+    try {
+      const s = await gPref.getValue("ext.osds.def_prompt_inject")
+      const chat_list = JSON.parse(s);
+      const chat_keys = Object.keys(chat_list);
+      const dd = DOM.qSel('#chat-srv')
+      let dd_html = [];
+      for(const key of chat_keys) {
+        const v = chat_list[key]
+        if (v["prompt.selector"])
+          dd_html.push(`<option id="${key}" > ${v.name} </option>`);
+      }
+      dd.innerHTML = dd_html.join('\n');
+    } catch(e) { console.log(e)}
+
+    var chat = await gPref.getValue("ext.osds.chat-srv")
+    const el = DOM.qSel('#chat-srv #'+chat)
+    if (el)
+      el.selected = true;
+
+    DOM.qSel('textarea#prompt-injects').value = await gPref.getValue('ext.osds.def_prompt_inject');
 
     var tokens = await gPref.getValue("ext.osds.gpt-tokens");
     DOM.qSel('#gpt-max-tokens').value=tokens;
@@ -434,10 +479,10 @@ function add_prompt_row(item, selected)
   const tbody = DOM.qSel('#prompt-list');
   var r = tbody.insertRow(-1);
   var readonly = '';
-  var del = '<button id="prompt_del" class="prompt_del" width="21" height="21"><img src="lib/css/img/trash.png"/></button>';
+  var del = '<button id="prompt_del" class="prompt_del" width="20" height="20"><img src="lib/css/img/trash.png"/></button>';
 
   if (item.myid === 'jsonld' || item.myid === 'turtle') {
-    readonly = 'readonly="readonly"';
+//    readonly = 'readonly="readonly"';
     del = '';
   }
 
@@ -496,10 +541,10 @@ function click_prompt(ev)
       const myid = row.attributes.myid.value;
 
       prompt_query.value = row.attributes.text.value;
-      if (myid === 'jsonld' || myid === 'turtle')
-        prompt_query.setAttribute('readonly', true);
-      else
-        prompt_query.removeAttribute('readonly');
+//      if (myid === 'jsonld' || myid === 'turtle')
+//        prompt_query.setAttribute('readonly', true);
+//      else
+//        prompt_query.removeAttribute('readonly');
     }
   }
   else {
@@ -543,7 +588,7 @@ function click_prompt_default(ev)
     lst[0].dispatchEvent(new Event('click'));
   }
 
-  DOM.qSel('#gpt-model #gpt35').selected=true;
+  DOM.qSel('textarea#prompt-injects').value = gPref.def_prompt_inject;
   DOM.qSel('#gpt-max-tokens').value='4096';
 }
 
@@ -598,6 +643,12 @@ function prompt_to_lst()
 
 async function savePref()
 {
+   const rc = validate_prompt_injects();
+   if (rc!==1) {
+     alert("Changes weren't saved");
+     return;
+   }
+   
    var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
    await gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
@@ -661,7 +712,20 @@ async function savePref()
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
-   await gPref.setValue("ext.osds.gpt-model", DOM.qSel('#gpt-model option:checked').id);
+    // tab ChatGPT
+   await gPref.setValue("ext.osds.chat-srv", DOM.qSel('#chat-srv option:checked').id);
+   await gPref.setValue("osds.chatgpt_model", DOM.qSel('#chatgpt-model option:checked').id);
+   v = DOM.iSel('chatgpt_max_tokens').value.trim();
+   await gPref.setValue("osds.chatgpt_max_tokens", parseInt(v, 10));
+
+   v = DOM.iSel('chatgpt_max_tokens').value.trim();
+   await gPref.setValue("osds.chatgpt_max_tokens", parseInt(v, 10));
+   await gPref.setValue("osds.chatgpt_temp", DOM.iSel('chatgpt_temp').value.trim());
+   await gPref.setValue("osds.chatgpt_openai_token", DOM.iSel('chatgpt_token').value.trim());
+   await gPref.setValue("osds.chatgpt_prompt", DOM.iSel('chatgpt_prompt').value.trim());
+
+
+//??   await gPref.setValue("ext.osds.gpt-model", DOM.qSel('#gpt-model option:checked').id);
    await gPref.setValue("ext.osds.gpt-tokens", DOM.iSel('gpt-max-tokens').value);
 
    v = prompt_to_lst();

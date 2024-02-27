@@ -99,29 +99,64 @@
 	font-family: Arial, Helvetica, sans-serif !important;
 	line-height: normal !important;
 }
-.super_links_popup-title {
+.super_links_chatgpt {
+        all: initial;
+	position: absolute;
+	display: none;
+	border: 2px solid #000 !important;
+	border-radius: 4px !important; 
+	width: 900px;
+	height: 400px;
+	background: #fff !important;
+	color: black !important;
+ 	z-index: 2147483647 !important;
+        marging: 2px !important;
+        marging-bottom: 10px !important;
+	font-family: Arial, Helvetica, sans-serif !important;
+	line-height: normal !important;
+}
+.super_links_popup-title, .super_links_chatgpt-title{
 	width: 100% !important;
 	height: 18px !important;
 	display: flex;
-	background-color: #0000a0 !important;
 	color: white !important;
 	border-bottom: 1px solid #000 !important;
 	position: relative !important;
 	cursor: move !important;
         font-size: 14px !important;
 }
+.super_links_popup-title{
+	background-color: #0000a0 !important;
+}
+.super_links_chatgpt-title{
+        background: #6c7ae0 !important;
+}
+
+
 .super_links_popup-content {
 	width: 100% !important;
 	height: calc(100% - 10px - 16px - 6px) !important;
 	overflow: auto !important;
+}
+.super_links_chatgpt-content {
+	width: 100% !important;
+	height: calc(100% - 20px) !important;
+	/*overflow: hidden !important;*/
+	overflow: auto !important;
+}
+.super_links_chatgpt-content-text {
+	width: 100% !important;
+	height: 100% !important;
+	overflow: hidden !important;
+	/*overflow: auto !important;*/
 }
 
 #super_links_snackbar {
   visibility: hidden;
   min-width: 250px !important;
   margin-left: -125px !important;
-  background-color: #333 !important;
-  color: #fff !important;
+  background-color: red !important;
+  color: yellow !important;
   text-align: center !important;
   border-radius: 2px !important;
   padding: 16px !important;
@@ -150,7 +185,7 @@ a:visited.superlink,
 }
 
 
-.super_links_popup_close {
+.super_links_popup_close, .super_links_chatgpt_close {
 	background: #606061 !important;
 	color: #FFFFFF !important;
 	line-height: 20px !important;
@@ -168,7 +203,7 @@ a:visited.superlink,
 	-webkit-box-shadow: 1px 1px 3px #000 !important;
 	box-shadow: 1px 1px 3px #000 !important;
 }
-.super_links_popup_close:hover { background: #00d9ff !important; }
+.super_links_popup_close:hover, super_links_chatgpt_close:hover { background: #00d9ff !important; }
 
 table.super_links_table a { color: blue !important; text-decoration:underline !important; }
 table.super_links_table a:link { color: blue !important; }
@@ -236,7 +271,7 @@ table.super_links_table th {
   opacity: 0.5 !important;
 }
 
-.super_links_popup-resizer {
+.super_links_popup-resizer, .super_links_chatgpt-resizer {
   width: 10px !important;
   height: 10px !important;
   position: absolute !important;

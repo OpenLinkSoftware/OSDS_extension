@@ -17,14 +17,19 @@
  *  51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
-  
+
 
 (function () {
 
+  let g_chat_id = null;
   var g_chatTab = null; //{windowId:0, tabId:0};
   var g_top = null;
-  const dropDown = `<div class="flex items-center gap-2 ml-auto">
-           <span>Data type:</span>
+
+  let g_prompt_id = null;
+  let g_prompt_set = {};
+
+  const dropDown_openai = `<div class="flex items-center gap-2 ml-auto">
+           <span>Data format:</span>
            <SELECT id="code_type" style="color:black" class="text-sm">
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
@@ -33,89 +38,132 @@
                  <OPTION id="csv">CSV</OPTION>
                  <OPTION id="rdfxml">RDF/XML</OPTION>
                  <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
            </SELECT>
            </div>`;
 
-  function debounce(callback, wait) {
-    let timeout;
-    return (...args) => {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => callback.apply(context, args), wait);
-    };
-  }
+  const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
+  const dropDown_ms = `<div>
+           <span>Data format:</span>
+           <SELECT id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>
+           </div>`;
 
 
-  DOM_htmlToElements = (html) => {
-    var template = document.createElement('template');
-    template.innerHTML = html;
-    return template.content.childNodes;
-  }
-
-
-  function scan_code()
+  function scan_code_openai()
   {
     const lst = document.querySelectorAll('pre');
-    if (lst.length > 0) {
-        for(const v of lst) {
-          const title = v.children[0].children[0];
-          const btn_copy = title.querySelector('button');
-          const dd_el = title.querySelector('#code_type');
-          if (!dd_el) {
-            title.insertBefore(DOM_htmlToElements(dropDown)[0], btn_copy);
+    for(const v of lst) 
+    {
+      let i=0;
+      const title = v.children[0].children[0];
+      let btn_copy = title.querySelector('button');
+      while(btn_copy.parentNode!=title && i < 10) {
+        btn_copy = btn_copy.parentNode
+        i++
+      }
+      const dd_el = title.querySelector('#code_type');
+      if (!dd_el && btn_copy.parentNode === title) {
+        title.insertBefore(DOM.htmlToElements(dropDown_openai)[0], btn_copy);
+      }
+    }
+  }
+
+
+  function scan_code_ms_copilot()
+  {
+    if (!g_top)
+      return;
+
+    for(const c0 of g_top.querySelectorAll('cib-chat-turn[mode="conversation"]'))
+    {
+      for(const c1 of c0.shadowRoot.querySelectorAll('cib-message-group[mode=conversation]')) 
+      {
+        for(const c2 of c1.shadowRoot.querySelectorAll('cib-message[type="text"]'))
+        {
+          for(const v of c2.shadowRoot.querySelectorAll('cib-shared cib-code-block'))
+          {
+            const e_hdr = v.shadowRoot.querySelector('div.code-header')
+            const e_hdr1 = v.shadowRoot.querySelector('div.code')
+            if (e_hdr) {
+              const btn_copy = e_hdr.querySelector('div.code-actions')
+              const dd_el = e_hdr.querySelector('#code_type');
+              if (btn_copy && !dd_el)
+                e_hdr.insertBefore(DOM.htmlToElements(dropDown_ms)[0], btn_copy);
+            }
+            else if (e_hdr1) {
+              const dd_el = v.shadowRoot.querySelector('#code_type');
+              if (!dd_el) {
+                const dd_html = ms_wrap + dropDown_ms + '</div>';
+                v.shadowRoot.insertBefore(DOM.htmlToElements(dd_html)[0], e_hdr1);
+              }
+            }
           }
         }
+      }
     }
   }
 
 
   var gMutationObserver = new MutationObserver(debounce((v) => {
-//      console.log('page was updated');
       if (g_top) {
-//        console.log('start scan for code');
-        scan_code();
+        if (g_chat_id === 'ch_openai') 
+          scan_code_openai();
+        else if (g_chat_id === 'ch_copilot')
+          scan_code_ms_copilot()
       }
     }, 500));
 
 
-  DOM_ready = (fn) => {
-    // If we're early to the party
-    document.addEventListener("DOMContentLoaded", fn);
-    // If late; I mean on time.
-    if (document.readyState === "interactive" || document.readyState === "complete" ) {
-      fn();
-    }
-  }
 
-
-  DOM_ready(async () =>
+  function handle_chat_code()
   {
-//    console.log('ready start');
-
+    // fix code blocks
     try {
-      scan_code();
+      
+      if (g_chat_id === 'ch_openai') {
+        scan_code_openai();
+        g_top = document.querySelector('div#__next');
+      }
+      else if (g_chat_id === 'ch_copilot') {
+        scan_code_ms_copilot();
+        try {
+          g_top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot
+          setInterval(scan_code_ms_copilot, 10*1000);
+        } catch(e){} 
+      }
 
-//      g_top = document.querySelector('div#__next main');
-      g_top = document.querySelector('div#__next');
       if (g_top) {
-//        gMutationObserver.observe(g_top, {attributes:true, childList:true, subtree:true});
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
-//        console.log('ready done');
       }
     } catch(e) {
       console.log(e);
     }
+  }
 
+  
+  function handle_chat_prompt()
+  {
+    if (g_prompt_id)
+    {
+      try {
+        // register chat in background
+        Browser.api.runtime.sendMessage({cmd:"gpt_window_reg", chat_id:g_prompt_id});
 
-    try {
-
-      // register chat in background
-      Browser.api.runtime.sendMessage({cmd:"gpt_window_reg"});
-
-      Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) 
-      {
+        Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) 
+        {
             if (request.cmd === "gpt_ping") { // send alive message
-               sendResponse({ping:1, winId: g_chatTab.winId, tabId: g_chatTab.tabId});
+               sendResponse({ping:1, winId: g_chatTab.winId, tabId: g_chatTab.tabId, chat_id:g_prompt_id});
                return true;
             }
             else if (request.cmd === "gpt_win_tab") { // store winId, tabId for current page
@@ -125,37 +173,109 @@
                sendResponse({});
                return true;
             }
-            else if (request.cmd === "gpt_prompt") {
-              update_prompt(request.text);
-            }
-      });
+            else if (request.cmd === "gpt_prompt") 
+               update_prompt(request.text);
+        });
 
-    } catch (e) {
-      console.log("OSDS:" + e);
+      } catch (e) {
+        console.log("OSDS:" + e);
+      }
     }
-
-  });
-
-
-  window.onbeforeunload = function () {
-    // unregister chat in background
-    Browser.api.runtime.sendMessage({cmd:"gpt_window_unreg"});
-
-    if (gMutationObserver)
-      gMutationObserver.disconnect()
   }
 
 
-  async function update_prompt(txt)
+  function getChatID()
   {
-    if (!txt)
-      return;
+    if (location.host==='chat.openai.com')
+      return 'ch_openai';
+    else if (location.host==='copilot.microsoft.com')
+      return 'ch_copilot';
+    else
+     return null;
+  }
 
-    const txtArea = document.getElementById('prompt-textarea');
-    txtArea.focus();
-    window.document.execCommand('insertText', false, txt);
-    txtArea.classList.remove('resize-none');
-    txtArea.classList.add('resize');
+
+  async function init_prompt_inject()
+  {
+    const setting = new Settings();
+    g_prompt_id = await setting.getValue('ext.osds.chat-srv');
+    try {
+      const s = await setting.getValue('ext.osds.def_prompt_inject')
+      const chat_list = JSON.parse(s);
+      const v = chat_list[g_prompt_id];
+      if (v['prompt.selector'])
+      {
+        if (v['location.host'] && location.host === v['location.host'])
+          g_prompt_set = v;
+        else if (v['location.origin'] && location.origin === v['location.origin'])
+          g_prompt_set = v;
+        else
+          g_prompt_id = null;
+      }
+    } catch(e) {
+      g_prompt_id = null;
+    }
+  }
+
+
+  window.onload = async () => {
+    g_chat_id = getChatID();
+
+    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot')
+      handle_chat_code();
+
+    await init_prompt_inject();
+
+    if (g_prompt_id && g_prompt_set) {
+      handle_chat_prompt();
+
+      window.onbeforeunload = function () 
+      {
+        // unregister chat in background
+        Browser.api.runtime.sendMessage({cmd:"gpt_window_unreg"});
+
+        if (gMutationObserver)
+          gMutationObserver.disconnect()
+      }
+    }
+  };
+
+
+  function update_prompt(txt)
+  {
+    if (!txt || !g_prompt_set)
+      return;
+    
+    const sel = g_prompt_set['prompt.selector'];
+    const addClass = g_prompt_set['prompt.css.addClass'];
+    const removeClass = g_prompt_set['prompt.css.removeClass'];
+    if (sel) 
+    {
+      let txtArea = null;
+      if (Array.isArray(sel))
+      {
+        let root = document;
+        for(const v of sel) {
+          root = (v === '#shadow-root') ? root.shadowRoot : root.querySelector(v)
+          if (!root)
+            break;
+        }
+        txtArea = root;
+      }
+      else 
+      {
+        txtArea = document.querySelector(sel);
+      }
+
+      if (txtArea) {
+        txtArea.focus();
+        window.document.execCommand('insertText', false, txt);
+        if (removeClass)
+          txtArea.classList.remove(removeClass);
+        if (addClass)
+          txtArea.classList.add(addClass);
+      }
+    }
   }
 
 

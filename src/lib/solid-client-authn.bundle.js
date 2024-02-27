@@ -66,7 +66,7 @@ class ClientAuthentication {
                     webId: redirectInfo.webId,
                     sessionId: redirectInfo.sessionId,
                     expirationDate: redirectInfo.expirationDate,
-                    tokens: redirectInfo.tokens
+                    tokens: redirectInfo.tokens,
                 };
             }
             catch (err) {
@@ -88,7 +88,8 @@ class ClientAuthentication {
         try {
             window.history.replaceState(null, "", cleanedUpUrl.toString());
         }
-        catch (e) { }
+        catch (e) {
+        }
     }
 }
 exports["default"] = ClientAuthentication;
@@ -118,10 +119,12 @@ async function silentlyAuthenticate(sessionId, clientAuthn, session) {
     var _a;
     const storedSessionInfo = await clientAuthn.validateCurrentSession(sessionId);
     if (storedSessionInfo !== null) {
-        if (window.localStorage)
+        if (window.localStorage !== null) {
             window.localStorage.setItem(constant_1.KEY_CURRENT_URL, window.location.href);
-        else
+        }
+        else {
             window.sessionStorage.setItem(constant_1.KEY_CURRENT_URL, window.location.href);
+        }
         await clientAuthn.login({
             sessionId,
             prompt: "none",
@@ -156,10 +159,12 @@ class Session extends events_1.default {
             return this.clientAuthentication.fetch(url, init);
         };
         this.internalLogout = async (emitSignal) => {
-            if (window.localStorage)
+            if (window.localStorage !== null) {
                 window.localStorage.removeItem(constant_1.KEY_CURRENT_SESSION);
-            else
+            }
+            else {
                 window.sessionStorage.removeItem(constant_1.KEY_CURRENT_SESSION);
+            }
             await this.clientAuthentication.logout(this.info.sessionId);
             this.info.isLoggedIn = false;
             if (emitSignal) {
@@ -177,26 +182,30 @@ class Session extends events_1.default {
             }
             const options = typeof inputOptions === "string" ? { url: inputOptions } : inputOptions;
             const url = (_a = options.url) !== null && _a !== void 0 ? _a : window.location.href;
-            const tokens = options.tokens;
+            const { tokens } = options;
             this.tokenRequestInProgress = true;
             const sessionInfo = await this.clientAuthentication.handleIncomingRedirect(url, this.events, tokens);
             if (isLoggedIn(sessionInfo)) {
                 this.setSessionInfo(sessionInfo);
-                const currentUrl = window.localStorage ? window.localStorage.getItem(constant_1.KEY_CURRENT_URL)
+                const currentUrl = window.localStorage
+                    ? window.localStorage.getItem(constant_1.KEY_CURRENT_URL)
                     : window.sessionStorage.getItem(constant_1.KEY_CURRENT_URL);
                 if (currentUrl === null) {
                     this.events.emit(solid_client_authn_core_1.EVENTS.LOGIN);
                 }
                 else {
-                    if (window.localStorage)
+                    if (window.localStorage !== null) {
                         window.localStorage.removeItem(constant_1.KEY_CURRENT_URL);
-                    else
+                    }
+                    else {
                         window.sessionStorage.removeItem(constant_1.KEY_CURRENT_URL);
+                    }
                     this.events.emit(solid_client_authn_core_1.EVENTS.SESSION_RESTORED, currentUrl);
                 }
             }
             else if (options.restorePreviousSession === true) {
-                const storedSessionId = window.localStorage ? window.localStorage.getItem(constant_1.KEY_CURRENT_SESSION)
+                const storedSessionId = window.localStorage
+                    ? window.localStorage.getItem(constant_1.KEY_CURRENT_SESSION)
                     : window.sessionStorage.getItem(constant_1.KEY_CURRENT_SESSION);
                 if (storedSessionId !== null) {
                     const attemptedSilentAuthentication = await silentlyAuthenticate(storedSessionId, this.clientAuthentication, this);
@@ -235,7 +244,7 @@ class Session extends events_1.default {
             };
         }
         this.events.on(solid_client_authn_core_1.EVENTS.LOGIN, () => {
-            if (window.localStorage)
+            if (window.localStorage !== null)
                 window.localStorage.setItem(constant_1.KEY_CURRENT_SESSION, this.info.sessionId);
             else
                 window.sessionStorage.setItem(constant_1.KEY_CURRENT_SESSION, this.info.sessionId);
@@ -758,7 +767,8 @@ class Redirector {
             try {
                 window.history.replaceState({}, "", redirectUrl);
             }
-            catch (e) { }
+            catch (e) {
+            }
         }
         else {
             window.location.href = redirectUrl;
@@ -801,7 +811,7 @@ class AuthCodeRedirectHandler {
             throw new Error(`[${redirectUrl}] is not a valid URL, and cannot be used as a redirect URL: ${e}`);
         }
     }
-    async handle(redirectUrl, eventEmitter, stored_tokens) {
+    async handle(redirectUrl, eventEmitter, storedTokens) {
         if (!(await this.canHandle(redirectUrl))) {
             throw new Error(`AuthCodeRedirectHandler cannot handle [${redirectUrl}]: it is missing one of [code, state].`);
         }
@@ -825,22 +835,31 @@ class AuthCodeRedirectHandler {
         let tokens;
         const tokenCreatedAt = Date.now();
         if (isDpop) {
-            if (stored_tokens)
-                tokens = stored_tokens;
-            else
+            if (storedTokens) {
+                tokens = await (0, oidc_client_ext_1.importDpopToken)(storedTokens);
+            }
+            else {
                 tokens = await (0, oidc_client_ext_1.getDpopToken)(issuerConfig, client, {
                     grantType: "authorization_code",
                     code: url.searchParams.get("code"),
                     codeVerifier,
                     redirectUrl: storedRedirectIri,
                 });
-            if (window.localStorage)
+            }
+            if (window.localStorage) {
                 window.localStorage.removeItem(`oidc.${oauthState}`);
-            else
+            }
+            else {
                 window.sessionStorage.removeItem(`oidc.${oauthState}`);
+            }
         }
         else {
-            tokens = await (0, oidc_client_ext_1.getBearerToken)(url.toString());
+            if (storedTokens) {
+                tokens = storedTokens;
+            }
+            else {
+                tokens = await (0, oidc_client_ext_1.getBearerToken)(url.toString());
+            }
         }
         let refreshOptions;
         if (tokens.refreshToken !== undefined) {
@@ -3134,12 +3153,25 @@ async function createDpopHeader(audience, method, dpopKey) {
         .sign(dpopKey.privateKey, {});
 }
 async function generateDpopKeyPair() {
-    const { privateKey, publicKey } = await jose.generateKeyPair(PREFERRED_SIGNING_ALG[0]);
+    const { privateKey, publicKey } = await jose.generateKeyPair(PREFERRED_SIGNING_ALG[0], { extractable: true });
     const dpopKeyPair = {
         privateKey,
         publicKey: await jose.exportJWK(publicKey),
+        privateKeyJWK: await jose.exportJWK(privateKey)
     };
     [dpopKeyPair.publicKey.alg] = PREFERRED_SIGNING_ALG;
+    [dpopKeyPair.privateKeyJWK.alg] = PREFERRED_SIGNING_ALG;
+    return dpopKeyPair;
+}
+async function importDpopKeyPair(pubKey, privKey) {
+    const publicKey = pubKey;
+    const privateKeyJWK = privKey;
+    const key = await jose.importJWK(privateKeyJWK);
+    const dpopKeyPair = {
+        privateKey: key,
+        publicKey,
+        privateKeyJWK
+    };
     return dpopKeyPair;
 }
 
@@ -3311,6 +3343,7 @@ exports.generateDpopKeyPair = generateDpopKeyPair;
 exports.getSessionIdFromOauthState = getSessionIdFromOauthState;
 exports.getWebidFromTokenPayload = getWebidFromTokenPayload;
 exports.handleRegistration = handleRegistration;
+exports.importDpopKeyPair = importDpopKeyPair;
 exports.isSupportedTokenType = isSupportedTokenType;
 exports.isValidRedirectUrl = isValidRedirectUrl;
 exports.loadOidcContextFromStorage = loadOidcContextFromStorage;
@@ -5063,6 +5096,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "clearOidcPersistentStorage": () => (/* binding */ clearOidcPersistentStorage),
 /* harmony export */   "getBearerToken": () => (/* binding */ getBearerToken),
 /* harmony export */   "getDpopToken": () => (/* binding */ getDpopToken),
+/* harmony export */   "importDpopToken": () => (/* binding */ importDpopToken),
 /* harmony export */   "refresh": () => (/* binding */ refresh),
 /* harmony export */   "registerClient": () => (/* binding */ registerClient),
 /* harmony export */   "removeOidcQueryParam": () => (/* binding */ removeOidcQueryParam)
@@ -5240,6 +5274,21 @@ async function getTokens(issuer, client, data, dpop) {
         expiresIn: tokenResponse.expires_in,
     };
 }
+async function importDpopToken(storedTokens) {
+    var _a;
+    let dpopKey;
+    if (storedTokens['dpopKey'] && storedTokens['dpopKey']['publicKey'] && storedTokens['dpopKey']['privateKeyJWK']) {
+        dpopKey = await (0,_inrupt_solid_client_authn_core__WEBPACK_IMPORTED_MODULE_1__.importDpopKeyPair)(storedTokens['dpopKey']['publicKey'], storedTokens['dpopKey']['privateKeyJWK']);
+    }
+    return {
+        accessToken: storedTokens['accessToken'],
+        idToken: storedTokens['idToken'],
+        refreshToken: (_a = storedTokens['tokenResponse']) !== null && _a !== void 0 ? _a : undefined,
+        webId: storedTokens['webId'],
+        dpopKey,
+        expiresIn: storedTokens['expiresIn'],
+    };
+}
 async function getBearerToken(redirectUrl) {
     let signinResponse;
     try {
@@ -5353,11 +5402,15 @@ async function clearOidcPersistentStorage() {
     const client = new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.OidcClient({
         response_mode: "query",
     });
-    if (window.localStorage)
+    if (window.localStorage) {
         await client.clearStaleState(new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.WebStorageStateStore({}));
-    else
+    }
+    else {
         await client.clearStaleState(new _inrupt_oidc_client__WEBPACK_IMPORTED_MODULE_0__.WebStorageStateStore({ store: window.sessionStorage }));
-    const myStorage = window.localStorage ? window.localStorage : window.sessionStorage;
+    }
+    const myStorage = window.localStorage
+        ? window.localStorage
+        : window.sessionStorage;
     const itemsToRemove = [];
     for (let i = 0; i <= myStorage.length; i += 1) {
         const key = myStorage.key(i);
@@ -5450,6 +5503,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "getSessionIdFromOauthState": () => (/* binding */ getSessionIdFromOauthState),
 /* harmony export */   "getWebidFromTokenPayload": () => (/* binding */ getWebidFromTokenPayload),
 /* harmony export */   "handleRegistration": () => (/* binding */ handleRegistration),
+/* harmony export */   "importDpopKeyPair": () => (/* binding */ importDpopKeyPair),
 /* harmony export */   "isSupportedTokenType": () => (/* binding */ isSupportedTokenType),
 /* harmony export */   "isValidRedirectUrl": () => (/* binding */ isValidRedirectUrl),
 /* harmony export */   "loadOidcContextFromStorage": () => (/* binding */ loadOidcContextFromStorage),
@@ -5818,12 +5872,25 @@ async function createDpopHeader(audience, method, dpopKey) {
         .sign(dpopKey.privateKey, {});
 }
 async function generateDpopKeyPair() {
-    const { privateKey, publicKey } = await (0,jose__WEBPACK_IMPORTED_MODULE_1__.generateKeyPair)(PREFERRED_SIGNING_ALG[0]);
+    const { privateKey, publicKey } = await (0,jose__WEBPACK_IMPORTED_MODULE_1__.generateKeyPair)(PREFERRED_SIGNING_ALG[0], { extractable: true });
     const dpopKeyPair = {
         privateKey,
         publicKey: await (0,jose__WEBPACK_IMPORTED_MODULE_1__.exportJWK)(publicKey),
+        privateKeyJWK: await (0,jose__WEBPACK_IMPORTED_MODULE_1__.exportJWK)(privateKey)
     };
     [dpopKeyPair.publicKey.alg] = PREFERRED_SIGNING_ALG;
+    [dpopKeyPair.privateKeyJWK.alg] = PREFERRED_SIGNING_ALG;
+    return dpopKeyPair;
+}
+async function importDpopKeyPair(pubKey, privKey) {
+    const publicKey = pubKey;
+    const privateKeyJWK = privKey;
+    const key = await (0,jose__WEBPACK_IMPORTED_MODULE_1__.importJWK)(privateKeyJWK);
+    const dpopKeyPair = {
+        privateKey: key,
+        publicKey,
+        privateKeyJWK
+    };
     return dpopKeyPair;
 }
 

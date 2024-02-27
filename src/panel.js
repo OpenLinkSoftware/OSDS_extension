@@ -60,7 +60,7 @@ function showPopup(tabId)
   //Request the data from the client (foreground) tab.
   try {
     if (Browser.is_ff) {
-      Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data' })
+      Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data' })
         .then(response => {
           if (!response || !response.ping) {
             hideDataTabs();
@@ -74,7 +74,7 @@ function showPopup(tabId)
           g_RestCons.show();
         });
     } else {
-      Browser.api.tabs.sendMessage(tabId, { property: 'req_doc_data'},
+      Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data'},
         function(response) { 
           if (!response || !response.ping) {
             hideDataTabs();
@@ -89,7 +89,25 @@ function showPopup(tabId)
     g_RestCons.show();
   }
 
+  gOidc.restoreConn().then(rc => {
+    Download_exec_update_state();
+  })
 
+  Download_exec_update_state();
+
+  async function click_login() {
+     if (gOidc.getWebId()) {
+       await gOidc.logout();
+       Download_exec_update_state();
+     } else {
+       gOidc.login();
+     }
+  } 
+
+  DOM.iSel('oidc-login-btn').onclick = (e) => { click_login() }
+  DOM.iSel('oidc-login-btn1').onclick = (e) => { click_login() }
+
+  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
   DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
@@ -169,6 +187,7 @@ async function loadPopup()
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
   $("#query_place").hide();
+  $("#login-dlg").hide();
 
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
@@ -424,9 +443,19 @@ async function show_Data()
   if (gData.md)
     md = await update_tab_exec('markdown', 'Markdown', gData.md, err_tabs);
 
-  if (gData.links.rss)
+  if (gData.rss) {
+    rss = await update_tab_exec('rss', 'RSS', gData.rss, err_tabs);
+    $('#rss-save').show();
+  }
+
+  if (gData.atom) {
+    atom = await update_tab_exec('atom', 'Atom', gData.atom, err_tabs);
+    $('#atom-save').show();
+  }
+
+  if (!rss && gData.links.rss)
     rss = true;
-  if (gData.links.atom)
+  if (!atom && gData.links.atom)
     atom = true;
 
   if (gData.tabs.length > 0)
@@ -554,6 +583,15 @@ async function parse_Data(dData)
 
     gData.md = new Markdown_Block(gData.baseURL, dData.md_nano.text);
 
+    if (dData.rss_nano.text && dData.rss_nano.text.length > 0) {
+      gData.rss = new RSS_Block(gData.baseURL, dData.rss_nano.text, false);
+      $(`#rss_items table.wait`).show();
+    }
+    if (dData.atom_nano.text && dData.atom_nano.text.length > 0) {
+      gData.atom = new RSS_Block(gData.baseURL, dData.atom_nano.text, true);
+      $(`#atom_items table.wait`).show();
+    }
+
     if (dData.posh.links) 
     {
       var setting = new Settings();
@@ -587,11 +625,15 @@ async function parse_Data(dData)
       }
 
 
-      if (Object.keys(rss_links).length > 0) 
+      if (Object.keys(rss_links).length > 0) {
         gData.links.rss = new RSS_Links("rss", "RSS", gData.baseURL, rss_links, links_cb_start, links_cb_error, links_cb_success);
+        $(`#rss_items table.loader`).show();
+      }
 
-      if (Object.keys(atom_links).length > 0)
+      if (Object.keys(atom_links).length > 0) {
         gData.links.atom = new Atom_Links("atom", "Atom", gData.baseURL, atom_links, links_cb_start, links_cb_error, links_cb_success);
+        $(`#atom_items table.loader`).show();
+      }
 
       if (chk_discovery === "1") {
         $('#atom_items #load_atom').hide();
@@ -616,16 +658,16 @@ async function parse_Data(dData)
 
       if (Object.keys(rdf_links).length > 0) {
         $('#rdf_items #throbber').show();
-        $('#rdf_items #load_jsonld').hide();
+        $('#rdf_items #load_rdf').hide();
         $(`#rdf_items table.loader`).show();
         gData.links.rdf = new RDF_Links("rdf", "RDF/XML", gData.baseURL, rdf_links, gData.rdf, links_cb_start, links_cb_error, links_cb_success);
         gData.links.rdf.loadData({}, 0); 
       }
 
       if (Object.keys(ttl_links).length > 0) {
-        $('#ttl_items #throbber').show();
-        $('#ttl_items #load_jsonld').hide();
-        $(`#ttl_items table.loader`).show();
+        $('#turtle_items #throbber').show();
+        $('#turtle_items #load_turtle').hide();
+        $(`#turtle_items table.loader`).show();
         gData.links.ttl = new TTL_Links("turtle", "Turtle", gData.baseURL, ttl_links, gData.turtle, links_cb_start, links_cb_error, links_cb_success);
         gData.links.ttl.loadData({}, 0); 
       }
@@ -751,12 +793,53 @@ function Prefs_exec()
   return false;
 }
 
-
-
-
-function Download_exec_update_state() 
+function Login_exec()
 {
-  
+  Download_exec_update_state();
+
+  var dlg = $( "#login-dlg" ).dialog({
+    resizable: true,
+    width:500,
+    height:200,
+    modal: true,
+    buttons: {
+      "OK": function() {
+        $(this).dialog( "destroy" );
+      }
+    }
+  });
+
+  return false;
+}
+
+
+
+async function Download_exec_update_state(pod) 
+{
+  try {
+    const webid = gOidc.getWebId();
+    const webid_href = DOM.iSel('oidc-webid');
+    const webid1_href = DOM.iSel('oidc-webid1');
+
+    webid1_href.href = webid_href.href = webid ? webid :'';
+    webid1_href.title = webid_href.title = webid ? webid :'';
+    webid1_href.style.display = webid_href.style.display = webid ? 'initial' :'none';
+
+    const oidc_login_btn = DOM.iSel('oidc-login-btn');
+    const oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
+    oidc_login_btn1.innerText = oidc_login_btn.innerText = webid ? 'Logout' : 'Login';
+
+    const login_tab = DOM.iSel('login_btn');
+    if (webid) {
+      login_tab.title = "Logged as "+webid;
+      login_tab.src = "images/uid.png";
+    } else {
+      login_tab.title = "Solid Login";
+      login_tab.src = "images/slogin24.png";
+    }
+  } catch(e) {}  
+
+
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
     $('#save-file').show();
@@ -764,12 +847,15 @@ function Download_exec_update_state()
     $('#save-file').hide();
 
   if (cmd==='fileupload') {
+    $('#login-fmt-item').show();
     $('#oidc-upload').show();
   } 
   else if (cmd==='sparqlupload') {
+    $('#login-fmt-item').show();
     $('#oidc-upload').hide();
   }
   else {
+    $('#login-fmt-item').hide();
     $('#oidc-upload').hide();
   }
 
@@ -794,6 +880,9 @@ function Download_exec_update_state()
     $('#save-fmt-item').show();    
     $('#save-sparql-item').hide();    
   }
+
+  if (pod)
+    await gOidc.checkSession();
 
   var oidc_url = document.getElementById('oidc-url');
   oidc_url.value = (gOidc.storage || '') + (filename || '');
@@ -823,7 +912,7 @@ async function Download_exec()
     Download_exec_update_state();
   });
 
-  Download_exec_update_state();
+  Download_exec_update_state(1);
 
   var isFileSaverSupported = false;
   try {
@@ -1005,48 +1094,26 @@ async function save_data(action, fname, fmt, callback)
     }
     else if (action==="fileupload") 
     {
-     var contentType = "text/plain;charset=utf-8";
+      var contentType = "text/plain;charset=utf-8";
 
-     if (fmt==="jsonld")
-       contentType = "application/ld+json;charset=utf-8";
-     else if (fmt==="json")
-       contentType = "application/json;charset=utf-8";
-     else if (fmt==="rdf")
-       contentType = "application/rdf+xml;charset=utf-8";
-     else
-       contentType = "text/turtle;charset=utf-8";
+      if (fmt==="jsonld")
+        contentType = "application/ld+json;charset=utf-8";
+      else if (fmt==="json")
+        contentType = "application/json;charset=utf-8";
+      else if (fmt==="rdf")
+        contentType = "application/rdf+xml;charset=utf-8";
+      else
+        contentType = "text/turtle;charset=utf-8";
 
-      putResource(gOidc, fname, retdata.txt, contentType, null)
-        .then(response => {
-          showInfo('Saved');
-        })
-        .catch(error => {
-          console.error('Error saving document', error)
-
-          let message
-
-          switch (error.status) {
-            case 0:
-            case 405:
-              message = 'this location is not writable'
-              break
-            case 401:
-            case 403:
-              message = 'you do not have permission to write here'
-              break
-            case 406:
-              message = 'enter a name for your resource'
-              break
-            default:
-              message = error.message
-              break
-          }
-          showInfo('Unable to save:' +message);
-        })
+      let v = await gOidc.putResource(fname, retdata.txt, contentType);
+      if (v.rc===1)
+        showInfo('Saved');
+      else
+        showInfo('Unable to save: ' +v.err);
     }
     else {
       selectTab("src");
-      src_view.setValue(retdata.txt + retdata.error+"\n");
+      src_view.setValue(retdata.txt + retdata.error+" \n \n ");
     }
 
   }
@@ -1077,10 +1144,24 @@ async function prepare_data(for_query, curTab, fmt)
       block = gData.posh;
     else if (curTab==="csv")
       block = gData.csv;
-    else if (curTab==="rss" && gData.links.rss && gData.links.rss.loaded())
-      block = gData.links.rss.block;
-    else if (curTab==="atom" && gData.links.atom && gData.links.atom.loaded())
-      block = gData.links.atom.block;
+    else if (curTab==="rss" && (gData.links.rss && gData.links.rss.loaded() || gData.rss)) {
+      if (gData.rss) {
+        block = gData.rss.copy();
+        if (gData.links.rss && gData.links.rss.loaded())
+          block.add_nano(gData.links.rss.block.text);
+      } else {
+        block = gData.links.rss.block;
+      }
+    }
+    else if (curTab==="atom" && (gData.links.atom && gData.links.atom.loaded() || gData.atom)) {
+      if (gData.atom) {
+        block = gData.atom.copy();
+        if (gData.links.atom && gData.links.atom.loaded())
+          block.add_nano(gData.links.atom.block.text);
+      } else {
+        block = gData.links.atom.block;
+      }
+    }
     else
       return null;
 

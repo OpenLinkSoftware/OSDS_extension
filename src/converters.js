@@ -1288,10 +1288,24 @@ class Convert_JSONL {
     return this.s_id+this.id;
   }
 
+  check_pred(val) 
+  {
+    if ( val.match(/^http(s)?:\/\//) ) {
+      val = "<"+val+">";
+    } else {
+      val = ':'+fixedEncodeURIComponent(val);
+    }
+    return val;
+  }
+
   str2obj_val(s) {
     var qv = '"';
 
+    try {
     s = s.replace(/\\/g,'\\\\').replace(/\'/g,"''").replace(/\"/g,"\\\"");
+    } catch(e) {
+      console.log("==1=="+e);
+    }
     return qv+s+qv;
   }
 
@@ -1339,16 +1353,14 @@ class Convert_JSONL {
         }
       }
 
-      const v = lst.join(',');
-      return v ? v : '""';
+      const vv = lst.join(',');
+      return vv ? vv : '""';
     }
     else {
       return ' '+this.handle_simple(obj);
     }
-
   }
-  
-  
+
   to_ttl(textData, baseURL) 
   {
     this.baseURL = baseURL;

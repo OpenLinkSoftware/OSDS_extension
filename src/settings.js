@@ -118,7 +118,35 @@ class Settings {
   +'"""\n'
   +'{selected_text}\n'
   +'"""\n\n';
-  
+
+    this.def_prompt_inject = ''+
+`{ 
+  "openia": {
+    "name": "OpenAI Chat", 
+    "url": "https://chat.openai.com/?model=gpt-4",
+    "location.host": "chat.openai.com",
+    "prompt.selector": "#prompt-textarea",
+    "prompt.css.removeClass": "resize-none",
+    "prompt.css.addClass": "resize"
+  },
+
+  "opal_qa": {
+    "name": "OPAL Chat (net-qa)", 
+    "url": "https://netid-qa.openlinksw.com:8443/chat",
+    "location.origin": "https://netid-qa.openlinksw.com:8443",
+    "prompt.selector": "textarea.message_input"
+  },
+
+  "ms_copilot":{
+    "name": "MS Copilot", 
+    "url": "https://copilot.microsoft.com",
+    "location.host": "copilot.microsoft.com",
+    "prompt.selector": ["cib-serp","#shadow-root", "cib-action-bar#cib-action-bar-main","#shadow-root",
+                        "cib-text-input","#shadow-root", "textarea#searchbox"]
+  }
+
+}
+`;     
 
     this._data = (data!== undefined && data!==null) ? data:null;
   }
@@ -209,6 +237,25 @@ class Settings {
       return val;
 
     switch(id) {
+      case "osds.chatgpt_prompt":
+          val = "What do you know about {words} ?";
+          break;
+      case "ext.osds.chat-srv":
+          val = "ch_openai";
+          break;
+      case "osds.chatgpt_model":
+          val = "gpt-3.5-turbo";
+          break;
+      case "osds.chatgpt_openai_token":
+          val = "sk-xxxxxx";
+          break;
+      case "osds.chatgpt_temp":
+          val = "1";
+          break;
+      case "osds.chatgpt_max_tokens":
+          val = "4096";
+          break;
+
       case "upload_sparql_endpoint":
           val = "https://linkeddata.uriburner.com/sparql";
           break;
@@ -301,6 +348,8 @@ class Settings {
       case "ext.osds.prompt-lst":
           val = [];
           break;
+      case "ext.osds.def_prompt_inject":
+          val = this.def_prompt_inject;
     }
     return val;
   }
@@ -551,6 +600,28 @@ class Settings {
        return h_url + docURL;
   }
 
+  validate_prompt_injects(str)
+  { 
+    try {
+      const data = JSON.parse(str);
+      for(const key of Object.keys(data)) 
+      {
+        const el = data[key];
+        if (!el['name'])
+          throw new Error(`item "${key}" must have attribute "name"`)
+        if (!el['url'])
+          throw new Error(`item "${key}" must have attribute "url"`)
+        if (!el["location.host"] && !el["location.origin"])
+          throw new Error(`item "${key}" must have attribute "location.host" or "location.origin"`)
+        if (!el['prompt.selector'])
+          throw new Error(`item "${key}" must have attribute "prompt.selector"`)
+      }
+      return {rc:1, data};
+    } catch(e) {
+      console.log(e);
+      return {rc:0, err:e.toString()}
+    }
+  }
 
 }
 

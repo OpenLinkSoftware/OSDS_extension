@@ -428,6 +428,10 @@ class RSS_Block extends DataBlock_Prepare {
     return {ttl:rc.ttl, error: rc.error};
   }
 
+  copy()
+  {
+    return new RSS_Block(this.baseURL, this.text.slice(), this.is_atom);
+  }
 }
 
 
@@ -810,6 +814,7 @@ class Microdata_Block extends DataBlock_Prepare {
   }
 
 }
+
 
 
 
