@@ -394,11 +394,208 @@ class Social {
       return null;
   }
 
-  msave(s, id)
+
+  scan_github(loc)
   {
-    let blob = new Blob([s], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, 'my_log.txt'+id);
+    let page_content = []; 
+    const base = loc.href
+    const title = document.querySelector('div#show_issue h1')?.innerText;
+    const auth_ref = document.querySelector('div#show_issue a.author')
+    const auth = auth_ref?.parentNode.innerText;
+    const auth_href = auth_ref.href;
+
+    if (title)
+      page_content.push(`### Issue ${title}`);
+    if (auth && auth_href)
+        page_content.push(`### ${auth}  ${auth_href}\n`);
+
+    const items = document.querySelectorAll('div.TimelineItem');
+    for(var el of items) {
+      const i_ref = el.querySelector('h3 > div > a[href]');
+      const i_title = el.querySelector('h3 strong a[href]');
+      const i_author = i_title?.innerText;
+      const i_author_href = i_title?.href;
+      const i_href = i_ref?.href;
+      const i_date = i_ref?.querySelector('relative-time')?.attributes['datetime']?.value;
+
+      if (i_href)
+        page_content.push(`### ${i_href}`);
+      if (i_author && i_author_href)
+        page_content.push(`### Author - ${i_author}  ${i_author_href}`);
+      if (i_date)
+        page_content.push(`### Timestamp - ${i_date}`)
+
+      const list = el.querySelector('task-lists td')?.childNodes;
+      if (list)
+        for(var c of list) {
+          if (c) {
+            switch(c.nodeName) 
+            {
+            case 'A':
+              const i_img = c.querySelector('img')
+              if (i_img)
+                page_content.push(`![Image](${i_img.src})`);
+              else if (c.innerText)
+                page_content.push(c.innerText);
+              break;
+            case 'DIV':
+              if (c.innerText)
+                page_content.push(c.innerText);
+              break;
+            case 'DETAILS':
+              // video ignore, vider URL could not be reused
+              break;
+            default:
+              if (c.innerText)
+                page_content.push(c.innerText);
+            }
+          }
+        }
+      
+      page_content.push('\n');
+    }
+
+    if (page_content.length> 0)
+      return page_content.join('\n');
+    else
+      return null;
   }
+
+
+  scan_reddit(loc) //??todo
+  {
+    let page_content = []; 
+    const base = loc.href
+    const title = document.querySelector('div#show_issue h1')?.innerText;
+    const auth_ref = document.querySelector('div#show_issue a.author')
+    const auth = auth_ref?.parentNode.innerText;
+    const auth_href = auth_ref.href;
+
+    if (title)
+      page_content.push(`### Issue ${title}`);
+    if (auth && auth_href)
+        page_content.push(`### ${auth}  ${auth_href}\n`);
+
+    const items = document.querySelectorAll('div.TimelineItem');
+    for(var el of items) {
+      const i_ref = el.querySelector('h3 > div > a[href]');
+      const i_title = el.querySelector('h3 strong a[href]');
+      const i_author = i_title?.innerText;
+      const i_author_href = i_title?.href;
+      const i_href = i_ref?.href;
+      const i_date = i_ref?.querySelector('relative-time')?.attributes['datetime']?.value;
+
+      if (i_href)
+        page_content.push(`### ${i_href}`);
+      if (i_author && i_author_href)
+        page_content.push(`### Author - ${i_author}  ${i_author_href}`);
+      if (i_date)
+        page_content.push(`### Timestamp - ${i_date}`)
+
+      const list = el.querySelector('task-lists td')?.childNodes;
+      if (list)
+        for(var c of list) {
+          if (c) {
+            switch(c.nodeName) 
+            {
+            case 'A':
+              const i_img = c.querySelector('img')
+              if (i_img)
+                page_content.push(`![Image](${i_img.src})`);
+              else if (c.innerText)
+                page_content.push(c.innerText);
+              break;
+            case 'DIV':
+              if (c.innerText)
+                page_content.push(c.innerText);
+              break;
+            case 'DETAILS':
+              // video ignore, vider URL could not be reused
+              break;
+            default:
+              if (c.innerText)
+                page_content.push(c.innerText);
+            }
+          }
+        }
+      
+      page_content.push('\n');
+    }
+
+    if (page_content.length> 0)
+      return page_content.join('\n');
+    else
+      return null;
+  }
+
+
+
+  scan_threads(loc) //??todo
+  {
+    let page_content = []; 
+    const base = loc.href
+    const title = document.querySelector('div#show_issue h1')?.innerText;
+    const auth_ref = document.querySelector('div#show_issue a.author')
+    const auth = auth_ref?.parentNode.innerText;
+    const auth_href = auth_ref.href;
+
+    if (title)
+      page_content.push(`### Issue ${title}`);
+    if (auth && auth_href)
+        page_content.push(`### ${auth}  ${auth_href}\n`);
+
+    const items = document.querySelectorAll('div.TimelineItem');
+    for(var el of items) {
+      const i_ref = el.querySelector('h3 > div > a[href]');
+      const i_title = el.querySelector('h3 strong a[href]');
+      const i_author = i_title?.innerText;
+      const i_author_href = i_title?.href;
+      const i_href = i_ref?.href;
+      const i_date = i_ref?.querySelector('relative-time')?.attributes['datetime']?.value;
+
+      if (i_href)
+        page_content.push(`### ${i_href}`);
+      if (i_author && i_author_href)
+        page_content.push(`### Author - ${i_author}  ${i_author_href}`);
+      if (i_date)
+        page_content.push(`### Timestamp - ${i_date}`)
+
+      const list = el.querySelector('task-lists td')?.childNodes;
+      if (list)
+        for(var c of list) {
+          if (c) {
+            switch(c.nodeName) 
+            {
+            case 'A':
+              const i_img = c.querySelector('img')
+              if (i_img)
+                page_content.push(`![Image](${i_img.src})`);
+              else if (c.innerText)
+                page_content.push(c.innerText);
+              break;
+            case 'DIV':
+              if (c.innerText)
+                page_content.push(c.innerText);
+              break;
+            case 'DETAILS':
+              // video ignore, vider URL could not be reused
+              break;
+            default:
+              if (c.innerText)
+                page_content.push(c.innerText);
+            }
+          }
+        }
+      
+      page_content.push('\n');
+    }
+
+    if (page_content.length> 0)
+      return page_content.join('\n');
+    else
+      return null;
+  }
+
 
 
   scan(loc)
@@ -411,6 +608,8 @@ class Social {
         rc = this.scan_linkedin(loc);
       else if (loc.origin === 'https://mastodon.social')
         rc = this.scan_mastodon(loc);
+      else if (loc.origin === 'https://github.com' && loc.pathname.indexOf('/issues/')!=-1)
+        rc = this.scan_github(loc);
     } catch(e) {
       console.log(e);
     }

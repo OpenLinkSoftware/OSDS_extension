@@ -118,10 +118,10 @@
 
   function scan_code_claude()
   {
-    const lst = document.querySelectorAll('div.contents pre div.code-block');
+    const lst = document.querySelectorAll('div.contents pre > div');
     for(const v of lst) 
     {
-      const hdr = v.querySelector('div.code-block__header')
+      const hdr = v.querySelector('div')
       const dd_el = hdr.querySelector('#code_type');
       if (dd_el)
         continue;
@@ -370,19 +370,19 @@
   {
     if (location.host==='chat.openai.com')
       return 'ch_openai';
-    else if (location.href.startsWith('https://copilot.microsoft.com/'))
+    else if (location.href.startsWith('https://copilot.microsoft.com'))
       return 'ch_copilot';
     else if (location.href.startsWith('https://claude.ai/chat'))
       return 'ch_claude';
-    else if (location.href.startsWith('https://gemini.google.com/'))
+    else if (location.href.startsWith('https://gemini.google.com'))
       return 'ch_gemini';
     else if (location.href.startsWith('https://labs.perplexity.ai/'))
       return 'ch_perplexity_labs';
-    else if (location.href.startsWith('https://www.perplexity.ai/'))
+    else if (location.href.startsWith('https://www.perplexity.ai'))
       return 'ch_perplexity';
     else if (location.href.startsWith('https://huggingface.co/chat'))
       return 'ch_huggingface';
-    else if (location.href.startsWith('https://chat.mistral.ai/chat/'))
+    else if (location.href.startsWith('https://chat.mistral.ai/chat'))
       return 'ch_mistral';
     else
      return null;
@@ -413,8 +413,8 @@
     }
   }
 
-
-  window.onload = async () => {
+  async function win_load()
+  {
     g_chat_id = getChatID();
 
     if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot' 
@@ -437,7 +437,8 @@
           gMutationObserver.disconnect()
       }
     }
-  };
+  }
+  window.addEventListener('load', win_load);
 
 
   function update_prompt(txt)
