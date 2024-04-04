@@ -122,7 +122,9 @@ async function init()
    typeInTextarea('{page_url}', DOM.qSel('#prompt-query'));
   }
 
-  DOM.iSel('prompt-validate').onclick = () => { validate_prompt_injects(true); }
+  DOM.iSel('prompt-validate').onclick = () => { 
+    validate_prompt_injects(true);
+  }
   
   await enableCtrls();
 
@@ -132,7 +134,7 @@ async function init()
 }
 
 
-function validate_prompt_injects(showOk)
+async function validate_prompt_injects(showOk)
 {
     try {
       const s = DOM.qSel('textarea#prompt-injects').value;
@@ -140,12 +142,38 @@ function validate_prompt_injects(showOk)
       if (v.rc !== 1)
         alert(v.err);
       else {
-        if (showOk)
+        if (showOk) {
           alert("Descripton is Valid!");
+          const chat = await gPref.getValue("ext.osds.chat-srv")
+          load_chat_list(s, chat);
+        }
       }
       return v.rc;
-    } catch(e) { return 0;}
+    } catch(e) { 
+      return 0;
+    }
 }
+
+function load_chat_list(data, sel)
+{
+    try {
+      const chat_list = JSON.parse(data);
+      const chat_keys = Object.keys(chat_list);
+      const dd = DOM.qSel('#chat-srv')
+      let dd_html = [];
+      for(const key of chat_keys) {
+        const v = chat_list[key]
+        if (v["prompt.selector"])
+          dd_html.push(`<option id="${key}" > ${v.name} </option>`);
+      }
+      dd.innerHTML = dd_html.join('\n');
+    } catch(e) { console.log(e)}
+
+    const el = DOM.qSel('#chat-srv #'+sel)
+    if (el)
+      el.selected = true;
+}
+
 
 
 function typeInTextarea(newText, el) {
@@ -420,26 +448,11 @@ async function loadPref()
     DOM.iSel('chatgpt_prompt').value = await gPref.getValue("osds.chatgpt_prompt");
 
     // tab ChatGPT
-    try {
-      const s = await gPref.getValue("ext.osds.def_prompt_inject")
-      const chat_list = JSON.parse(s);
-      const chat_keys = Object.keys(chat_list);
-      const dd = DOM.qSel('#chat-srv')
-      let dd_html = [];
-      for(const key of chat_keys) {
-        const v = chat_list[key]
-        if (v["prompt.selector"])
-          dd_html.push(`<option id="${key}" > ${v.name} </option>`);
-      }
-      dd.innerHTML = dd_html.join('\n');
-    } catch(e) { console.log(e)}
-
+    const data = await gPref.getValue("ext.osds.def_prompt_inject")
     var chat = await gPref.getValue("ext.osds.chat-srv")
-    const el = DOM.qSel('#chat-srv #'+chat)
-    if (el)
-      el.selected = true;
 
-    DOM.qSel('textarea#prompt-injects').value = await gPref.getValue('ext.osds.def_prompt_inject');
+    load_chat_list(data, chat);
+    DOM.qSel('textarea#prompt-injects').value = data;
 
     var tokens = await gPref.getValue("ext.osds.gpt-tokens");
     DOM.qSel('#gpt-max-tokens').value=tokens;
@@ -643,7 +656,7 @@ function prompt_to_lst()
 
 async function savePref()
 {
-   const rc = validate_prompt_injects();
+   const rc = await validate_prompt_injects();
    if (rc!==1) {
      alert("Changes weren't saved");
      return;
@@ -712,11 +725,8 @@ async function savePref()
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
-    // tab ChatGPT
    await gPref.setValue("ext.osds.chat-srv", DOM.qSel('#chat-srv option:checked').id);
    await gPref.setValue("osds.chatgpt_model", DOM.qSel('#chatgpt-model option:checked').id);
-   v = DOM.iSel('chatgpt_max_tokens').value.trim();
-   await gPref.setValue("osds.chatgpt_max_tokens", parseInt(v, 10));
 
    v = DOM.iSel('chatgpt_max_tokens').value.trim();
    await gPref.setValue("osds.chatgpt_max_tokens", parseInt(v, 10));
@@ -725,7 +735,8 @@ async function savePref()
    await gPref.setValue("osds.chatgpt_prompt", DOM.iSel('chatgpt_prompt').value.trim());
 
 
-//??   await gPref.setValue("ext.osds.gpt-model", DOM.qSel('#gpt-model option:checked').id);
+    // tab ChatGPT
+   gPref.setValue('ext.osds.def_prompt_inject', DOM.qSel('textarea#prompt-injects').value);
    await gPref.setValue("ext.osds.gpt-tokens", DOM.iSel('gpt-max-tokens').value);
 
    v = prompt_to_lst();
@@ -734,6 +745,7 @@ async function savePref()
 
 
    Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});
+   alert("Settings were Saved !");
 }
 
 

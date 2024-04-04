@@ -209,6 +209,8 @@
           g_prompt_set = v;
         else if (v['location.origin'] && location.origin === v['location.origin'])
           g_prompt_set = v;
+        else if (v['location.startsWith'] && location.href.startsWith(v['location.startsWith']))
+          g_prompt_set = v;
         else
           g_prompt_id = null;
       }

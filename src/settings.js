@@ -124,7 +124,7 @@ class Settings {
   "openia": {
     "name": "OpenAI Chat", 
     "url": "https://chat.openai.com/?model=gpt-4",
-    "location.host": "chat.openai.com",
+    "location.startsWith": "https://chat.openai.com/",
     "prompt.selector": "#prompt-textarea",
     "prompt.css.removeClass": "resize-none",
     "prompt.css.addClass": "resize"
@@ -133,18 +133,45 @@ class Settings {
   "opal_qa": {
     "name": "OPAL Chat (net-qa)", 
     "url": "https://netid-qa.openlinksw.com:8443/chat",
-    "location.origin": "https://netid-qa.openlinksw.com:8443",
+    "location.startsWith": "https://netid-qa.openlinksw.com:8443/chat",
     "prompt.selector": "textarea.message_input"
   },
 
   "ms_copilot":{
     "name": "MS Copilot", 
     "url": "https://copilot.microsoft.com",
-    "location.host": "copilot.microsoft.com",
+    "location.startsWith": "https://copilot.microsoft.com/",
     "prompt.selector": ["cib-serp","#shadow-root", "cib-action-bar#cib-action-bar-main","#shadow-root",
                         "cib-text-input","#shadow-root", "textarea#searchbox"]
-  }
+  },
 
+  "perplexity": {
+    "name": "Perplexity", 
+    "url": "https://labs.perplexity.ai/",
+    "location.startsWith": "https://labs.perplexity.ai",
+    "prompt.selector": "main textarea"
+  },
+
+  "huggingface": {
+    "name": "HuggingChat", 
+    "url": "https://huggingface.co/chat",
+    "location.startsWith": "https://huggingface.co/chat/",
+    "prompt.selector": "div#app textarea"
+  },
+
+  "claude": {
+    "name": "Claude Chat", 
+    "url": "https://claude.ai/chat",
+    "location.startsWith": "https://claude.ai/chat/",
+    "prompt.selector": "fieldset div.ProseMirror[contenteditable=true][enterkeyhint=enter]"
+  },
+
+  "gemini": {
+    "name":"Goggle Gemini",
+    "url": "https://gemini.google.com/",
+    "location.startsWith": "https://gemini.google.com/app",
+    "prompt.selector": "chat-app main rich-textarea  div.textarea[contenteditable=true]"
+  }
 }
 `;     
 
@@ -611,8 +638,8 @@ class Settings {
           throw new Error(`item "${key}" must have attribute "name"`)
         if (!el['url'])
           throw new Error(`item "${key}" must have attribute "url"`)
-        if (!el["location.host"] && !el["location.origin"])
-          throw new Error(`item "${key}" must have attribute "location.host" or "location.origin"`)
+        if (!el["location.startsWith"])
+          throw new Error(`item "${key}" must have attribute "location.startsWith"`)
         if (!el['prompt.selector'])
           throw new Error(`item "${key}" must have attribute "prompt.selector"`)
       }
