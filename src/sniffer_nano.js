@@ -443,18 +443,36 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
     {
       const chats = { 
              openai: { top:'div#__next main pre select#code_type option:checked', 
-                       closest:'pre', 
+                       sel: {closest:'pre'}, 
                        code:'code'
                      }, 
 
              gemini: { top:'model-response message-content code-block select#code_type option:checked', 
-                       closest:'div.code-block', 
+                       sel: {closest:'div.code-block'}, 
                        code:'code'
                      }, 
              claude: { top:'div.contents pre div.code-block select#code_type option:checked', 
-                       closest:'div.code-block', 
+                       sel: {closest:'div.code-block'}, 
                        code:'code'
-                     } 
+                     }, 
+             perplexity: { top:'div#__next main pre select#code_type option:checked', 
+                       sel: {closest:'pre'}, 
+                       code:'code'
+                     }, 
+             perplexity_labs: { top:'div#__next main pre select#code_type option:checked',  
+                       sel: {closest:'pre'}, 
+                       code:'code'
+                     }, 
+
+             mistral: { top:'pre select#code_type option:checked', 
+                       sel: {closest:'pre'}, 
+                       code:'code'
+                     }, 
+             huggingface: { top:'select#code_type option:checked', 
+                       sel: { parentNode:3 },
+                       code:'pre code'
+                     }, 
+           
            }
 
       const fmt = chats[chat_id];
@@ -467,7 +485,15 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
       for (var el of lst) {
         const el_type = el.id;
 
-        el_pre = el.closest(fmt.closest);
+        if (fmt.sel.closest) {
+          el_pre = el.closest(fmt.sel.closest);
+        }
+        else if (fmt.sel.parentNode) {
+          el_pre = el;
+          for(var i=0; i<fmt.sel.parentNode; i++)
+            el_pre = el_pre.parentNode;
+        }
+
         if (el_pre) {
           el_code = el_pre.querySelector(fmt.code);
           if (el_code) {

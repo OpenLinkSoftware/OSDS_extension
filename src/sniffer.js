@@ -131,6 +131,26 @@
                   data_found = ret.exists;
                   nano = ret.data;
                 }
+                else if (!data_found && location.href.startsWith('https://www.perplexity.ai')) {
+                  ret = Nano.sniff_nanotation_chat(ret, 'perplexity');
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
+                else if (!data_found && location.href.startsWith('https://labs.perplexity.ai')) {
+                  ret = Nano.sniff_nanotation_chat(ret, 'perplexity_labs');
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
+                else if (!data_found && location.href.startsWith('https://chat.mistral.ai/chat')) {
+                  ret = Nano.sniff_nanotation_chat(ret, 'mistral');
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
+                else if (!data_found && location.href.startsWith('https://huggingface.co/chat/')) {
+                  ret = Nano.sniff_nanotation_chat(ret, 'huggingface');
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
             }
 
 
@@ -237,6 +257,22 @@
             }
             else if (location.href.startsWith('https://claude.ai/chat/')) {
               ret = Nano.sniff_nanotation_chat(ret, 'claude');
+              nano = ret.data;
+            }
+            else if (location.href.startsWith('https://www.perplexity.ai')) {
+              ret = Nano.sniff_nanotation_chat(ret, 'perplexity');
+              nano = ret.data;
+            }
+            else if (location.href.startsWith('https://labs.perplexity.ai')) {
+              ret = Nano.sniff_nanotation_chat(ret, 'perplexity_labs');
+              nano = ret.data;
+            }
+            else if (location.href.startsWith('https://chat.mistral.ai/chat')) {
+              ret = Nano.sniff_nanotation_chat(ret, 'mistral');
+              nano = ret.data;
+            }
+            else if (location.href.startsWith('https://huggingface.co/chat/')) {
+              ret = Nano.sniff_nanotation_chat(ret, 'huggingface');
               nano = ret.data;
             }
 

@@ -66,8 +66,10 @@
   const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
-//  const dropDown_def = `<div style="display:flex; flex-direction:row; margin-right:70px">
-//           ${dd_base} </div>`;
+  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto" style="height=24px;margin-left:300px"> ${dd_base} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textMainDark" style="height=24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
+  const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height=24px;margin-left:300px"> ${dd_base_rev} </div>`;
+  const dropDown_huggingface = `<div class="flex items-center gap-2 ml-auto" style="height=24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
 
 
 
@@ -166,6 +168,72 @@
   }
 
 
+  function scan_code_perplexity_labs()
+  {
+    const lst = document.querySelectorAll('div#__next main pre');
+    for(const v of lst) 
+    {
+      const title = v.children[0].children[0];
+      const dd_el = title.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      title.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], title.children[0]);
+    }
+  }
+
+
+  function scan_code_perplexity()
+  {
+    const lst = document.querySelectorAll('div#__next main pre');
+    for(const v of lst) 
+    {
+      const dd_el = v.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const code = v.querySelector('code')?.parentNode;
+      const block = code?.parentNode;
+      if (code && block)
+        block.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], code);
+    }
+  }
+
+  function scan_code_mistral()
+  {
+    const lst = document.querySelectorAll('pre');
+    for(const v of lst) 
+    {
+      let i=0;
+      const block = v.children[0];
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = block?.querySelector('button')
+      if (btn_copy && block)
+        block.insertBefore(DOM.htmlToElements(dropDown_mistral)[0], btn_copy);
+    }
+  }
+
+  function scan_code_huggingface()
+  {
+    const lst = document.querySelectorAll('pre');
+    for(const v of lst) 
+    {
+      const block = v.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = block.querySelector('button')
+      if (btn_copy)
+        block.insertBefore(DOM.htmlToElements(dropDown_huggingface)[0], btn_copy);
+    }
+  }
+
+
+
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
         if (g_chat_id === 'ch_openai') 
@@ -176,6 +244,10 @@
           scan_code_claude();
         else if (g_chat_id === 'ch_gemini') 
           scan_code_gemini();
+        else if (g_chat_id === 'ch_perplexity_labs') 
+          scan_code_perplexity_labs();
+        else if (g_chat_id === 'ch_perplexity') 
+          scan_code_perplexity();
       }
     }, 500));
 
@@ -195,18 +267,40 @@
         scan_code_ms_copilot();
         try {
           g_top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot
-          setInterval(scan_code_ms_copilot, 10*1000);
+          setInterval(scan_code_ms_copilot, 5*1000);
         } catch(e){} 
       }
       else if (g_chat_id === 'ch_claude') {
         scan_code_claude();
         g_top = document.querySelector('body');
+        setInterval(scan_code_claude, 5*1000);
       }
       else if (g_chat_id === 'ch_gemini') {
         scan_code_gemini();
         g_top = document.querySelector('body');
-        setInterval(scan_code_gemini, 10*1000);
+        setInterval(scan_code_gemini, 5*1000);
       }
+      else if (g_chat_id === 'ch_perplexity_labs') {
+        scan_code_perplexity_labs();
+        g_top = document.querySelector('div#__next');
+        use_mutation_observer = true;
+      }
+      else if (g_chat_id === 'ch_perplexity') {
+        scan_code_perplexity();
+        g_top = document.querySelector('div#__next');
+        use_mutation_observer = true;
+      }
+      else if (g_chat_id === 'ch_mistral') {
+        scan_code_mistral();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_mistral, 3*1000);
+      }
+      else if (g_chat_id === 'ch_huggingface') {
+        scan_code_huggingface();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_huggingface, 3*1000);
+      }
+      
 
       if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
@@ -260,6 +354,8 @@
     else if (location.href.startsWith('https://gemini.google.com/'))
       return 'ch_gemini';
     else if (location.href.startsWith('https://labs.perplexity.ai/'))
+      return 'ch_perplexity_labs';
+    else if (location.href.startsWith('https://www.perplexity.ai/'))
       return 'ch_perplexity';
     else if (location.href.startsWith('https://huggingface.co/chat'))
       return 'ch_huggingface';
@@ -299,7 +395,9 @@
     g_chat_id = getChatID();
 
     if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot' 
-       || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini')
+       || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini'
+       || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
+       || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface')
       handle_chat_code();
 
     await init_prompt_inject();

@@ -145,10 +145,17 @@ class Settings {
                         "cib-text-input","#shadow-root", "textarea#searchbox"]
   },
 
-  "perplexity": {
-    "name": "Perplexity", 
+  "perplexity_labs": {
+    "name": "Perplexity Labs", 
     "url": "https://labs.perplexity.ai/",
     "location.startsWith": "https://labs.perplexity.ai",
+    "prompt.selector": "main textarea"
+  },
+
+  "perplexity": {
+    "name": "Perplexity", 
+    "url": "https://www.perplexity.ai/",
+    "location.startsWith": "https://www.perplexity.ai",
     "prompt.selector": "main textarea"
   },
 
@@ -167,7 +174,7 @@ class Settings {
   },
 
   "gemini": {
-    "name":"Goggle Gemini",
+    "name":"Google Gemini",
     "url": "https://gemini.google.com/",
     "location.startsWith": "https://gemini.google.com/app",
     "prompt.selector": "chat-app main rich-textarea  div.textarea[contenteditable=true]"
