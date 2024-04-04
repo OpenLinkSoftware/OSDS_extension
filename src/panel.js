@@ -100,6 +100,7 @@ function showPopup(tabId)
        await gOidc.logout();
        Download_exec_update_state();
      } else {
+       Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
        gOidc.login();
      }
   } 
@@ -705,7 +706,9 @@ async function SuperLinks_exec()
   await settings._syncAll();
 
   if (doc_URL!==null) {
+    Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
     Browser.api.runtime.sendMessage({cmd: 'actionSuperLinks'});
+    close(); // close popup
   }
   return false;
 }
@@ -999,6 +1002,8 @@ async function Download_exec()
 
 async function save_data(action, fname, fmt, callback)
 {
+  Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
+
   if (action==="sparqlupload") 
   {
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
@@ -1032,6 +1037,7 @@ async function save_data(action, fname, fmt, callback)
     }
 
     Browser.api.runtime.sendMessage(exec_cmd);
+    close(); // close popup
 
   } 
   else 
@@ -1072,6 +1078,12 @@ async function save_data(action, fname, fmt, callback)
     }
     else if (action==="fileupload") 
     {
+      const webId = await gOidc.checkSession();
+      if (!webId) {
+        showInfo("You must be LoggedIn for Upload")
+        return;
+      }
+
       var contentType = "text/plain;charset=utf-8";
 
       if (fmt==="jsonld")
@@ -1082,8 +1094,10 @@ async function save_data(action, fname, fmt, callback)
         contentType = "application/rdf+xml;charset=utf-8";
       else
         contentType = "text/turtle;charset=utf-8";
-
+      
+      DOM.qSel('.super_links_msg').style.display = 'flex';
       let v = await gOidc.putResource(fname, retdata.txt, contentType);
+      DOM.qSel('.super_links_msg').style.display = 'none';
       if (v.rc===1)
         showInfo('Saved', fname);
       else
@@ -1188,7 +1202,6 @@ function showInfo(msg, href)
     }
   });
 }
-
 
 
 

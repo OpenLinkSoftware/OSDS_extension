@@ -754,7 +754,12 @@ async function actionSPARQL_Upload(info, tab, request) {
 Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
-    if (request.cmd === "close_oidc_web")
+    if (request.cmd === "reset_uploads")
+    {
+      gSuperLInks = null;
+      gSPARQL_Upload = null;
+    }
+    else if (request.cmd === "close_oidc_web")
     {
       var curWin = await getCurWin();
       var curTab = await getCurTab();
