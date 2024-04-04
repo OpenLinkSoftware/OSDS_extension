@@ -451,50 +451,6 @@ var g_chat = new ChatService();
 /**** End WebRequest ****/
 
 
-
-
-var tabsBrowserAction = {};
-
-function handleCloseTab(tabId, info) {
-  delete tabsBrowserAction[tabId];
-}
-
-function handleOpenTab(tabId) {
-  tabsBrowserAction[tabId] = false;
-}
-
-function storeBrowserAction(tabId, show) {
-  tabsBrowserAction[tabId] = show;
-}
-
-function getBrowserActionState(tabId) {
-  return tabsBrowserAction[tabId];
-}
-
-
-Browser.api.tabs.onRemoved.addListener(handleCloseTab);
-Browser.api.tabs.onUpdated.addListener(handleOpenTab);
-
-
-function setPageAction(tabId, show)
-{
-  storeBrowserAction(tabId, show);
-
-  if (Browser.is_ff || Browser.is_chrome || Browser.is_safari) {
-    if (show)
-      Browser.api.browserAction.enable(tabId);
-    else
-      Browser.api.browserAction.disable(tabId);
-  }
-  else {
-    if (show)
-      Browser.api.pageAction.show(tabId);
-    else
-      Browser.api.pageAction.hide(tabId);
-  }
-}
-
-
 async function handle_super_links_chatgpt(sender, chatgpt_req, event)
 {
   const setting = new Settings();
@@ -564,12 +520,6 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     {
       handle_super_links_chatgpt(sender, request.req, request.event);
     }
-/**
-    else
-    {
-      sendResponse({}); // stop
-    }
-**/
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
@@ -580,34 +530,7 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
 Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
-    if (request.property === "status")
-    {
-      var doc_URL = request.doc_URL;
-      var tabId = sender.tab.id;
-      var show_action = request.data_exists;
-      var sparql_pattern = /\/sparql\/?$/gmi;
-      var url = new URL(doc_URL);
-      var setting = new Settings();
-      var action_for_params =  await setting.getValue("ext.osds.pref.show_action");
-      var settings = new Settings();
-      var chk_all = "0";
-
-      if (!Browser.is_safari)
-          chk_all = await setting.getValue("ext.osds.handle_all");
-
-      if (doc_URL && url.search.length>0
-          && (sparql_pattern.test(doc_URL) || action_for_params) )
-      {
-        show_action = true;
-      }
-
-      setPageAction(tabId, show_action);
-      
-      if (!show_action && chk_all && chk_all!=="1") {
-            setPageAction(tabId, true);
-      }
-    }
-    else if (request.cmd === "actionSuperLinks")
+    if (request.cmd === "actionSuperLinks")
     {
       var curTab = await getCurTab();
       if (curTab.length > 0)
@@ -619,12 +542,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       if (curTab.length > 0)
         actionSPARQL_Upload(null, curTab[0], request);
     }
-/**
-    else
-    {
-      sendResponse({}); // stop
-    }
-**/
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }

@@ -92,59 +92,10 @@ Nano.getSelectionString = (el, win) => {
 
 
 
-Nano.scan_frames = () => {
-        try {
-            if (window.frames.length > 0) {
-                window._osds_frames = {};
-                Nano.scan_iframes(window.frames, "f");
-            }
-        } catch (e) {
-        }
-    }
-
-Nano.scan_iframes = (frames, id) => {
-        for (var i = 0; i < frames.length; i++) {
-            var win = frames[i];
-            var frame_id = id + "_" + i;
-
-            win.postMessage('osds:{"sniff":true, "frame":"' + frame_id + '"}', "*");
-
-            if (win.frames.length > 0)
-                Nano.scan_iframes(win.frames, frame_id);
-        }
-    }
-
-Nano.sniff_frames = (doc_Texts, frames, id) => {
-        try {
-            for (var i = 0; i < frames.length; i++) {
-                var win = frames[i];
-                var txt = null;
-                var frame_id = id + "_" + i;
-
-                try {
-                    txt = win.document.body.innerText;
-                } catch (e) {
-                    txt = window._osds_frames[frame_id];
-                }
-
-                if (txt === undefined || (txt !== null && txt.length == 0))
-                    txt = Nano.getSelectionString(win.document.body, win);
-
-                if (txt && txt.length > 0)
-                    doc_Texts.push(txt);
-
-                if (frames[i].frames.length > 0)
-                    Nano.sniff_frames(doc_Texts, frames[i].frames, frame_id);
-            }
-        } catch (e) {
-        }
-    }
-
-
-Nano.sniff_nanotation_DOM = () => {
+Nano.sniff_nanotation_Document = (doc_Texts) => 
+    {
         var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
         var comment = /^ *#/;
-        var doc_Texts = [];
         var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[], rss:[], atom:[]};
 
         function isWhitespace(c) 
@@ -176,18 +127,6 @@ Nano.sniff_nanotation_DOM = () => {
           else
             return str;
         }
-
-
-        var txt = document.body.innerText;
-
-        if (txt === undefined || (txt !== null && txt.length == 0))
-            txt = Nano.getSelectionString(document.body, window);
-
-        if (txt && txt.length > 0)
-            doc_Texts.push(txt);
-
-        if (window.frames.length > 0)
-            Nano.sniff_frames(doc_Texts, window.frames, "f");
 
         for (var i = 0; i < doc_Texts.length; i++) {
 

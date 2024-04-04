@@ -20,6 +20,7 @@
 
 // React when the browser action's icon is clicked.
 
+var g_tabId = null
 var items;
 var $ = jQuery;
 var gData_exists = false;
@@ -190,10 +191,10 @@ async function loadPopup()
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
   var curTabs = await getCurTab();
-  var tabId = null;
+  var tabId = g_tabId = null;
 
   if (curTabs.length > 0) {
-    tabId = curTabs[0].id;
+    tabId = g_tabId = curTabs[0].id;
     doc_URL = curTabs[0].url;
   }
   
@@ -657,22 +658,34 @@ async function parse_Data(dData)
 }
 
 
-
-//Chrome API
-//wait data from extension
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+async function handle_docData(data, is_data_exists, tab_index)
 {
   try {
-    if (request.property == "doc_data")
+    async function frames_data(v)
     {
-      var dData = JSON.parse(request.data);
+      const rc = Nano.sniff_nanotation_Document(v);
+      is_data_exists = is_data_exists || rc.exists
+      const nano = rc.data;
+
+      var dData = JSON.parse(data);
+      dData.ttl_nano.text       = dData.ttl_nano.text.concat(nano.ttl)
+      dData.ttl_curly_nano.text = dData.ttl_curly_nano.text.concat(nano.ttl_curly)
+      dData.jsonld_nano.text    = dData.jsonld_nano.text.concat(nano.jsonld)
+      dData.rdf_nano.text       = dData.rdf_nano.text.concat(nano.rdf)
+      dData.json_nano.text      = dData.json_nano.text.concat(nano.json)
+      dData.jsonl_nano.text     = dData.jsonl_nano.text.concat(nano.jsonl)
+      dData.csv_nano.text       = dData.csv_nano.text.concat(nano.csv)
+      dData.md_nano.text        = dData.md_nano.text.concat(nano.md)
+      dData.rss_nano.text       = dData.rss_nano.text.concat(nano.rss)
+      dData.atom_nano.text      = dData.atom_nano.text.concat(nano.atom)
+
       try {
-        gData.tab_index = sender.tab.index;
+        gData.tab_index = tab_index;
       } catch(e){}
 
       g_RestCons.load(doc_URL);
 
-      if (request.is_data_exists)
+      if (is_data_exists)
       {
         try {
           await parse_Data(dData);
@@ -688,11 +701,25 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
         selectTab('cons');
         g_RestCons.show();
-      } 
+      }
     }
+
+    Browser.api.tabs.executeScript(g_tabId, {file:"frame_text.js", allFrames:true}, frames_data);
 
   } catch(e) {
     console.log("OSDS: onMsg="+e);
+  } 
+
+}
+
+
+//Chrome API
+//wait data from extension
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+{
+  if (request.property == "doc_data")
+  {
+    handle_docData(request.data, request.is_data_exists, sender.tab.index);
   }
 
 });

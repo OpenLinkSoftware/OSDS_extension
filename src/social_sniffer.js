@@ -414,8 +414,6 @@ class Social {
     }
         
     if (page_content.length> 0) {
-//          blob = new Blob([page_content.join('\n')], {type: "text/plain;charset=utf-8"});
-//          saveAs(blob, 'linkedin_eng.txt');
       return page_content.join('\n');
     }
     else
