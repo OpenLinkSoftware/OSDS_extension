@@ -3,7 +3,7 @@
   "short_name": "osds",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "3.2.11",
+  "version": "3.2.12",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
@@ -34,7 +34,8 @@
       "js": ["lib/jquery-3.1.0.min.js", "lib/microdatajs/jquery.microdata.js", 
              "lib/microdatajs/jquery.microdata.json.js", "lib/RDFa.js", "lib/n3-browser.js", 
              "lib/jquery.mark.js", "lib/namespace.js", "lib/posh.js", "utils.js", "helpers_ui.js", 
-             "browser.js", "settings.js", "sniffer.js", "chat-inject.js", "social_sniffer.js", "lib/FileSaver.js"],
+             "browser.js", "settings.js", "sniffer_nano.js", "super_links.js",
+             "sniffer.js", "chat-inject.js", "social_sniffer.js"],
       "css": ["content.css"],
       "run_at": "document_idle"
     },
@@ -42,12 +43,6 @@
       "matches": ["https://openlinksoftware.github.io/*"],
       "js": ["browser.js", "lib/solid-client-authn.bundle.js", "oidc-webid-inject.js"],
       "run_at": "document_start"
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["frame.js"],
-      "run_at": "document_idle",
-      "all_frames": true
     }
   ],
   "permissions": [
