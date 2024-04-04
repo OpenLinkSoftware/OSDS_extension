@@ -462,64 +462,129 @@ class Social {
   }
 
 
-  scan_reddit(loc) //??todo
+  scan_reddit_01(loc) 
   {
     let page_content = []; 
     const base = loc.href
-    const title = document.querySelector('div#show_issue h1')?.innerText;
-    const auth_ref = document.querySelector('div#show_issue a.author')
-    const auth = auth_ref?.parentNode.innerText;
-    const auth_href = auth_ref.href;
+
+    // === for  /comments/  =====
+    const title = document.querySelector('shreddit-title')?.title
+    const auth_el = document.querySelector('shreddit-post')?.querySelector('faceplate-tracker[noun="user_profile"] a')
+    const auth = auth_el?.innerText
+    const auth_href = auth_el?.href;
+
+    const community_el = document.querySelector('shreddit-post').querySelector('faceplate-tracker[noun="community"] a')
+    const community = community_el?.innerText
+    const community_href = community_el?.href;
+
+    const post_text = document.querySelector('shreddit-post')?.querySelector('div[slot="text-body"]')?.innerText 
+    const post_imgs = document.querySelector('shreddit-post')?.querySelectorAll('img[role="presentation"]')
+    const post_video = document.querySelector('shreddit-post')?.querySelectorAll('video')
 
     if (title)
-      page_content.push(`### Issue ${title}`);
+      page_content.push(`### ${title}`);
     if (auth && auth_href)
-        page_content.push(`### ${auth}  ${auth_href}\n`);
+      page_content.push(`### Author ${auth}  ${auth_href}\n`);
+    if (community && community_href)
+      page_content.push(`### Community ${community}  ${community_href}\n`);
+    
+    if (post_text)
+      page_content.push(post_text)
+    if (post_imgs)
+      for(const img of post_imgs)
+        page_content.push(`![Image](${img.src})`);  
+    if (post_video)
+      for(const v of post_video)
+        page_content.push(`![Video](${v.src})`);  
 
-    const items = document.querySelectorAll('div.TimelineItem');
-    for(var el of items) {
-      const i_ref = el.querySelector('h3 > div > a[href]');
-      const i_title = el.querySelector('h3 strong a[href]');
-      const i_author = i_title?.innerText;
-      const i_author_href = i_title?.href;
-      const i_href = i_ref?.href;
-      const i_date = i_ref?.querySelector('relative-time')?.attributes['datetime']?.value;
-
-      if (i_href)
-        page_content.push(`### ${i_href}`);
-      if (i_author && i_author_href)
-        page_content.push(`### Author - ${i_author}  ${i_author_href}`);
-      if (i_date)
-        page_content.push(`### Timestamp - ${i_date}`)
-
-      const list = el.querySelector('task-lists td')?.childNodes;
-      if (list)
-        for(var c of list) {
-          if (c) {
-            switch(c.nodeName) 
-            {
-            case 'A':
-              const i_img = c.querySelector('img')
-              if (i_img)
-                page_content.push(`![Image](${i_img.src})`);
-              else if (c.innerText)
-                page_content.push(c.innerText);
-              break;
-            case 'DIV':
-              if (c.innerText)
-                page_content.push(c.innerText);
-              break;
-            case 'DETAILS':
-              // video ignore, vider URL could not be reused
-              break;
-            default:
-              if (c.innerText)
-                page_content.push(c.innerText);
-            }
-          }
+    const comm = document.querySelectorAll('shreddit-comment')
+    if (comm)
+      for(const c of comm)
+      {
+        const permalink = c.permalink
+        const ts = c.querySelector('time')?.datetime
+        const auth_list = c.querySelectorAll('faceplate-tracker[noun="comment_author"] a')
+        const comm_list = c.querySelectorAll('div[id$=content] p')
+        for(let i=0; i < auth_list.length; i++) 
+        {
+          page_content.push(`#### ${auth_list[i].innerText}  ${auth_list[i].href}`);
+          page_content.push(`     ${comm_list[i]}`);
         }
+      }
+
+    if (page_content.length> 0)
+      return page_content.join('\n');
+    else
+      return null;
+  }
+
+
+  scan_reddit_1(loc) 
+  {
+    let page_content = []; 
+    const base = loc.href
+
+    // === for  /comments/  =====
+    const post = document.querySelector('div[data-testid="post-container"]')
+    const auth_el = post?.querySelector('a[data-testid="post_author_link"]')
+    const auth = auth_el?.innerText
+    const auth_href = auth_el?.href;
+    const title = post.querySelector('div[data-adclicklocation="title"] h1')?.innerText
+
+    const post_ts = post?.querySelector('span[data-textid="post_timestamp"]')
+    const post_vote = post?.querySelector('[id^=vote-arrows]').innerText
+    const post_video = post?.querySelectorAll('shreddit-player')  // .src
+    const post_imgs = post?.querySelectorAll('img[role="presentation"]')  // .style.height!=='1px'
+    const post_text = post?.querySelectorAll('div > p') // .innerText 
+
+    if (title)
+      page_content.push(`### ${title}`);
+    if (post_ts)
+      page_content.push(`### Datetime: ${post_ts}`);
+    if (post_vote)
+      page_content.push(`### Votes: ${post_vote}`);
+    if (auth && auth_href)
+      page_content.push(`### Author ${auth}  ${auth_href}\n`);
+    
+    if (post_text)
+      for(const v of post_text)
+        page_content.push(v.innerText)
+    if (post_imgs)
+      for(const v of post_imgs) {
+        if (v.style.height!=='1px')
+          page_content.push(`![Image](${v.src})`);  
+      }
+    if (post_video)
+      for(const v of post_video)
+        page_content.push(`![Video](${v.src})`);  
+
+    const parent = post?.parentNode
+    if (parent) {
+      const comm_el = parent.children[parent.children.length-1];
+      const comm_list = comm_el.querySelectorAll('div.Comment')
       
       page_content.push('\n');
+
+      if (comm_list)
+        for(const c of comm_list) 
+        {
+          const hdr = c.querySelector('div[data-testid="post-comment-header"]')
+          const auth =  hdr?.querySelector('a[data-testid="comment_author_link"]')  //  .href  .innerText
+          const ts = hdr?.querySelector('a[data-testid="comment_timestamp"]')?.innerText
+          const txt = c.querySelector('div[data-testid="comment"]')?.innerText
+          const vote = c.querySelector('[id^=vote-arrows]')?.innerText
+
+          if (auth)
+            page_content.push(`##### ${auth.innerText}  ${auth.href}`);
+          if (ts)
+            page_content.push(`##### Datetime: ${ts} `);
+          if (vote)
+            page_content.push(`##### Votes: ${vote} `);
+          if (txt)
+            page_content.push(txt);
+
+          page_content.push('\n');
+        }
     }
 
     if (page_content.length> 0)
@@ -530,64 +595,111 @@ class Social {
 
 
 
-  scan_threads(loc) //??todo
+  scan_reddit_2(loc) 
   {
     let page_content = []; 
     const base = loc.href
-    const title = document.querySelector('div#show_issue h1')?.innerText;
-    const auth_ref = document.querySelector('div#show_issue a.author')
-    const auth = auth_ref?.parentNode.innerText;
-    const auth_href = auth_ref.href;
 
-    if (title)
-      page_content.push(`### Issue ${title}`);
-    if (auth && auth_href)
-        page_content.push(`### ${auth}  ${auth_href}\n`);
+    const feed = document.querySelectorAll('div[data-testid="post-container"]')
+    if (feed)
+      for(const post of feed)
+      {
+        const title = post.querySelector('div[data-adclicklocation="title"] h3')?.innerText
+        const auth_el = post.querySelector('a[data-testid="post_author_link"]')
+        const auth = auth_el?.innerText
+        const auth_href = auth_el?.href;
+        const post_ts = post.querySelector('span[data-testid="post_timestamp"]')
+        const post_vote = post.querySelector('[id^=vote-arrows]').innerText
+        const post_text = post.querySelectorAll('div > p') // .innerText 
 
-    const items = document.querySelectorAll('div.TimelineItem');
-    for(var el of items) {
-      const i_ref = el.querySelector('h3 > div > a[href]');
-      const i_title = el.querySelector('h3 strong a[href]');
-      const i_author = i_title?.innerText;
-      const i_author_href = i_title?.href;
-      const i_href = i_ref?.href;
-      const i_date = i_ref?.querySelector('relative-time')?.attributes['datetime']?.value;
+        const post_video = post.querySelectorAll('shreddit-player')  // .src
+        const post_imgs = post.querySelectorAll('img[role="presentation"]')  // .style.height!=='1px'
 
-      if (i_href)
-        page_content.push(`### ${i_href}`);
-      if (i_author && i_author_href)
-        page_content.push(`### Author - ${i_author}  ${i_author_href}`);
-      if (i_date)
-        page_content.push(`### Timestamp - ${i_date}`)
+        const comments = post.querySelector('a[data-test-id="comments-page-link-num-comments"]')
 
-      const list = el.querySelector('task-lists td')?.childNodes;
-      if (list)
-        for(var c of list) {
-          if (c) {
-            switch(c.nodeName) 
-            {
-            case 'A':
-              const i_img = c.querySelector('img')
-              if (i_img)
-                page_content.push(`![Image](${i_img.src})`);
-              else if (c.innerText)
-                page_content.push(c.innerText);
-              break;
-            case 'DIV':
-              if (c.innerText)
-                page_content.push(c.innerText);
-              break;
-            case 'DETAILS':
-              // video ignore, vider URL could not be reused
-              break;
-            default:
-              if (c.innerText)
-                page_content.push(c.innerText);
-            }
+        if (title)
+          page_content.push(`### ${title}`);
+        if (post_ts)
+          page_content.push(`### Datetime: ${post_ts}`);
+        if (post_vote)
+          page_content.push(`### Votes: ${post_vote}`);
+        if (auth && auth_href)
+          page_content.push(`### Author ${auth}  ${auth_href}\n`);
+        if (comments)
+          page_content.push(`### ${comments.href}  ${comments.innerText}\n`);
+    
+        if (post_text)
+          for(const v of post_text)
+            page_content.push(v.innerText)
+        if (post_imgs)
+          for(const v of post_imgs) {
+            if (v.style.height!=='1px')
+              page_content.push(`![Image](${v.src})`);  
           }
+        if (post_video)
+          for(const v of post_video)
+            page_content.push(`![Video](${v.src})`);  
+
+        page_content.push('\n\n');
+      }
+
+    if (page_content.length> 0)
+      return page_content.join('\n');
+    else
+      return null;
+  }
+
+
+
+  scan_threads(loc) 
+  {
+    let page_content = []; 
+    const base = loc.href
+
+    // === for  /post/  =====
+    const items = document.querySelectorAll('time');
+    for(const p of items)
+    {
+      const ts = p.getAttribute('datetime');
+      const root = p.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+      const txt = root.querySelectorAll('div > div > div > span')[2]?.innerText
+      const imgs = root.querySelectorAll('picture img') // .src
+      const vids = root.querySelectorAll('video') // .src
+
+      const links = root.querySelectorAll('a[href^="/@"]')
+      let auth = null;
+      let auth_href = null;
+      let post_href = null
+      for(const l of links) {
+        const uri = new URL(l.href);
+        if (uri.pathname.startsWith('/@')) {
+          if (uri.pathname.indexOf('/post')===-1) {
+            auth_href = l.href
+            auth = l.innerText
+          }
+          else
+            post_href = l.href
         }
-      
-      page_content.push('\n');
+      }
+
+      if (auth && auth_href)
+        page_content.push(`### Author ${auth}  ${auth_href}`);
+      if (ts)
+        page_content.push(`### Datetime: ${ts}`);
+    
+      if (txt)
+        page_content.push(txt)
+      if (imgs)
+        for(const v of imgs) {
+          page_content.push(`![Image](${v.src})`);  
+        }
+      if (vids)
+        for(const v of vids) {
+          page_content.push(`![Video](${v.src})`);  
+          page_content.push(`![Image](${v.getAttribute('poster')})`);  
+        }
+
+      page_content.push('\n\n')
     }
 
     if (page_content.length> 0)
@@ -610,6 +722,14 @@ class Social {
         rc = this.scan_mastodon(loc);
       else if (loc.origin === 'https://github.com' && loc.pathname.indexOf('/issues/')!=-1)
         rc = this.scan_github(loc);
+      else if (loc.origin === 'https://www.reddit.com') {
+        if (loc.pathname.indexOf('/comments/')!=-1)
+          rc = this.scan_reddit_1(loc);
+        else
+          rc = this.scan_reddit_2(loc);
+      }
+      else if (loc.origin === 'https://www.threads.net')
+        rc = this.scan_threads(loc);
     } catch(e) {
       console.log(e);
     }

@@ -428,7 +428,26 @@ DOM.ready = (fn) => {
     fn();
   }
 }
-
+// query elements even deeply within shadow doms. e.g.:
+// ts-app::shadow paper-textarea::shadow paper-input-container
+DOM.querySelectorDeep = (selector, root = document) => {
+  let currentRoot = root;
+  let partials = selector.split('::shadow');
+  let elems = currentRoot.querySelectorAll(partials[0]);
+  for (let i = 1; i < partials.length; i++) {
+    let partial = partials[i];
+    let elemsInside = [];
+    for (let j = 0; j < elems.length; j++) {
+      let shadow = elems[j].shadowRoot;
+      if (shadow) {
+        const matchesInShadow = shadow.querySelectorAll(partial);
+        elemsInside = elemsInside.concat([... matchesInShadow]);
+      }
+    }
+    elems = elemsInside;
+  }
+  return elems;
+}
 
 function debounce(callback, wait) {
     let timeout;
