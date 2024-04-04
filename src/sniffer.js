@@ -967,8 +967,8 @@
                 }
                 else if (request.cmd === "page_content") {
                     const scanner = new Social();
-                    const page_content = scanner.scan(location);
-                    sendResponse({page_content});
+                    const rc = scanner.scan(location);
+                    sendResponse({page_content:rc.text, dom:rc.dom, frames:window.frames.length});
                     //console.log(page_content);
                     return true;
                 }

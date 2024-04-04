@@ -409,7 +409,7 @@ class Social {
       console.log(e);
     }
     if (rc)
-      return rc;
+      return {text:rc, dom:0};
 
     let page_content = document.body.innerText;
 
@@ -459,10 +459,10 @@ class Social {
           page_add.push(` ![Image](${v})`);
       }
 
-      return page_content+'\n'+page_add.join('\n');
+      return {text:page_content+'\n'+page_add.join('\n'), dom:1};
     } catch(e) {
       console.log(e);
-      return page_content;
+      return {text:page_content, dom:1};
     }
   }
 

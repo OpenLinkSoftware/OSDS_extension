@@ -195,12 +195,32 @@ class ChatService {
   askChatGPT_page_content(info, tab) 
   {
     const self = this;
+    let page_text = "";
+
+    function handle_frames(rc)
+    {
+      if (rc && rc.length > 0)
+        self.askChatGPT({text:rc.join('\n'), url:info.pageUrl}, tab, 'content');
+      else
+        self.askChatGPT({text:page_text, url:info.pageUrl}, tab, 'content');
+    }
+
+    function scan_frames()
+    {
+      Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true}, handle_frames);
+    }
 
     function handle_resp(resp)
     {
       // content received send it to ChatService
       if (resp && resp.page_content) {
-        self.askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
+        if (resp.dom && resp.dom===1 && resp.frames>0) {
+          page_text = resp.page_content;
+          scan_frames();
+        }
+        else
+          self.askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
+
       }
     }
 
