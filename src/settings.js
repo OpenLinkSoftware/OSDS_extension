@@ -124,7 +124,7 @@ class Settings {
   "openia": {
     "name": "OpenAI Chat", 
     "url": "https://chat.openai.com/?model=gpt-4",
-    "location.startsWith": "https://chat.openai.com/",
+    "location.startsWith": "https://chat.openai.com",
     "prompt.selector": "#prompt-textarea",
     "prompt.css.removeClass": "resize-none",
     "prompt.css.addClass": "resize"
@@ -140,7 +140,7 @@ class Settings {
   "ms_copilot":{
     "name": "MS Copilot", 
     "url": "https://copilot.microsoft.com",
-    "location.startsWith": "https://copilot.microsoft.com/",
+    "location.startsWith": "https://copilot.microsoft.com",
     "prompt.selector": ["cib-serp","#shadow-root", "cib-action-bar#cib-action-bar-main","#shadow-root",
                         "cib-text-input","#shadow-root", "textarea#searchbox"]
   },
@@ -162,14 +162,14 @@ class Settings {
   "huggingface": {
     "name": "HuggingChat", 
     "url": "https://huggingface.co/chat",
-    "location.startsWith": "https://huggingface.co/chat/",
+    "location.startsWith": "https://huggingface.co/chat",
     "prompt.selector": "div#app textarea"
   },
 
   "claude": {
     "name": "Claude Chat", 
     "url": "https://claude.ai/chat",
-    "location.startsWith": "https://claude.ai/chat/",
+    "location.startsWith": "https://claude.ai/chat",
     "prompt.selector": "fieldset div.ProseMirror[contenteditable=true][enterkeyhint=enter]"
   },
 

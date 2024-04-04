@@ -416,10 +416,10 @@ DOM.htmlToElements = (html) => {
     template.innerHTML = html;
     return template.content.childNodes;
   }
-DOM.qShow = (sel) => { DOM.qSel(sel).classList.remove('hidden'); };
-DOM.qHide = (sel) => { DOM.qSel(sel).classList.add('hidden'); };
-DOM.Show = (el) => { el.classList.remove('hidden'); };
-DOM.Hide = (el) => { el.classList.add('hidden'); };
+DOM.qShow = (sel) => { DOM.qSel(sel)?.classList.remove('hidden'); };
+DOM.qHide = (sel) => { DOM.qSel(sel)?.classList.add('hidden'); };
+DOM.Show = (el) => { el?.classList.remove('hidden'); };
+DOM.Hide = (el) => { el?.classList.add('hidden'); };
 DOM.ready = (fn) => {
   // If we're early to the party
   document.addEventListener("DOMContentLoaded", fn);

@@ -22,7 +22,7 @@ var gPref = null;
 var yasqe_slinks = null;
 var yasqe_srv = null;
 var gPromptId = 0;
-
+var g_prompt_view = null;
 
 DOM.ready(() => { init(); })
 
@@ -52,6 +52,10 @@ async function init()
            var s = yasqe_slinks.getValue();
            yasqe_slinks.setValue(s);
 	}
+	else if (ui.newPanel[0].id == "tabs-4") {
+           var s = g_prompt_view.getValue();
+           g_prompt_view.setValue(s);
+	}
     }
   });
 
@@ -74,8 +78,13 @@ async function init()
 			createShareLink : null,
 			persistent: null,
     });
-
     yasqe_srv.setSize("100%", 420);
+
+    g_prompt_view = CodeMirror.fromTextArea(DOM.qSel('textarea#prompt-injects'), {
+      lineNumbers: true
+    });
+    g_prompt_view.setSize("100%", "250");
+
   } catch(e) {
     console.log(e);
   }
@@ -137,7 +146,7 @@ async function init()
 async function validate_prompt_injects(showOk)
 {
     try {
-      const s = DOM.qSel('textarea#prompt-injects').value;
+      const s = g_prompt_view.getValue();
       const v = gPref.validate_prompt_injects(s);
       if (v.rc !== 1)
         alert(v.err);
@@ -452,7 +461,7 @@ async function loadPref()
     var chat = await gPref.getValue("ext.osds.chat-srv")
 
     load_chat_list(data, chat);
-    DOM.qSel('textarea#prompt-injects').value = data;
+    g_prompt_view.setValue(data);
 
     var tokens = await gPref.getValue("ext.osds.gpt-tokens");
     DOM.qSel('#gpt-max-tokens').value=tokens;
@@ -601,7 +610,8 @@ function click_prompt_default(ev)
     lst[0].dispatchEvent(new Event('click'));
   }
 
-  DOM.qSel('textarea#prompt-injects').value = gPref.def_prompt_inject;
+  g_prompt_view.setValue(gPref.def_prompt_inject);
+  validate_prompt_injects();
   DOM.qSel('#gpt-max-tokens').value='4096';
 }
 
@@ -736,7 +746,7 @@ async function savePref()
 
 
     // tab ChatGPT
-   gPref.setValue('ext.osds.def_prompt_inject', DOM.qSel('textarea#prompt-injects').value);
+   gPref.setValue('ext.osds.def_prompt_inject', g_prompt_view.getValue()); //??--  DOM.qSel('textarea#prompt-injects').value);
    await gPref.setValue("ext.osds.gpt-tokens", DOM.iSel('gpt-max-tokens').value);
 
    v = prompt_to_lst();

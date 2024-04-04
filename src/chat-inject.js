@@ -52,6 +52,30 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
+  const dd_base_pplabs = `<span style="background-color: green;">Data format:</span>
+           <SELECT id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+  const dd_base_hugging = `<span style="background-color: green;">Data format:</span>
+           <SELECT style="all:revert;" id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
 
   const dropDown_openai = `<div class="flex items-center gap-2 ml-auto" style="height=24px;"> ${dd_base} </div>`;
 
@@ -66,10 +90,10 @@
   const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
-  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto" style="height=24px;margin-left:300px"> ${dd_base} </div>`;
-  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textMainDark" style="height=24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
-  const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height=24px;margin-left:300px"> ${dd_base_rev} </div>`;
-  const dropDown_huggingface = `<div class="flex items-center gap-2 ml-auto" style="height=24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
+  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textMainDark" style="height:24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
+  const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
+  const dropDown_huggingface = `<div class="flex items-center gap-2 ml-auto" style="height:20px;margin-left:300px;top:5px;position:absolute;"> ${dd_base_hugging} </div>`;
 
 
 
@@ -178,7 +202,7 @@
       if (dd_el)
         continue;
 
-      title.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], title.children[0]);
+      title.insertBefore(DOM.htmlToElements(dropDown_perplexity_labs)[0], title.children[0]);
     }
   }
 

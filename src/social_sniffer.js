@@ -417,7 +417,53 @@ class Social {
       page_content = this.getSelectionString(document.body, window);
 
     page_content = this.cleanText(page_content);
-    return page_content;
+
+    try {
+
+      let links = [];
+      for(const v of document.querySelectorAll('a')) 
+      { 
+        if (v.textContent) { 
+            const name = this.cleanText(v.textContent);
+            if (page_content.indexOf(v.textContent)!==-1)
+              page_content = page_content.replaceAll(v.textContent, `[${v.textContent}](${v.href})`);
+            else if (name && page_content.indexOf(name)!==-1)
+              page_content = page_content.replaceAll(name, `[${name}](${v.href})`);
+            else if (name && v.href)
+              links.push({name, href:v.href});
+        }
+      }
+      let page_add = [];
+      page_add.push('Links:');
+      for(const v of links) {
+        const name = this.cleanText(v.name);
+        if (!v.href || !name)
+          continue;
+        page_add.push(` [${name}](${v.href})`);
+      }
+
+      let images = {};
+      for(const v of document.querySelectorAll('img')) 
+        if (!v.src.endsWith('.svg') && v.src.startsWith('https:'))
+          images[v.src]=1;
+
+      for(const v of document.querySelectorAll('video')) 
+        if (v.src.startsWith('https:'))
+          images[v.src]=2;
+
+      for(const v of Object.keys(images)) 
+      { 
+        if (images[v] === 2)
+          page_add.push(` ![Video](${v})`);
+        else
+          page_add.push(` ![Image](${v})`);
+      }
+
+      return page_content+'\n'+page_add.join('\n');
+    } catch(e) {
+      console.log(e);
+      return page_content;
+    }
   }
 
 

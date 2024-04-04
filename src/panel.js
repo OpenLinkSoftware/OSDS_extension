@@ -134,9 +134,6 @@ function showPopup(tabId)
           gData.links.atom.loadData({}, 0);
   }
 
-  $('#tab-rss').hide();
-  $('#tab-atom').hide();
-
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
       lineNumbers: true
@@ -287,7 +284,7 @@ function selectTab(tab)
   prevSelectedTab = getSelectedTab();
   var el = DOM.qSel(`#tab-${tab} input`);
   el.checked = true;
-  $(el).parent().show();
+  DOM.Show(el.parentNode);
 }
 
 function getSelectedTab()
@@ -304,7 +301,7 @@ function hideDataTabs()
 {
   var lst = DOM.qSelAll('.tabs li[id^="tab"]');
   for(var v of lst) {
-    $(v).hide();
+    DOM.Hide(v);
   }
 }
 
@@ -373,9 +370,10 @@ function update_tab(tabname, title, val, err_tabs)
        $(`#${tabname}_items #docdata_view`).append(html);
     }
       return true;
-  } else {
-    $(`#tab-${tabname}`).hide();
-    $(`#${tabname}-save`).hide();
+  } 
+  else {
+    DOM.qHide(`#tab-${tabname}`);
+    DOM.qHide(`#${tabname}-save`);
     return false;
   }
 }
@@ -392,6 +390,18 @@ async function update_tab_exec(tabname, title, block, err_tabs)
 
 async function show_Data()
 {
+  function updateUI(loaded, tabName)
+  {
+    if (loaded) {
+      DOM.qShow(`#tab-${tabName}`);
+      DOM.qShow(`#${tabName}-save`);
+    }
+    else {
+      DOM.qHide(`#tab-${tabName}`);
+      DOM.qHide(`#${tabName}-save`);
+    }
+  }
+  
   var cons = false;
   var micro = false;
   var jsonld = false;
@@ -404,14 +414,14 @@ async function show_Data()
   var csv = false;
   var rss = false;
   var atom = false;
-  var md = false;
+  var markdown = false;
   var html = "";
   var err_tabs = [];
   var bnode_types = {};
 
   gData.tabs = [];
-  $('#rss-save').hide();
-  $('#atom-save').hide();
+  DOM.qHide('#rss-save');
+  DOM.qHide('#atom-save');
 
   if (gData.micro)
     micro = await update_tab_exec('micro', 'Microdata', gData.micro, err_tabs);
@@ -441,16 +451,16 @@ async function show_Data()
     csv = await update_tab_exec('csv', 'CSV', gData.csv, err_tabs);
 
   if (gData.md)
-    md = await update_tab_exec('markdown', 'Markdown', gData.md, err_tabs);
+    markdown = await update_tab_exec('markdown', 'Markdown', gData.md, err_tabs);
 
   if (gData.rss) {
     rss = await update_tab_exec('rss', 'RSS', gData.rss, err_tabs);
-    $('#rss-save').show();
+    DOM.qShow('#rss-save');
   }
 
   if (gData.atom) {
     atom = await update_tab_exec('atom', 'Atom', gData.atom, err_tabs);
-    $('#atom-save').show();
+    DOM.qShow('#atom-save');
   }
 
   if (!rss && gData.links.rss)
@@ -463,55 +473,23 @@ async function show_Data()
   else if (err_tabs.length > 0)
     selectTab(err_tabs[0]);
 
+  updateUI(micro,  'micro');
+  updateUI(jsonld, 'jsonld');
+  updateUI(turtle, 'turtle');
+  updateUI(rdfa,   'rdfa');
+  updateUI(rdf,    'rdf');
+  updateUI(posh,   'posh');
+  updateUI(json,   'json');
+  updateUI(jsonl,  'jsonl');
+  updateUI(csv,    'csv');
+  updateUI(markdown, 'markdown');
+  updateUI(rss,    'rss');
+  updateUI(atom,   'atom');
 
-  if (!micro) {
-    $('#tab-micro').hide();
-    $('#micro-save').hide();
-  }
-  if (!jsonld) {
-    $('#tab-jsonld').hide();
-    $('#jsonld-save').hide();
-  }
-  if (!turtle) {
-    $('#tab-turtle').hide();
-    $('#turtle-save').hide();
-  }
-  if (!rdfa) {
-    $('#tab-rdfa').hide();
-    $('#rdfa-save').hide();
-  }
-  if (!rdf) {
-    $('#tab-rdf').hide();
-    $('#rdf-save').hide();
-  }
-  if (!posh) {
-    $('#tab-posh').hide();
-    $('#posh-save').hide();
-  }
-  if (!json) {
-    $('#tab-json').hide();
-  }
-  if (!jsonl) {
-    $('#tab-jsonl').hide();
-  }
-  if (!jsonl && !json) {
-    $('#json-save').hide();
-  }
-
-  if (!csv) {
-    $('#tab-csv').hide();
-    $('#csv-save').hide();
-  }
-  if (!md) {
-    $('#tab-markdown').hide();
-//??    $('#markdown-save').hide();
-  }
-  if (rss) {
-    $('#tab-rss').show();
-  } 
-  if (atom) {
-    $('#tab-atom').show();
-  }
+  if (!jsonl && !json)
+    DOM.qHide('#json-save');
+  else
+    DOM.qShow('#json-save');
 
   gData_showed = true;
 }
@@ -535,8 +513,8 @@ function links_cb_success(tab, tabName, rc)
     update_tab(tab, tabName, rc);
     $(`#${tab}_items table.loader`).hide();
 
-    $(`#tab-${tab}`).show();
-    $(`#${tab}-save`).show();
+    DOM.qShow(`#tab-${tab}`);
+    DOM.qShow(`#${tab}-save`);
   } 
 }
 
@@ -1107,7 +1085,7 @@ async function save_data(action, fname, fmt, callback)
 
       let v = await gOidc.putResource(fname, retdata.txt, contentType);
       if (v.rc===1)
-        showInfo('Saved');
+        showInfo('Saved', fname);
       else
         showInfo('Unable to save: ' +v.err);
     }
@@ -1183,9 +1161,22 @@ async function prepare_data(for_query, curTab, fmt)
 }
 
 
-function showInfo(msg)
+function showInfo(msg, href)
 {
-  $('#alert-msg').prop('textContent',msg);
+  let el;
+
+  el = DOM.iSel('alert-msg');
+  el.textContent = msg;
+
+  el = DOM.iSel('alert_href')
+  if (href) {
+    el.href = href;
+    el.innerText = href
+    DOM.Show(el);
+  } else {
+    DOM.Hide(el);
+  }
+
   $('#alert-dlg').dialog({
     resizable: true,
     height:180,

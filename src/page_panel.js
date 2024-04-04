@@ -816,7 +816,7 @@ async function save_data(action, fname, fmt, callback)
 
      let v = await gOidc.putResource(fname, retdata.txt, contentType);
      if (v.rc===1)
-        showInfo('Saved');
+        showInfo('Saved', fname);
      else
         showInfo('Unable to save: ' +v.err);
     }
@@ -856,7 +856,20 @@ async function prepare_data(for_query, curTab, fmt)
 
 function showInfo(msg)
 {
-  $('#alert-msg').prop('textContent',msg);
+  let el;
+
+  el = DOM.iSel('alert-msg');
+  el.textContent = msg;
+
+  el = DOM.iSel('alert_href')
+  if (href) {
+    el.href = href;
+    el.innerText = href
+    DOM.Show(el);
+  } else {
+    DOM.Hide(el);
+  }
+
   $('#alert-dlg').dialog({
     resizable: true,
     height:180,

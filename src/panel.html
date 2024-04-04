@@ -99,6 +99,7 @@
       <div class="popup" id="alert-dlg" title="Info">
         <p id="alert-msg">
         </p>
+        <a id="alert_href" href=""></a>
       </div>
 
 
@@ -199,13 +200,13 @@
 
       <div class="content">
       <ul class="tabs" role="tablist">
-        <li id="tab-micro" >
-          <input type="radio" name="tabs" id="itab-micro" checked />
-          <label for="itab-micro" role="tab" aria-selected="true" tabindex="0" 
+        <li id="tab-micro" class="hidden">
+          <input type="radio" name="tabs" id="itab-micro" />
+          <label for="itab-micro" role="tab" aria-selected="false" tabindex="0" 
                  title="Structured Data encoded using HTML5 Microdata Notation" >
             Microdata
           </label>
-          <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="false">
+          <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="ture">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
@@ -215,7 +216,7 @@
           </div>
         </li>
 
-        <li id="tab-jsonld">
+        <li id="tab-jsonld" class="hidden">
           <input type="radio" name="tabs" id="itab-jsonld" />
           <label for="itab-jsonld" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using JSON-LD Notation" >
@@ -243,7 +244,7 @@
           </div>
         </li>
 
-        <li id="tab-turtle">
+        <li id="tab-turtle" class="hidden">
           <input type="radio" name="tabs" id="itab-turtle" />
           <label for="itab-turtle" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using RDF-Turtle Notation" >
@@ -271,7 +272,7 @@
           </div>
         </li>
 
-        <li id="tab-rdfa">
+        <li id="tab-rdfa" class="hidden">
           <input type="radio" name="tabs" id="itab-rdfa" />
           <label for="itab-rdfa" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using RDFa Notation" >
@@ -287,7 +288,7 @@
           </div>
         </li>
 
-        <li id="tab-rdf">
+        <li id="tab-rdf" class="hidden">
           <input type="radio" name="tabs" id="itab-rdf" />
           <label for="itab-rdf" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using RDF/XML Notation" >
@@ -315,13 +316,13 @@
           </div>
         </li>
 
-        <li id="tab-posh">
-          <input type="radio" name="tabs" id="itab-posh" />
-          <label for="itab-posh" role="tab" aria-selected="false" tabindex="0"
+        <li id="tab-posh" >
+          <input type="radio" name="tabs" id="itab-posh" checked />
+          <label for="itab-posh" role="tab" aria-selected="true" tabindex="0"
                  title="Metadata encoded using Plain Old Semantic HTML Notation" >
             POSH
           </label>
-          <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="false">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
@@ -331,7 +332,7 @@
           </div>
         </li>
 
-        <li id="tab-json">
+        <li id="tab-json" class="hidden">
           <input type="radio" name="tabs" id="itab-json" />
           <label for="itab-json" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using JSON Notation" >
@@ -347,7 +348,7 @@
           </div>
         </li>
 
-        <li id="tab-jsonl">
+        <li id="tab-jsonl" class="hidden">
           <input type="radio" name="tabs" id="itab-jsonl" />
           <label for="itab-jsonl" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using JSONL Notation" >
@@ -363,7 +364,7 @@
           </div>
         </li>
 
-        <li id="tab-csv">
+        <li id="tab-csv" class="hidden">
           <input type="radio" name="tabs" id="itab-csv" />
           <label for="itab-csv" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using CSV Notation" >
@@ -379,7 +380,7 @@
           </div>
         </li>
 
-        <li id="tab-rss">
+        <li id="tab-rss" class="hidden">
           <input type="radio" name="tabs" id="itab-rss" />
           <label for="itab-rss" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using RSS Notation" >
@@ -407,7 +408,7 @@
           </div>
         </li>
 
-        <li id="tab-atom">
+        <li id="tab-atom" class="hidden">
           <input type="radio" name="tabs" id="itab-atom" />
           <label for="itab-atom" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using Atom Notation" >
@@ -435,7 +436,7 @@
           </div>
         </li>
 
-        <li id="tab-markdown">
+        <li id="tab-markdown" class="hidden">
           <input type="radio" name="tabs" id="itab-markdown" />
           <label for="itab-markdown" role="tab" aria-selected="false" tabindex="0"
                  title="Metadata encoded using Markdown Notation" >
