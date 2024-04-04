@@ -19,7 +19,9 @@
  */
   
 
-  HTML_Gen = function(_docURI, bnode_types, uimode) {
+class HTML_Gen {
+  constructor(_docURI, bnode_types, uimode) 
+  {
     this.ns = new Namespace();
     this.uimode = "";
     this.SubjName = "Subject";
@@ -46,12 +48,10 @@
       this.PredName = "Attribute";
       this.ObjName  = "Value";
     }
-  };
+  }
 
-  HTML_Gen.prototype = {
-
-    load: function (n_data, start_id, _base) 
-    {
+  load(n_data, start_id, _base) 
+  {
       var expanded = null;
       var id_list = {};
    
@@ -84,7 +84,8 @@
           }
 
           if (isBNode) {
-            $.each(n_data[i].props, (key, val) => {
+            for (const [key, val] of Object.entries(n_data[i].props)) 
+            {
               if (key === this.ns.RDF_TYPE && val.length > 0) {
                 var type_name = this.create_iri_for_type(val[0]);
                 var id = this.bnode_types[type_name];
@@ -97,7 +98,7 @@
                 this.bnodes[subj] = this.create_iri_for_type(val[0], id);
                 this.bnode_types[type_name] = id;
               }
-            });
+            }
           }
         }
 
@@ -123,8 +124,8 @@
               n_data[i].s = this.docURI + "#nodeID" + subj.substring(9);
           }
 
-          $.each(n_data[i].props, (key, val) => {
-
+          for (const [key, val] of Object.entries(n_data[i].props)) 
+          {
               for(var j=0; j < val.length; j++) {
                 var obj = val[j];
                 if (obj.iri) {
@@ -144,9 +145,8 @@
                   }
                 }
               }
-          });
+          }
           //end replace bNode with IRI
-        
         }
 
 
@@ -197,22 +197,23 @@
            expanded = tbl_start + str + tbl_end;
       }
       return expanded;
-    },
+  }
 
 
-    format_props : function(props, id_list, only_rdf_type)
-    {
+  format_props(props, id_list, only_rdf_type)
+  {
       if (props=== undefined) 
         return "";
         
       var str = "";
-      var self = this;
-      $.each(props, function(key, val){
-        if ((only_rdf_type && key!==self.ns.RDF_TYPE)
-            || (!only_rdf_type && key===self.ns.RDF_TYPE))
-          return;
 
-        var key_str = self.iri2html(key, true);
+      for (const [key, val] of Object.entries(props)) 
+      {
+        if ((only_rdf_type && key!==this.ns.RDF_TYPE)
+            || (!only_rdf_type && key===this.ns.RDF_TYPE))
+          continue;
+
+        var key_str = this.iri2html(null, key, true);
 
         for(var i=0; i<val.length; i++) {
           var obj = val[i];
@@ -220,7 +221,7 @@
             var iri = obj.iri;
             var entity_id = id_list[iri];
             //nodeID://
-            if (entity_id!==undefined && (self.is_BNode(iri) || self.is_VBNode(iri))) {
+            if (entity_id!==undefined && (this.is_BNode(iri) || this.is_VBNode(iri))) {
               str += `<tr class='data_row'>
                          <td> ${key_str} </td>
                          <td class='major'>
@@ -229,8 +230,8 @@
                       </tr>`;
             }
             else {
-              var sval = self.iri2html(obj.iri, null, null, true);
-              var td_class = obj.typeid!==undefined || key===self.ns.RDF_TYPE ?" class='typeid'":"";
+              var sval = this.iri2html(key, obj.iri, null, null, true);
+              var td_class = obj.typeid!==undefined || key===this.ns.RDF_TYPE ?" class='typeid'":"";
               str += `<tr class='data_row'>
                         <td ${td_class}> ${key_str} </td>
                         <td ${td_class} > ${sval} </td>
@@ -241,17 +242,17 @@
             var v = obj.value;
             var sval;
             if (obj.type) {
-              var pref = self.ns.has_known_ns(obj.type);
+              var pref = this.ns.has_known_ns(obj.type);
               if (pref)
-                sval = self.check_link(v)+"("+self.pref_link(obj.type,pref)+")";
+                sval = this.check_link(key, v)+"("+this.pref_link(obj.type,pref)+")";
               else
-                sval = self.check_link(v)+"("+self.check_link(obj.type)+")";
+                sval = this.check_link(key, v)+"("+this.check_link(null, obj.type)+")";
             }
             else if (obj.lang){
-              sval = '"'+self.check_link(v)+'"@'+obj.lang;
+              sval = '"'+this.check_link(key, v)+'"@'+obj.lang;
             } 
             else {
-              sval = self.check_link(v);
+              sval = this.check_link(key, v);
             }
             str += `<tr class='data_row'>
                       <td> ${key_str} </td>
@@ -259,12 +260,12 @@
                     </tr>`;
           }
         } 
-      });
+      }
       return str;
-    },
+  }
 
-    create_iri_for_type: function(obj, id)
-    {
+  create_iri_for_type(obj, id)
+  {
       var sid = (id && id > 0) ? '_'+id : '';
       if (obj.iri && !this.is_VBNode(obj.iri) && !this.is_BNode(obj.iri)) {
         var value = obj.iri;
@@ -300,11 +301,11 @@
         }
       } else 
         return null;
-    },
+  }
 
 
-    format_id : function (value, id_list) 
-    {
+  format_id(value, id_list) 
+  {
        var entity_id = id_list[value];
        {
          // for scroll between entities on page
@@ -319,16 +320,16 @@
              anc = '<a name="'+uri.substr(hashPos+1)+'"/>';           
            }
          }
-         var sval = this.iri2html(uri, null, 'ent', true);
+         var sval = this.iri2html(null, uri, null, 'ent', true);
          return `<tr class='major data_row'>
                    <td> ${anc} ${this.SubjName} </td>
                    <td> ${sval} </td>
                  </tr>`;
        }
-    },
+  }
 
-    iri2html : function (uri, is_key, myid, is_iri)
-    {
+  iri2html(key, uri, is_key, myid, is_iri)
+  {
       var v = this.check_subst(uri, myid);
 
       if (v.rc==true) {
@@ -337,22 +338,27 @@
       else { 
         var pref = this.ns.has_known_ns(uri);
         var sid = myid ? ` ${myid} ` : '';
-        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(uri, is_key, sid, is_iri);
+        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(key, uri, is_key, sid, is_iri);
       }
-    },
+  }
     
-    check_link : function (val, is_key, sid, is_iri) 
-    {
+  check_link(prop, val, is_key, sid, is_iri) 
+  {
       var s_val = String(val);
 
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
         s_val = (new URL(s_val)).href;
+
         if ( s_val.match(/\.(jpg|png|gif|svg|webp)$/) ) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
         if ( s_val.match(/\.(jpg|png|gif|svg|webp)[?#].*/) ) {
+          var width = (is_key!==undefined && is_key)?200:300;
+          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
+        }
+        if (prop && (prop ==='http://schema.org/image' || prop ==='https://schema.org/image')) {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
         } 
@@ -372,11 +378,11 @@
         return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       }
       return this.pre(s_val);
-    },
+  }
 
 
-    pref_link : function (val, pref, sid) 
-    {
+  pref_link(val, pref, sid) 
+  {
       var s_val = String(val);
 
       if ( s_val.match(/^http(s)?:\/\//) ) 
@@ -390,31 +396,33 @@
         return `<a ${sid} href="${s_val}" title="${s_val}"> ${this.decodeURI(s_val)} </a>`;
       else
         return `<a ${sid} href="${s_val}" title="${s_val}"> ${pref.ns}:${this.decodeURI(data)}</a>`;
-    },
+  }
 
-    pre : function (text) 
-    {
+  pre(text) 
+  {
       return sanitize_str(text);
-    },
+  }
 
-    is_BNode : function (str) 
-    {
+  is_BNode(str) 
+  {
         return str.startsWith("_:");
-    },
+  }
 
-    is_VBNode : function (str) 
-    {
+  is_VBNode(str) 
+  {
         return (str.startsWith("nodeID://") || str.startsWith("nodeid://"));
-    },
+  }
 
-    check_URI : function(uri) {
+  check_URI(uri) 
+  {
       if (this.docURI[this.docURI.length-1]==="#")
         return uri.startsWith(this.docURI);
       else
         return uri.startsWith(this.docURI+'#');
-    },
+  }
 
-    check_subst : function(uri, myid) {
+  check_subst(uri, myid) 
+  {
       if (uri.startsWith(this.docURI)) {
         var s = uri.substr(this.docURI.length);
         if (s[0]==="#") {
@@ -433,14 +441,15 @@
         else
           return {rc:false};
       }
-    },
+  }
 
-    decodeURI : function(val) {
+  decodeURI(val) 
+  {
       try {
         return decodeURI(val);
       } catch (ex) {
         return val; 
       }
-    },
-
   }
+
+}

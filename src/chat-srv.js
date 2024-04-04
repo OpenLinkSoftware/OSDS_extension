@@ -154,6 +154,7 @@ class ChatService {
     function handle_resp(resp)
     {
       if (resp && resp.ping === 1 && resp.chat_id === self.prompt_id) {
+
         // GPT window opened
         if (resp.winId && resp.tabId) {
           self.activateChatWin({windowId:resp.winId, id:resp.tabId}, ask);
@@ -192,7 +193,7 @@ class ChatService {
     this.askChatGPT({text:info.selectionText, url:info.pageUrl}, tab, 'selection');
   }
 
-  askChatGPT_page_content(info, tab) 
+  async askChatGPT_page_content(info, tab) 
   {
     const self = this;
     let page_text = "";

@@ -27,19 +27,29 @@ class Social {
     const base = loc.href
     const items = DOM.qSelAll('article[data-testid="tweet"]');
     for (var el of items) {
-      let i_content = el.querySelector('div[data-testid="tweetText"]')?.textContent
+      let i_content = el.querySelector('div[data-testid="tweetText"]')?.innerText
       let i_id = el.querySelector('a:has(time)')
       let i_id_href = (i_id? i_id.href : '');
       const lst = el.querySelectorAll('a[role="link"] div[dir="ltr"]')
-      let i_author = lst.length > 0 ? lst[0].textContent : '';
+      const i_author = lst.length > 0 ? lst[0].textContent : '';
+      const i_timestamp = i_id?.querySelector('time')?.getAttribute('datetime')
+
       if (i_content) {
         const lst_a = el.querySelectorAll('a');
         for (var anc of lst_a) {
-          if (anc.textContent.startsWith('https://') || anc.textContent.startsWith('http://'))
-            i_content = i_content.replaceAll(anc.textContent,`[${anc.textContent}](${anc.href} "Link")`)
+          if (anc.innerText.startsWith('https://') || anc.innerText.startsWith('http://'))
+            i_content = i_content.replaceAll(anc.innerText,`[${anc.innerText}](${anc.href} "Link")`)
         }
       }
-      page_content.push(`### ${i_id_href}\n### ${i_author}\n\n${i_content}`);
+      if (i_id_href)
+        page_content.push(`### ${i_id_href}`);
+      if (i_author)
+        page_content.push(`### ${i_author}`);
+      if (i_timestamp)
+        page_content.push(`### Timestamp - ${i_timestamp}`)
+      if (i_content)
+        page_content.push(`\n${i_content}`);
+
       // add video links
       let lst_v = el.querySelectorAll('video');
       for (var v of lst_v) {
@@ -52,22 +62,20 @@ class Social {
         else if (i_source)
           i_v_href = i_source.src;
           
-        //const i_v_type = i_source ? i_source.type : null;
         if (i_v_href && i_v_href.startsWith('blob:http'))
-          i_v_href = i_id_href
-          //i_v_href = i_v_href.substring(5)
+          i_v_href = i_id_href //use tweet ref
 
-        if (i_poster && i_v_href )
-          page_content.push(`[![Video](${i_poster})](${i_v_href} "Video")`)
-
+        if (i_poster)
+          page_content.push(`![Image](${i_poster})`)
+        if (i_v_href )
+          page_content.push(`![Video](${i_v_href})`)
       }
+
       // add image links
       lst_v = el.querySelectorAll('div[data-testid="tweetPhoto"] img');
       for (var v of lst_v) {
-        let i_v_href = v.src ? v.src : null;
-
-        if (i_v_href )
-          page_content.push(`![Image](${i_v_href})`)
+        if (v.src)
+          page_content.push(`![Image](${v.src})`)
       }
 
       page_content.push('\n');
@@ -85,6 +93,69 @@ class Social {
     let page_content = []; 
     const base = loc.href
 
+    // Scaffold
+    const sf = DOM.qSel('main div[data-scaffold-immersive-reader] article');
+    if (sf) {
+       const thdr = sf.querySelector('section.series-reader-header')
+       if (thdr) {
+         const thdr_img_href = thdr.querySelector('img')?.src
+         const thdr_href = thdr.querySelector('a')?.href
+         const thdr_text = thdr.innerText
+
+         if (thdr_href)
+           page_content.push(`### ${thdr_href}`)
+       
+         page_content.push(`### Team: ${thdr_text}`)
+
+         if (thdr_img_href)
+           page_content.push(`![Image](${thdr_img_href})`)
+
+         page_content.push('')
+       }
+         
+       const hdr = sf.querySelector('header')
+       if (hdr) {
+         const hdr_text = hdr.innerText
+         const hdr_img_href = hdr.querySelector('img')?.src
+
+         page_content.push(`### ${hdr_text}`)
+
+         if (hdr_img_href)
+           page_content.push(`![Image](${hdr_img_href})`)
+
+         page_content.push('')
+       }
+
+       const auth = sf.querySelector('div.reader-author-info__container > div > div > div')
+       if (auth) {
+         const auth_img_href = auth.querySelector('a > img')?.src
+         const auth_name = auth.querySelector('a > h2')
+         const auth_href = auth_name?.parentNode?.href
+         const auth_title = auth_name?.parentNode?.parentNode?.children[1]
+
+         if (auth_name)
+           page_content.push(`### Author - ${auth_name.innerText}  ${auth_href?auth_href:''}`);
+         if (auth_title)
+           page_content.push(`### ${auth_title}`);
+         if (auth_img_href)
+           page_content.push(`![Image](${auth_img_href})`)
+
+         page_content.push('')
+       }
+
+       const post = sf.querySelector('div[data-scaffold-immersive-reader-content]')
+       const post_content = post?.innerText
+       if (post_content)
+          page_content.push(post_content)
+
+       const img_lst = post?.querySelectorAll('img')
+       for(const v of img_lst) {
+          page_content.push(`![Image](${v.src})`)
+       }
+       
+       page_content.push('\n\n')
+    }
+
     // Logout state
     let items = DOM.qSelAll('article:is(.main-feed-activity-card, .feed-reshare-content)');
     for (var el of items) 
@@ -100,7 +171,7 @@ class Social {
                           +' [data-tracking-control-name="public_post_main-feed-card_reshare_feed-actor-name"])')
       const i_auth_href = i_auth_link ? i_auth_link.href : ''
 
-      const i_author = i_auth_link.textContent;
+      const i_author = i_auth_link.innerText;
 
       page_content.push(`### ${i_id_href}\n### Author - ${i_author}  ${i_auth_href} \n\n${i_content}`);
 
@@ -127,14 +198,14 @@ class Social {
         const i_v = it.querySelector('video');
         let i_v_href = i_v ? i_v.src.replaceAll('&amp;','&') : '';
         if (i_v)
-          page_content.push(`[![Video]](${i_v_href} "Video")`)
+          page_content.push(`![Video](${i_v_href})`)
       }
 
       const i_lst_ve = el.querySelectorAll('iframe.w-main-feed-card-media');
       for(var it of i_lst_ve) {
         const i_v_href = it.src ? it.src : it.getAttribute("data-delayed-url");
         //if (i_v_href)
-        page_content.push(`[![Video]](${i_v_href} "Video")`)
+        page_content.push(`![Video](${i_v_href})`)
       }
 
       // comments
@@ -185,8 +256,10 @@ class Social {
         if (i_poster_url && i_poster_url.startsWith('url('))
           i_poster_url = i_poster_url.substring(5, i_poster_url.length-2);
 
-        if (i_poster_url && i_v_href)
-          page_content.push(`[![Video](${i_poster_url})](${i_v_href} "Video")`)
+        if (i_poster_url)
+          page_content.push(`![Image](${i_poster_url})`)
+        if (i_v_href)
+          page_content.push(`![Video](${i_v_href})`)
       }
 
       i_v = el.querySelector('div.update-components-linkedin-video')
@@ -199,8 +272,10 @@ class Social {
           if (i_v_href && i_v_href.startsWith('blob:'))
             i_v_href = i_v_href.substring(5);
 
-          if (i_poster_url && i_v_href)
-            page_content.push(`[![Video](${i_poster_url})](${i_v_href} "Video")`)
+          if (i_poster_url)
+            page_content.push(`![Image](${i_poster_url})`)
+          if (i_v_href)
+            page_content.push(`![Video](${i_v_href})`)
         }
       }
 
@@ -236,7 +311,7 @@ class Social {
       page_content.push('\n');
     }
 
-
+    // == Comments
     const comments = DOM.qSelAll('article.comments-comment-item')
     for (var el of comments) {
       let i_cont_1 = el.querySelector('div.comments-comment-item-content-body')
@@ -244,9 +319,9 @@ class Social {
       let i_content = '';
 
       if (i_cont_1)
-        i_content = i_cont_1.textContent
+        i_content = i_cont_1.innerText
       else if (i_cont_2)
-        i_content = i_cont_2.textContent
+        i_content = i_cont_2.innerText
 
       const i_auth_link = el.querySelector('a.comments-post-meta__actor-link')
       const i_auth_href = i_auth_link ? i_auth_link.href : ''
@@ -804,6 +879,14 @@ class Social {
     }
   }
 
+
+  fix_innerText(n)
+  {
+    if (n)
+      return this.fix_label(n.innerText);
+    else
+      return '';
+  }
 
   fix_textContent(n)
   {
