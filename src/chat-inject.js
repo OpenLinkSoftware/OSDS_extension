@@ -18,7 +18,6 @@
  *
  */
 
-
 (function () {
 
   let g_chat_id = null;

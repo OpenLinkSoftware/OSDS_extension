@@ -966,10 +966,12 @@
                       el.style.display = 'none';
                 }
                 else if (request.cmd === "page_content") {
+                    const mmax = 16*1024*1024;
                     const scanner = new Social();
                     const rc = scanner.scan(location);
+                    if (rc.text.length > mmax)
+                      rc.text = rc.text.substring(0, mmax);
                     sendResponse({page_content:rc.text, dom:rc.dom, frames:window.frames.length});
-                    //console.log(page_content);
                     return true;
                 }
             });

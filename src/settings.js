@@ -321,13 +321,13 @@ class Settings {
           val = "0";
           break;
       case "ext.osds.handle_xml":
-          val = "1";
+          val = "0";
           break;
       case "ext.osds.handle_csv":
           val = "1";
           break;
       case "ext.osds.handle_json":
-          val = "1";
+          val = "0";
           break;
       case "ext.osds.handle_all":
           val = "1";

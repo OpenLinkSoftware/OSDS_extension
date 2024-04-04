@@ -394,6 +394,12 @@ class Social {
       return null;
   }
 
+  msave(s, id)
+  {
+    let blob = new Blob([s], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, 'my_log.txt'+id);
+  }
+
 
   scan(loc)
   {
@@ -419,18 +425,31 @@ class Social {
     page_content = this.cleanText(page_content);
 
     try {
+      let ancs = {}
+      for(const v of document.querySelectorAll('a')) 
+        if (v.href)
+          ancs[v.textContent] = v.href
 
       let links = [];
-      for(const v of document.querySelectorAll('a')) 
+      for(const text of Object.keys(ancs))
       { 
-        if (v.textContent) { 
-            const name = this.cleanText(v.textContent);
-            if (page_content.indexOf(v.textContent)!==-1)
-              page_content = page_content.replaceAll(v.textContent, `[${v.textContent}](${v.href})`);
-            else if (name && page_content.indexOf(name)!==-1)
-              page_content = page_content.replaceAll(name, `[${name}](${v.href})`);
-            else if (name && v.href)
-              links.push({name, href:v.href});
+        if (text) { 
+            const name = this.cleanText(text);
+            const text_href = ancs[text];
+
+            if (name.length < 3 || text.length < 3) {
+              links.push({name, href:text_href});
+              continue;
+            }
+
+            if (page_content.indexOf(text)!==-1) {
+              page_content = page_content.replaceAll(text, `[${name}](${text_href})`);
+            }
+            else if (name && page_content.indexOf(name)!==-1) {
+              page_content = page_content.replaceAll(name, `[${name}](${text_href})`);
+            }
+            else if (name && text_href)
+              links.push({name, href:text_href});
         }
       }
       let page_add = [];
