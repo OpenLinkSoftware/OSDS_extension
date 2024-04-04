@@ -171,7 +171,15 @@ class Settings {
     "url": "https://gemini.google.com/",
     "location.startsWith": "https://gemini.google.com/app",
     "prompt.selector": "chat-app main rich-textarea  div.textarea[contenteditable=true]"
+  },
+
+  "mistral": {
+    "name":"Mistral Chat",
+    "url": "https://chat.mistral.ai/chat/",
+    "location.startsWith": "https://chat.mistral.ai/chat",
+    "prompt.selector": "form textarea"
   }
+  
 }
 `;     
 

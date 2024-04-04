@@ -28,24 +28,7 @@
   let g_prompt_id = null;
   let g_prompt_set = {};
 
-  const dropDown_openai = `<div class="flex items-center gap-2 ml-auto">
-           <span>Data format:</span>
-           <SELECT id="code_type" style="color:black" class="text-sm">
-                 <OPTION id="none" selected></OPTION>
-                 <OPTION id="turtle">RDF-Turtle</OPTION>
-                 <OPTION id="jsonld">JSON-LD</OPTION>
-                 <OPTION id="json">JSON</OPTION>
-                 <OPTION id="csv">CSV</OPTION>
-                 <OPTION id="rdfxml">RDF/XML</OPTION>
-                 <OPTION id="markdown">Markdown</OPTION>
-                 <OPTION id="rss">RSS</OPTION>
-                 <OPTION id="atom">Atom</OPTION>
-           </SELECT>
-           </div>`;
-
-  const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
-  const dropDown_ms = `<div>
-           <span>Data format:</span>
+  const dd_base = `<span>Data format:</span>
            <SELECT id="code_type" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
@@ -56,13 +39,41 @@
                  <OPTION id="markdown">Markdown</OPTION>
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
-           </SELECT>
-           </div>`;
+           </SELECT>`;
+  const dd_base_rev = `<span>Data format:</span>
+           <SELECT style="all:revert;" id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+
+  const dropDown_openai = `<div class="flex items-center gap-2 ml-auto" style="height=24px;"> ${dd_base} </div>`;
+
+  const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
+  const dropDown_ms = `<div> ${dd_base} </div>`;
+
+  const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-right:70px; height=24px;" class="text-text-500">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_gemini = `<div style="display:flex; flex-direction:row; height=24px;">
+           ${dd_base} </div>`;
+  const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
+           ${dropDown_gemini} </div>`;
+
+//  const dropDown_def = `<div style="display:flex; flex-direction:row; margin-right:70px">
+//           ${dd_base} </div>`;
+
 
 
   function scan_code_openai()
   {
-    const lst = document.querySelectorAll('pre');
+    const lst = document.querySelectorAll('div#__next main pre');
     for(const v of lst) 
     {
       let i=0;
@@ -75,6 +86,46 @@
       const dd_el = title.querySelector('#code_type');
       if (!dd_el && btn_copy.parentNode === title) {
         title.insertBefore(DOM.htmlToElements(dropDown_openai)[0], btn_copy);
+      }
+    }
+  }
+
+
+  function scan_code_claude()
+  {
+    const lst = document.querySelectorAll('div.contents pre div.code-block');
+    for(const v of lst) 
+    {
+      const hdr = v.querySelector('div.code-block__header')
+      const dd_el = hdr.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = hdr.querySelector('button')
+      if (btn_copy)
+      	hdr.insertBefore(DOM.htmlToElements(dropDown_claude)[0], btn_copy);
+    }
+  }
+
+
+  function scan_code_gemini()
+  {
+    const lst = document.querySelectorAll('model-response message-content code-block');
+    for(const v of lst) 
+    {
+      const dd_el = v.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const block = v.querySelector('div.code-block')
+      const hdr = block.querySelector('div.header')
+      if (hdr) {
+        hdr.append(DOM.htmlToElements(dropDown_gemini)[0]);
+      } 
+      else {
+        const internal = block.querySelector('div.code-block-internal-container')
+        if (internal)
+          internal.insertBefore(DOM.htmlToElements(dropDown_gemini1)[0], internal.children[0]);
       }
     }
   }
@@ -121,6 +172,10 @@
           scan_code_openai();
         else if (g_chat_id === 'ch_copilot')
           scan_code_ms_copilot()
+        else if (g_chat_id === 'ch_claude') 
+          scan_code_claude();
+        else if (g_chat_id === 'ch_gemini') 
+          scan_code_gemini();
       }
     }, 500));
 
@@ -128,12 +183,13 @@
 
   function handle_chat_code()
   {
-    // fix code blocks
+    let use_mutation_observer = false;
     try {
       
       if (g_chat_id === 'ch_openai') {
         scan_code_openai();
         g_top = document.querySelector('div#__next');
+        use_mutation_observer = true;
       }
       else if (g_chat_id === 'ch_copilot') {
         scan_code_ms_copilot();
@@ -142,8 +198,17 @@
           setInterval(scan_code_ms_copilot, 10*1000);
         } catch(e){} 
       }
+      else if (g_chat_id === 'ch_claude') {
+        scan_code_claude();
+        g_top = document.querySelector('body');
+      }
+      else if (g_chat_id === 'ch_gemini') {
+        scan_code_gemini();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_gemini, 10*1000);
+      }
 
-      if (g_top) {
+      if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
       }
     } catch(e) {
@@ -188,8 +253,18 @@
   {
     if (location.host==='chat.openai.com')
       return 'ch_openai';
-    else if (location.host==='copilot.microsoft.com')
+    else if (location.href.startsWith('https://copilot.microsoft.com/'))
       return 'ch_copilot';
+    else if (location.href.startsWith('https://claude.ai/chat'))
+      return 'ch_claude';
+    else if (location.href.startsWith('https://gemini.google.com/'))
+      return 'ch_gemini';
+    else if (location.href.startsWith('https://labs.perplexity.ai/'))
+      return 'ch_perplexity';
+    else if (location.href.startsWith('https://huggingface.co/chat'))
+      return 'ch_huggingface';
+    else if (location.href.startsWith('https://chat.mistral.ai/chat/'))
+      return 'ch_mistral';
     else
      return null;
   }
@@ -223,7 +298,8 @@
   window.onload = async () => {
     g_chat_id = getChatID();
 
-    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot')
+    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot' 
+       || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini')
       handle_chat_code();
 
     await init_prompt_inject();

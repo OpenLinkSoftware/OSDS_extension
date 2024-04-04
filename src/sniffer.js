@@ -36,527 +36,12 @@
     		rss:null, atom:null};
     var data_found = false;
 
-    var ttl_nano_pattern = /(^\s*## (Nanotation|Turtle|RDF-Turtle) +Start ##[\s\n\r]*)((.|\n|\r)*?)(^\s*## (Nanotation|Turtle|RDF-Turtle) +(End|Stop) ##)(.*)/gmi;
-    var jsonld_nano_pattern = /(^\s*## JSON-LD +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON-LD +(End|Stop) ##))(.*)/gmi;
-    var json_nano_pattern = /(^\s*## JSON +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSON +(End|Stop) ##))(.*)/gmi;
-    var jsonl_nano_pattern = /(^\s*## JSONL +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## JSONL +(End|Stop) ##))(.*)/gmi;
-    var csv_nano_pattern = /(^\s*## CSV +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## CSV +(End|Stop) ##))(.*)/gmi;
-    var rdf_nano_pattern = /(^\s*## RDF(\/|-)XML +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RDF(\/|-)XML +(End|Stop) ##))(.*)/gmi;
-    var md_nano_pattern = /(^\s*## Markdown +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Markdown +(End|Stop) ##))(.*)/gmi;
-    var rss_nano_pattern = /(^\s*## RSS +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## RSS +(End|Stop) ##))(.*)/gmi;
-    var atom_nano_pattern = /(^\s*## Atom +Start ##[\s\n\r]*)((.|\n|\r)*?)((^\s*## Atom +(End|Stop) ##))(.*)/gmi;
-
-
-    function getSelectionString(el, win) {
-        win = win || window;
-        var doc = win.document, sel, range, prevRange, selString;
-
-        if (win.getSelection && doc.createRange) {
-            sel = win.getSelection();
-            if (sel.rangeCount) {
-                prevRange = sel.getRangeAt(0);
-            }
-            range = doc.createRange();
-            range.selectNodeContents(el);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            selString = sel.toString();
-            sel.removeAllRanges();
-            prevRange && sel.addRange(prevRange);
-        }
-        else if (doc.body.createTextRange) {
-            range = doc.body.createTextRange();
-            range.moveToElementText(el);
-            range.select();
-        }
-        return selString;
-    }
-
-
-    function fix_Nano_data(str) {
-        str = str.replace(/\xe2\x80\x9c/g, '"')       //replace smart quotes with sensible ones (opening)
-            .replace(/\xe2\x80\x9d/g, '"')       //replace smart quotes with sensible ones (closing)
-            .replace(/\xc3\xa2\xc2\x80\xc2\x9c/g, '"')  //smart->sensible quote replacement, wider encoding
-            .replace(/\xc3\xa2\xc2\x80\xc2\x9d/g, '"')  //smart->sensible quote replacement, wider encoding
-
-            .replace(/\u00a0/g, " ")   //&nbsp
-            .replace(/\u009d/g, " ")   //&nbsp
-            .replace(/\u0080/g, " ")   //&nbsp
-
-            .replace(/\u202F/g, " ")   // NARROW NO-BREAK SPACE
-            .replace(/\u2009/g, " ")   // thin space
-            .replace(/\u2007/g, " ")   // FIGURE SPACE
-
-            .replace(/\u200B/g, "")   //ZERO WIDTH SPACE
-            .replace(/\u200D/g, "")   // WORD-JOINER
-            .replace(/\u200C/g, "")   // ZERO WIDTH NON-JOINER
-            .replace(/\uFEFF/g, "")   // zero width no-break space Unicode code point
-
-            .replace(/\u201A/g, "'")
-            .replace(/\u2018/g, "'")
-            .replace(/\u2019/g, "'")
-            .replace(/\u2039/g, "'")
-            .replace(/\u203A/g, "'")
-            .replace(/\u201C/g, '"')
-            .replace(/\u201D/g, '"')
-            .replace(/\u201E/g, '"')
-            .replace(/\u00BB/g, '"')
-            .replace(/\u00AB/g, '"');
-//       .replace(/\u8629/g,' ')
-//       .replace(/\u2026/g,'...');
-
-        return str;
-    }
-
-
-    function sniff_frames(doc_Texts, frames, id) {
-        try {
-            for (var i = 0; i < frames.length; i++) {
-                var win = frames[i];
-                var txt = null;
-                var frame_id = id + "_" + i;
-
-                try {
-                    txt = win.document.body.innerText;
-                } catch (e) {
-                    txt = window._osds_frames[frame_id];
-                }
-
-                if (txt === undefined || (txt !== null && txt.length == 0))
-                    txt = getSelectionString(win.document.body, win);
-
-                if (txt && txt.length > 0)
-                    doc_Texts.push(txt);
-
-                if (frames[i].frames.length > 0)
-                    sniff_frames(doc_Texts, frames[i].frames, frame_id);
-            }
-        } catch (e) {
-        }
-    }
-
-
-    function scan_frames() {
-        try {
-            if (window.frames.length > 0) {
-                window._osds_frames = {};
-                scan_iframes(window.frames, "f");
-            }
-        } catch (e) {
-        }
-    }
-
-    function scan_iframes(frames, id) {
-        for (var i = 0; i < frames.length; i++) {
-            var win = frames[i];
-            var frame_id = id + "_" + i;
-
-            win.postMessage('osds:{"sniff":true, "frame":"' + frame_id + '"}', "*");
-
-            if (win.frames.length > 0)
-                scan_iframes(win.frames, frame_id);
-        }
-    }
-
-
-    function sniff_nanotation() {
-        var eoln = /(?:\r\n)|(?:\n)|(?:\r)/g;
-        var comment = /^ *#/;
-        var doc_Texts = [];
-        var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[], rss:[], atom:[]};
-
-        function isWhitespace(c) 
-        {
-            var cc = c.charCodeAt(0);
-            if (( cc >= 0x0009 && cc <= 0x000D ) ||
-                ( cc == 0x0020 ) ||
-                ( cc == 0x0085 ) ||
-                ( cc == 0x00A0 )) {
-                return true;
-            }
-            return false;
-        }
-
-        function dropComments(str) 
-        {
-          if (str.length > 0) 
-          {
-             //drop commetns
-             var s_split = str.split(eoln);
-             var v = [];
-             s_split.forEach(function (item, i, arr) {
-               if (!comment.test(item))
-                  v.push(item);
-             });
-
-             return v.join('\n');
-          } 
-          else
-            return str;
-        }
-
-
-        var txt = document.body.innerText;
-
-        if (txt === undefined || (txt !== null && txt.length == 0))
-            txt = getSelectionString(document.body, window);
-
-        if (txt && txt.length > 0)
-            doc_Texts.push(txt);
-
-        if (window.frames.length > 0)
-            sniff_frames(doc_Texts, window.frames, "f");
-
-        for (var i = 0; i < doc_Texts.length; i++) {
-
-            txt = doc_Texts[i];
-            if (txt) {
-
-                var s_doc = fix_Nano_data(txt);
-
-                //try get Turtle Nano
-                while (true) {
-                    var ndata = ttl_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[3];
-                    if (str.length > 0)
-                      ret.ttl.push(dropComments(str));
-                }
-
-                //try get Turtle Nano in CurlyBraces { ... }
-                var j = 0;
-                var inCurly = 0;
-                var str = "";
-                while (j < s_doc.length) {
-                    var ch = s_doc[j++];
-                    if (ch == '"') {
-                        var rc = s_doc.indexOf(ch, j);
-                        if (rc == -1)
-                            break;
-                        if (inCurly > 0)
-                            str += s_doc.substring(j - 1, rc + 1);
-                        j = rc + 1;
-                    }
-                    else if (ch == '{') {
-                        inCurly++;
-                    }
-                    else if (ch == '}') {
-                        inCurly--;
-                        ret.ttl_curly.push(dropComments(str));
-                        str = "";
-                    }
-                    else if (inCurly > 0) {
-                        str += ch;
-                    }
-                }
-
-                //try get JSON-LD Nano
-                while (true) {
-                    var ndata = jsonld_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        var add = false;
-                        for (var c = 0; c < str.length; c++) {
-                            add = str[c] === "{" ? true : false;
-                            if (add)
-                                break;
-                            if (!isWhitespace(str[c]))
-                                break;
-                        }
-
-                        if (add)
-                            ret.jsonld.push(str);
-                    }
-                }
-
-                //try get RDF/XML Nano
-                while (true) {
-                    var ndata = rdf_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[3];
-                    if (str.length > 0) {
-                        ret.rdf.push(str);
-                    }
-                }
-
-                //try get JSON Nano
-                while (true) {
-                    var ndata = json_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        var add = false;
-                        for (var c = 0; c < str.length; c++) {
-                            add = (str[c] === "{" || str[c] === "[") ? true : false;
-                            if (add)
-                                break;
-                            if (!isWhitespace(str[c]))
-                                break;
-                        }
-
-                        if (add)
-                            ret.json.push(str);
-                    }
-                }
-
-
-                //try get JSONL Nano
-                while (true) {
-                    var ndata = jsonl_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        var add = false;
-                        for (var c = 0; c < str.length; c++) {
-                            add = (str[c] === "{" || str[c] === "[") ? true : false;
-                            if (add)
-                                break;
-                            if (!isWhitespace(str[c]))
-                                break;
-                        }
-
-                        if (add)
-                            ret.jsonl.push(str);
-                    }
-                }
-
-
-                //try get CSV Nano
-                while (true) {
-                    var ndata = csv_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        ret.csv.push(str);
-                    }
-                }
-
-                //try get MD Nano
-                while (true) {
-                    var ndata = md_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        ret.md.push(str);
-                    }
-                }
-
-                //try get Rss Nano
-                while (true) {
-                    var ndata = rss_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        ret.rss.push(str);
-                    }
-                }
-
-                //try get Atom Nano
-                while (true) {
-                    var ndata = atom_nano_pattern.exec(s_doc);
-                    if (ndata == null)
-                        break;
-
-                    var str = ndata[2];
-                    if (str.length > 0) {
-                        ret.atom.push(str);
-                    }
-                }
-
-            }
-        }
-
-
-        if (ret.ttl.length > 0 || ret.ttl_curly.length > 0 || ret.jsonld.length > 0 
-            || ret.rdf.length > 0|| ret.json.length > 0 || ret.jsonl.length > 0 
-            || ret.csv.length > 0 || ret.md.length > 0|| ret.rss.length > 0 || ret.atom.length > 0)
-            return {exists: true, data: ret}; 
-        else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], 
-                    csv:[], md:[], rss:[], atom:[]}};
-    }
-
-
-    function sniff_nanotation_openai(nano) 
-    {
-        var el_pre, el_code;
-      
-        var lst = DOM.qSelAll('div#__next main pre select#code_type option:checked');
-        for (var el of lst) {
-          var el_type = el.id;
-
-          if (el_type === 'turtle') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.ttl.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'jsonld') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.jsonld.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'json') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.json.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'csv') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.csv.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'rdfxml') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.rdf.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'markdown') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.md.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'rss') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.rss.push(el_code.textContent);
-              }
-            }
-          }
-          else if (el_type === 'atom') {
-            el_pre = el.closest('pre');
-            if (el_pre) {
-              el_code = el_pre.querySelector('code');
-              if (el_code) {
-                nano.exists = true;
-                nano.data.atom.push(el_code.textContent);
-              }
-            }
-          }
-
-        }
-
-      return nano;
-    }
-
- 
-    function sniff_nanotation_ms_copilot(nano) 
-    {
-      _top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot;
-
-      if (!_top)
-        return nano;
-
-      for(const c0 of _top.querySelectorAll('cib-chat-turn[mode="conversation"]'))
-      {
-        for(const c1 of c0.shadowRoot.querySelectorAll('cib-message-group[mode=conversation]')) 
-        {
-          for(const c2 of c1.shadowRoot.querySelectorAll('cib-message[type="text"]'))
-          {
-            for(const v of c2.shadowRoot.querySelectorAll('cib-shared cib-code-block'))
-            {
-              const text = v.getAttribute('clipboard-data');
-              //const dd_el = e_hdr.querySelector('#code_type');
-              const dd_el = v.shadowRoot.querySelector('select#code_type option:checked');
-              if (text && dd_el) {
-                let lst = null;
-                switch(dd_el.id) {
-                  case 'turtle': 
-                    nano.exists = true;
-                    nano.data.ttl.push(text);
-                    break;
-                  case 'jsonld':
-                    nano.exists = true;
-                    nano.data.jsonld.push(text);
-                    break;
-                  case 'json':
-                    nano.exists = true;
-                    nano.data.json.push(text);
-                    break;
-                  case 'csv':
-                    nano.exists = true;
-                    nano.data.csv.push(text);
-                    break;
-                  case 'rdfxml':
-                    nano.exists = true;
-                    nano.data.rdf.push(text);
-                    break;
-                  case 'markdown':
-                    nano.exists = true;
-                    nano.data.md.push(text);
-                    break;
-                  case 'rss':
-                    nano.exists = true;
-                    nano.data.rss.push(text);
-                    break;
-                  case 'atom':
-                    nano.exists = true;
-                    nano.data.atom.push(text);
-                    break;
-                }
-              }
-            }
-          }
-        }
-      }
-      return nano;
-    }
-
 
     function is_data_exist() 
     {
         try {
 
-            scan_frames();
+            Nano.scan_frames();
             data_found = false;
 
             var items = jQuery('[itemscope]').not(jQuery('[itemscope] [itemscope]'));
@@ -622,17 +107,27 @@
 
 
             if (!data_found) {
-                var ret = sniff_nanotation();
+                var ret = Nano.sniff_nanotation_DOM();
                 data_found = ret.exists;
                 nano = ret.data;
 
                 if (!data_found && location.href.startsWith('https://chat.openai.com')) {
-                  ret = sniff_nanotation_openai(ret);
+                  ret = Nano.sniff_nanotation_chat(ret, 'openai');
                   data_found = ret.exists;
                   nano = ret.data;
                 }
                 else if (!data_found && location.href.startsWith('https://copilot.microsoft.com')) {
-                  ret = sniff_nanotation_ms_copilot(ret);
+                  ret = Nano.sniff_nanotation_ms_copilot(ret);
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
+                else if (!data_found && location.href.startsWith('https://gemini.google.com/app')) {
+                  ret = Nano.sniff_nanotation_chat(ret, 'gemini');
+                  data_found = ret.exists;
+                  nano = ret.data;
+                }
+                else if (!data_found && location.href.startsWith('https://claude.ai/chat/')) {
+                  ret = Nano.sniff_nanotation_chat(ret, 'claude');
                   data_found = ret.exists;
                   nano = ret.data;
                 }
@@ -725,16 +220,24 @@
                 }
             }
 
-            var ret = sniff_nanotation();
+            var ret = Nano.sniff_nanotation_DOM();
             nano = ret.data;
             
             if (location.href.startsWith('https://chat.openai.com')) {
-               ret = sniff_nanotation_openai(ret);
+               ret = Nano.sniff_nanotation_chat(ret, 'openai');
                nano = ret.data;
             }
             else if (location.href.startsWith('https://copilot.microsoft.com')) {
-               ret = sniff_nanotation_ms_copilot(ret);
+               ret = Nano.sniff_nanotation_ms_copilot(ret);
                nano = ret.data;
+            }
+            else if (location.href.startsWith('https://gemini.google.com/app')) {
+              ret = Nano.sniff_nanotation_chat(ret, 'gemini');
+              nano = ret.data;
+            }
+            else if (location.href.startsWith('https://claude.ai/chat/')) {
+              ret = Nano.sniff_nanotation_chat(ret, 'claude');
+              nano = ret.data;
             }
 
         } catch (e) {
@@ -1223,7 +726,7 @@
 
 
             function request_doc_data() {
-                scan_frames();
+                Nano.scan_frames();
 
                 sniff_Data();
                 send_doc_data();
