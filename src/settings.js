@@ -184,7 +184,7 @@ class Settings {
     "name":"Mistral Chat",
     "url": "https://chat.mistral.ai/chat/",
     "location.startsWith": "https://chat.mistral.ai/chat",
-    "prompt.selector": "form textarea"
+    "prompt.selector": "textarea"
   }
   
 }
