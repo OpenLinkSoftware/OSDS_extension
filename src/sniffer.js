@@ -101,6 +101,9 @@
                 }
             }
 
+            nano = {ttl:[], ttl_curly:[], jsonld:[], rdf:[], json:[], jsonl:[], csv:[], md:[], 
+    		rss:[], atom:[]};
+
             if (location.href.startsWith('https://chat.openai.com')) {
                nano = Nano.sniff_nanotation_chat(nano, 'openai');
             }
