@@ -94,8 +94,8 @@ class OidcWeb {
 
   login(idp_url, autologin) 
   {
-     const width = 650;
-     const height = 400;
+     const width = 700;
+     const height = 500;
      const alogin = autologin ? '&autologin=1' : ''
 
 
@@ -127,8 +127,8 @@ class OidcWeb {
 
   login2(idp_url) 
   {
-     const width = 650;
-     const height = 400;
+     const width = 700;
+     const height = 500;
 
 //     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
      const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
@@ -223,7 +223,9 @@ class OidcWeb {
           options['tokens'] = JSON.parse(oidc_saved_tokens);
 
         const ret = await this.authClient.handleIncomingRedirect(options);
-
+        if (ret && ret.tokens) {
+          await this.localStore_save('oidc_saved_tokens', JSON.stringify(ret.tokens));
+        }
         this.authClient = solidClientAuthentication.default;
         const session = this.authClient.getDefaultSession();
         if (session.info && session.info.isLoggedIn && session.info.webId)
@@ -294,7 +296,7 @@ class OidcWeb {
         });
       })
     } else {
-      return Browser.api.storage.local.get(key)[key];
+      return (await Browser.api.storage.local.get(key))[key];
     }
   }
 

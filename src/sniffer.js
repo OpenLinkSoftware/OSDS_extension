@@ -102,36 +102,28 @@
             }
 
             if (location.href.startsWith('https://chat.openai.com')) {
-               ret = Nano.sniff_nanotation_chat(ret, 'openai');
-               nano = ret.data;
+               nano = Nano.sniff_nanotation_chat(nano, 'openai');
             }
             else if (location.href.startsWith('https://copilot.microsoft.com')) {
-               ret = Nano.sniff_nanotation_ms_copilot(ret);
-               nano = ret.data;
+               nano = Nano.sniff_nanotation_ms_copilot(nano);
             }
             else if (location.href.startsWith('https://gemini.google.com/app')) {
-              ret = Nano.sniff_nanotation_chat(ret, 'gemini');
-              nano = ret.data;
+              nano = Nano.sniff_nanotation_chat(nano, 'gemini');
             }
             else if (location.href.startsWith('https://claude.ai/chat/')) {
-              ret = Nano.sniff_nanotation_chat(ret, 'claude');
-              nano = ret.data;
+              nano = Nano.sniff_nanotation_chat(nano, 'claude');
             }
             else if (location.href.startsWith('https://www.perplexity.ai')) {
-              ret = Nano.sniff_nanotation_chat(ret, 'perplexity');
-              nano = ret.data;
+              nano = Nano.sniff_nanotation_chat(nano, 'perplexity');
             }
             else if (location.href.startsWith('https://labs.perplexity.ai')) {
-              ret = Nano.sniff_nanotation_chat(ret, 'perplexity_labs');
-              nano = ret.data;
+              nano = Nano.sniff_nanotation_chat(nano, 'perplexity_labs');
             }
             else if (location.href.startsWith('https://chat.mistral.ai/chat')) {
-              ret = Nano.sniff_nanotation_chat(ret, 'mistral');
-              nano = ret.data;
+              nano = Nano.sniff_nanotation_chat(nano, 'mistral');
             }
             else if (location.href.startsWith('https://huggingface.co/chat/')) {
-              ret = Nano.sniff_nanotation_chat(ret, 'huggingface');
-              nano = ret.data;
+              nano = Nano.sniff_nanotation_chat(nano, 'huggingface');
             }
 
         } catch (e) {

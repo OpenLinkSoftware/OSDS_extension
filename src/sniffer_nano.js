@@ -338,36 +338,28 @@ Nano.sniff_nanotation_ms_copilot = (nano) =>
                 let lst = null;
                 switch(dd_el.id) {
                   case 'turtle': 
-                    nano.exists = true;
-                    nano.data.ttl.push(text);
+                    nano.ttl.push(text);
                     break;
                   case 'jsonld':
-                    nano.exists = true;
-                    nano.data.jsonld.push(text);
+                    nano.jsonld.push(text);
                     break;
                   case 'json':
-                    nano.exists = true;
-                    nano.data.json.push(text);
+                    nano.json.push(text);
                     break;
                   case 'csv':
-                    nano.exists = true;
-                    nano.data.csv.push(text);
+                    nano.csv.push(text);
                     break;
                   case 'rdfxml':
-                    nano.exists = true;
-                    nano.data.rdf.push(text);
+                    nano.rdf.push(text);
                     break;
                   case 'markdown':
-                    nano.exists = true;
-                    nano.data.md.push(text);
+                    nano.md.push(text);
                     break;
                   case 'rss':
-                    nano.exists = true;
-                    nano.data.rss.push(text);
+                    nano.rss.push(text);
                     break;
                   case 'atom':
-                    nano.exists = true;
-                    nano.data.atom.push(text);
+                    nano.atom.push(text);
                     break;
                 }
               }
@@ -438,36 +430,28 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
           if (el_code) {
             switch(el_type) {
               case 'turtle':
-                nano.exists = true;
-                nano.data.ttl.push(el_code.textContent);
+                nano.ttl.push(el_code.textContent);
                 break;
               case 'jsonld':
-                nano.exists = true;
-                nano.data.jsonld.push(el_code.textContent);
+                nano.jsonld.push(el_code.textContent);
                 break;
               case 'json':
-                nano.exists = true;
-                nano.data.json.push(el_code.textContent);
+                nano.json.push(el_code.textContent);
                 break;
               case 'csv':
-                nano.exists = true;
-                nano.data.csv.push(el_code.textContent);
+                nano.csv.push(el_code.textContent);
                 break;
               case 'rdfxml':
-                nano.exists = true;
-                nano.data.rdf.push(el_code.textContent);
+                nano.rdf.push(el_code.textContent);
                 break;
               case 'markdown':
-                nano.exists = true;
-                nano.data.md.push(el_code.textContent);
+                nano.md.push(el_code.textContent);
                 break;
               case 'rss':
-                nano.exists = true;
-                nano.data.rss.push(el_code.textContent);
+                nano.rss.push(el_code.textContent);
                 break;
               case 'atom':
-                nano.exists = true;
-                nano.data.atom.push(el_code.textContent);
+                nano.atom.push(el_code.textContent);
                 break;
             }
           }

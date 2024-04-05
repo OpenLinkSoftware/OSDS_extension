@@ -40,7 +40,8 @@ async function recvMessage(event)
   await save_data('oidc_code', authData);
 
   const auth = JSON.parse(atob(authData));
-  const options = {url:auth.url, restorePreviousSession: true};
+//??  const options = {url:auth.url, restorePreviousSession: true};
+  const options = {url:auth.url};
   const ret = await solidClientAuthentication.default.handleIncomingRedirect(options);
   if (ret && ret.tokens) {
     await save_data('oidc_saved_tokens', JSON.stringify(ret.tokens));
