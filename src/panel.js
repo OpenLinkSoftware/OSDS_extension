@@ -930,10 +930,6 @@ async function Download_exec()
     $('#save-action').prop('disabled', true);
   }
 
-  if (Browser.isEdgeWebExt)
-    $('#save-action').prop('disabled', true);
-
-
   var filename = null;
   var fmt = "jsonld";
 

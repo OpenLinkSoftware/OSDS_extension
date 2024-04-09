@@ -504,7 +504,7 @@ function add_prompt_row(item, selected)
   var del = '<button id="prompt_del" class="prompt_del" width="20" height="20"><img src="lib/css/img/trash.png"/></button>';
 
   if (item.myid === 'jsonld' || item.myid === 'turtle') {
-//    readonly = 'readonly="readonly"';
+    readonly = 'readonly="readonly"';
     del = '';
   }
 
@@ -563,10 +563,10 @@ function click_prompt(ev)
       const myid = row.attributes.myid.value;
 
       prompt_query.value = row.attributes.text.value;
-//      if (myid === 'jsonld' || myid === 'turtle')
-//        prompt_query.setAttribute('readonly', true);
-//      else
-//        prompt_query.removeAttribute('readonly');
+      if (myid === 'jsonld' || myid === 'turtle')
+        prompt_query.setAttribute('readonly', true);
+      else
+        prompt_query.removeAttribute('readonly');
     }
   }
   else {
