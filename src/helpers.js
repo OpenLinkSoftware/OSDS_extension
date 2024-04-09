@@ -470,7 +470,7 @@ class SuperLinks {
             var val = JSON.parse(data);
             var links = val.results.bindings;
             if (links.length == 0) {
-//              alert("Empty SuperLinks resultSet was received from server");
+              // Empty SuperLinks resultSet was received from server
               return {statusCode: rc.status, data: null};
             }
           } catch(e) {
@@ -614,7 +614,7 @@ class SuperLinks {
     }
 
     if (!rc || (rc && !rc.data)) {
-//??--      alert("Empty SuperLinks resultSet was received from server");
+      // Empty SuperLinks resultSet was received from server
       if (rc.statusCode == 401 || rc.statusCode == 403) {
         this.logout();
         this.check_login(true);

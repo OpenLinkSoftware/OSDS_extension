@@ -286,7 +286,7 @@
                <div class="osds_revert_css osds_popup_btns">
                  <input id="osds_popup_retry" value=" Try&nbsp;Again " type="button" class="osds_revert_css osds_popup_btn">
                  <input id="osds_popup_cancel" value=" Cancel " type="button" class="osds_revert_css osds_popup_btn">
-               <div>
+               </div>
              </div>
            </div>`
         );

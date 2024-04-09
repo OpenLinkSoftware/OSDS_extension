@@ -42,16 +42,6 @@ var gOidc = new OidcWeb();
 
 DOM.ready(() =>
 {
-  if (Browser.is_safari) {
-      var el = DOM.qSel("body.sniffer");
-      el.classList.add("sniffer_sf");
-      el.classList.remove("sniffer");
-
-      el = DOM.qSel("div.content");
-      el.classList.add("content_sf");
-      el.classList.remove("content");
-  }
-
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
   gOidc.restoreConn().then(rc => {
@@ -126,6 +116,18 @@ DOM.ready(() =>
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
 
+  DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+     DOM.qSel('.osds_popup').style.display = 'none';
+     Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+     return false;
+  };
+  DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+     DOM.qSel('.osds_popup').style.display = 'none';
+     Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+     return false;
+  };
+
+
   Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       if (request.cmd == "super_links_msg_show") {
           if (request.message) {
@@ -140,6 +142,17 @@ DOM.ready(() =>
           if (request.msg1) {
             showSnackbar(request.msg1, request.msg2);
           }
+      }
+      else if (request.cmd === "osds_msg_show") {
+          if (request.message) {
+            DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
+            DOM.qSel('.osds_popup').style.display = 'block';
+          }
+      }
+      else if (request.cmd === "osds_msg_hide") {
+          var el = DOM.qSel('.osds_popup');
+          if (el)
+            el.style.display = 'none';
       }
   });
 

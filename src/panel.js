@@ -209,11 +209,7 @@ async function loadPopup()
     Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
        function(resp) {
             if (resp && resp.opened) {
-               if (Browser.is_safari && resp.url) {
-                 location.href = resp.url;
-               }
-               else
-                 close();
+               close();
             }
             else {
                showPopup(tabId);

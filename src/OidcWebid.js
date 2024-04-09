@@ -120,9 +120,6 @@ class OidcWeb {
      else {
        this.popupCenter({url: _url, title:"Login", w:width, h:height});
      }
-
-     if (Browser.is_safari)
-       window.close();
   }
 
   login2(idp_url) 
@@ -151,9 +148,6 @@ class OidcWeb {
      } else {
        this.popupCenter({url, title:"Login", w:width, h:height});
      }
-
-     if (Browser.is_safari)
-       window.close();
   }
 
   popupCenter({url, title, w, h})

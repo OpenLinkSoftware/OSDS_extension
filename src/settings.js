@@ -111,10 +111,18 @@ class Settings {
   +'{selected_text}\n'
   +'"""\n\n';
 
+//    this.def_prompt_query_jsonld = ''
+//  +'Disregard any previous instructions. \n'
+//  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note, I don\'t want any HTML tags included in the output. \n'
+//  +'"""\n'
+//  +'{selected_text}\n'
+//  +'"""\n\n';
 
     this.def_prompt_query_jsonld = ''
   +'Disregard any previous instructions. \n'
-  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note, I don\'t want any HTML tags included in the output. \n'
+  +'Using a code-block, generate a comprehensive representation of this information in JSON-LD using valid schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note the following. \n'
+  +'1. Use @vocab properly. \n'
+  +'2. I don\'t want any HTML tags included in the output. \n'
   +'"""\n'
   +'{selected_text}\n'
   +'"""\n\n';

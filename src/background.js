@@ -498,12 +498,10 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     if (request.cmd === "openIfHandled")
     {
       var tabId = request.tabId;
-      var tab = pages[request.tabId];
+      var tab = pages[tabId];
       if (tab) {
         var url = page_panel_url+"?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext;
-        if (!Browser.is_safari) {
-          Browser.openTab(url);
-        }
+        Browser.openTab(url);
         sendResponse({'cmd': request.cmd, 'opened':true, url});
         return true;
       } 
