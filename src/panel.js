@@ -188,6 +188,9 @@ async function loadPopup()
   $("#query_place").hide();
   $("#login-dlg").hide();
 
+  hideDataTabs();
+  selectTab('posh');
+
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
   var curTabs = await getCurTab();

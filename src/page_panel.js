@@ -44,6 +44,8 @@ DOM.ready(() =>
 {
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
+  selectTab('micro');
+
   gOidc.restoreConn().then(rc => {
     Download_exec_update_state();
   })
