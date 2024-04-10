@@ -136,6 +136,19 @@ function showPopup(tabId)
           gData.links.atom.loadData({}, 0);
   }
 
+  DOM.iSel('sparql_add_osds_hash').onclick = async (e) => {
+    const settings = new Settings();
+    const graph = await settings.getValue('upload_sparql_graph');
+    if (!graph) {
+      const v = DOM.iSel('sparql_add_osds_hash').checked
+      var _url = new URL(doc_URL);
+      if (v)
+        _url.hash = 'osds';
+      DOM.iSel('save-sparql-graph').value = _url.toString();
+    }
+  }
+
+
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
       lineNumbers: true
@@ -906,7 +919,7 @@ async function Download_exec()
   await settings._syncAll();
 
   var _url = new URL(doc_URL);
-  _url.hash = "osds";
+//??  _url.hash = "osds";
 
   const graph = await settings.getValue('upload_sparql_graph');
   DOM.iSel('save-sparql-graph').value = graph ? graph : _url.toString();

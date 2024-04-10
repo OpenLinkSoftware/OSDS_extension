@@ -27,6 +27,7 @@ class ChatService {
     this.timeout = 3000
     this.prompt_id = null;
     this.prompt_url = null;
+    this.prompt_in_new_window = false;
     this.setting = new Settings();
   }
 
@@ -37,12 +38,8 @@ class ChatService {
       const s = await this.setting.getValue('ext.osds.def_prompt_inject')
       const chat_list = JSON.parse(s);
       const v = chat_list[this.prompt_id];
-      if (v['url'])
-      {
-        this.prompt_url = v['url']
-      } else {
-        this.prompt_url = null;
-      }
+      this.prompt_url = v['url'] ? v['url'] : null;
+      this.prompt_in_new_window = v['prompt_in_new_window'] ? v['prompt_in_new_window'] : false;
     } catch(e) {
       this.prompt_id = null;
     }
@@ -156,7 +153,7 @@ class ChatService {
       if (resp && resp.ping === 1 && resp.chat_id === self.prompt_id) {
 
         // GPT window opened
-        if (resp.winId && resp.tabId) {
+        if (!self.prompt_in_new_window && resp.winId && resp.tabId) {
           self.activateChatWin({windowId:resp.winId, id:resp.tabId}, ask);
         }
         else {

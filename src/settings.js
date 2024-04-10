@@ -129,7 +129,7 @@ class Settings {
 
     this.def_prompt_inject = ''+
 `{ 
-  "openia": {
+  "openai": {
     "name": "OpenAI Chat", 
     "url": "https://chat.openai.com/?model=gpt-4",
     "location.startsWith": "https://chat.openai.com",
@@ -142,7 +142,8 @@ class Settings {
     "name": "OPAL Chat (net-qa)", 
     "url": "https://netid-qa.openlinksw.com:8443/chat",
     "location.startsWith": "https://netid-qa.openlinksw.com:8443/chat",
-    "prompt.selector": "textarea.message_input"
+    "prompt.selector": "textarea.message_input",
+    "prompt_in_new_window": true
   },
 
   "ms_copilot":{
