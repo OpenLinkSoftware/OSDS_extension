@@ -127,6 +127,7 @@ class Settings {
   +'{selected_text}\n'
   +'"""\n\n';
 
+    this.def_prompt_srv = 'openai';
     this.def_prompt_inject = ''+
 `{ 
   "openai": {
@@ -292,7 +293,7 @@ class Settings {
           val = "What do you know about {words} ?";
           break;
       case "ext.osds.chat-srv":
-          val = "ch_openai";
+          val = this.def_prompt_srv;
           break;
       case "osds.chatgpt_model":
           val = "gpt-3.5-turbo";
@@ -304,7 +305,7 @@ class Settings {
           val = "1";
           break;
       case "osds.chatgpt_max_tokens":
-          val = "4096";
+          val = "32000";
           break;
 
       case "upload_sparql_endpoint":
@@ -394,7 +395,7 @@ class Settings {
           val = 'gpt35';
           break;
       case "ext.osds.gpt-tokens":
-          val = '4096';
+          val = '32000';
           break;
       case "ext.osds.prompt-lst":
           val = [];

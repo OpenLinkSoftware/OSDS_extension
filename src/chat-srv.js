@@ -38,9 +38,14 @@ class ChatService {
       const s = await this.setting.getValue('ext.osds.def_prompt_inject')
       const chat_list = JSON.parse(s);
       const v = chat_list[this.prompt_id];
+      if (!v) {
+        alert('Error: Update "LLM Chat Server" in setting')
+        return;
+      }
       this.prompt_url = v['url'] ? v['url'] : null;
       this.prompt_in_new_window = v['prompt_in_new_window'] ? v['prompt_in_new_window'] : false;
     } catch(e) {
+      console.log(e);
       this.prompt_id = null;
     }
   }
@@ -88,7 +93,7 @@ class ChatService {
     const model = await this.setting.getValue('ext.osds.gpt-model');
     var max_len = parseInt(await this.setting.getValue('ext.osds.gpt-tokens'), 10);
     if (max_len == 0)
-      max_len = 4096;
+      max_len = 32000;
   
     ///gpt-35 max_tokens = 4096
     // gpt4 max-tokens = 8192  // 32768
@@ -107,7 +112,7 @@ class ChatService {
 
     prompt_query = prompt_query.replace("{page_url}", ask.url);
     var text = ask.text; 
-
+/**
     if (prompt_query.length + text.length > max_len) 
     {
       const pattern_len = gpt3encoder.countTokens(prompt_query);
@@ -119,6 +124,9 @@ class ChatService {
         text = gpt3encoder.decode(txt_encoded);
       }
     }
+***/
+    if (prompt_query.length + text.length > max_len) 
+      text = text.substring(0, Math.max(1, max_len - prompt_query.length));
 
     prompt_query = prompt_query.replace("{selected_text}", text);
 
