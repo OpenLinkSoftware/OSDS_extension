@@ -93,6 +93,7 @@
   const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textMainDark" style="height:24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
   const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
   const dropDown_huggingface = `<div class="flex items-center gap-2 ml-auto" style="height:20px;margin-left:300px;top:5px;position:absolute;"> ${dd_base_hugging} </div>`;
+  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;margin-left:300px;position:absolute;top:3px;align-items:center;"> ${dd_base_pplabs} </div>`;
 
 
 
@@ -255,6 +256,22 @@
     }
   }
 
+  function scan_code_you()
+  {
+    const lst = document.querySelectorAll('div#ydc-content-area  div[data-testid="youchat-code"] pre');
+    for(const v of lst) 
+    {
+      const block = v.parentNode;
+
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn = block.querySelector('div > div[data-eventactioncontent]')?.parentNode;
+      if (btn && block)
+        block.insertBefore(DOM.htmlToElements(dropDown_you)[0], btn);
+    }
+  }
 
 
   var gMutationObserver = new MutationObserver(debounce((v) => {
@@ -271,6 +288,8 @@
           scan_code_perplexity_labs();
         else if (g_chat_id === 'ch_perplexity') 
           scan_code_perplexity();
+        else if (g_chat_id === 'ch_you') 
+          scan_code_you();
       }
     }, 500));
 
@@ -322,6 +341,11 @@
         scan_code_huggingface();
         g_top = document.querySelector('body');
         setInterval(scan_code_huggingface, 3*1000);
+      }
+      else if (g_chat_id === 'ch_you') {
+        scan_code_you();
+        g_top = document.querySelector('div#ydc-content-area');
+        use_mutation_observer = true;
       }
       
 
@@ -384,6 +408,8 @@
       return 'ch_huggingface';
     else if (location.href.startsWith('https://chat.mistral.ai/chat'))
       return 'ch_mistral';
+    else if (location.href.startsWith('https://you.com/'))
+      return 'ch_you';
     else
      return null;
   }
@@ -420,7 +446,8 @@
     if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot' 
        || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini'
        || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
-       || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface')
+       || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface'
+       || g_chat_id === 'ch_you')
       handle_chat_code();
 
     await init_prompt_inject();

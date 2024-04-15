@@ -39,7 +39,7 @@ class ChatService {
       const chat_list = JSON.parse(s);
       const v = chat_list[this.prompt_id];
       if (!v) {
-        alert('Error: Update "LLM Chat Server" in setting')
+        alert('Error:\n Could not found "'+this.prompt_id+'" item in new LLM Server\'s settings!\n Update value for "Chat Service" in settings')
         return;
       }
       this.prompt_url = v['url'] ? v['url'] : null;

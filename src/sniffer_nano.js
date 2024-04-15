@@ -403,7 +403,10 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        sel: { parentNode:3 },
                        code:'pre code'
                      }, 
-           
+             you: { top:'div#ydc-content-area select#code_type option:checked', 
+                       sel: { parentNode:3 },
+                       code:'pre code'
+                     }, 
            }
 
       const fmt = chats[chat_id];

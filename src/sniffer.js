@@ -128,6 +128,9 @@
             else if (location.href.startsWith('https://huggingface.co/chat/')) {
               nano = Nano.sniff_nanotation_chat(nano, 'huggingface');
             }
+            else if (location.href.startsWith('https://you.com')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'you');
+            }
 
         } catch (e) {
             console.log("OSDS:" + e);
