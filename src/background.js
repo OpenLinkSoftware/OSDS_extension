@@ -238,7 +238,7 @@ var g_chat = new ChatService();
 
     var chk_xml = chk_setting["ext.osds.handle_xml"];
     var chk_csv = chk_setting["ext.osds.handle_csv"];
-    var chk_json = chk_setting["ext.osds.handle_csv"];
+    var chk_json = chk_setting["ext.osds.handle_json"];
 
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
