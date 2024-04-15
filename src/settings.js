@@ -139,6 +139,14 @@ class Settings {
     "prompt.css.addClass": "resize"
   },
 
+  "uriburner": {
+    "name": "OpenLink Data Twingler", 
+    "url": "https://linkeddata.uriburner.com/chat",
+    "location.startsWith": "https://linkeddata.uriburner.com/chat",
+    "prompt.selector": "textarea.message_input",
+    "prompt_in_new_window": true
+  },
+
   "opal_qa": {
     "name": "OPAL Chat (net-qa)", 
     "url": "https://netid-qa.openlinksw.com:8443/chat",
