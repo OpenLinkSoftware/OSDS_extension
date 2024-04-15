@@ -203,6 +203,13 @@ class Settings {
     "url": "https://chat.mistral.ai/chat/",
     "location.startsWith": "https://chat.mistral.ai/chat",
     "prompt.selector": "textarea"
+  },
+  
+  "you": {
+    "name":"You Chat",
+    "url": "https://you.com",
+    "location.startsWith": "https://you.com",
+    "prompt.selector": "textarea#search-input-textarea"
   }
   
 }
