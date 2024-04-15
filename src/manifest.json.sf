@@ -56,5 +56,4 @@
 
   "content_security_policy": 
     "script-src 'self' 'unsafe-eval' safari-web-extension://lib; object-src 'self' safari-web-extension://lib; style-src 'self' 'unsafe-inline' safari-web-extension://lib https://solid.openlinksw.com; media-src 'self' 'unsafe-inline' safari-web-extension://lib ;"
-
 }
