@@ -340,7 +340,7 @@ class Settings {
           val = "0";
           break;
       case "ext.osds.handle_all":
-          val = "0";
+          val = "1";
           break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"
