@@ -439,9 +439,6 @@ async function show_Data()
   if (gData.rdf)
     rdf = await update_tab_exec('rdf', 'RDF/XML', gData.rdf, err_tabs);
   
-  if (gData.posh)
-    posh = await update_tab_exec('posh', 'POSH', gData.posh, err_tabs);
-
   if (gData.json)
     json = await update_tab_exec('json', 'JSON', gData.json, err_tabs);
 
@@ -463,6 +460,9 @@ async function show_Data()
     atom = await update_tab_exec('atom', 'Atom', gData.atom, err_tabs);
     DOM.qShow('#atom-save');
   }
+
+  if (gData.posh)
+    posh = await update_tab_exec('posh', 'POSH', gData.posh, err_tabs);
 
   if (!rss && gData.links.rss)
     rss = true;
