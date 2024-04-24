@@ -131,6 +131,9 @@
             else if (location.href.startsWith('https://you.com')) {
               nano = Nano.sniff_nanotation_chat(nano, 'you');
             }
+            else if (location.href.startsWith('https://www.meta.ai')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'meta');
+            }
 
         } catch (e) {
             console.log("OSDS:" + e);

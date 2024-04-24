@@ -94,6 +94,7 @@
   const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
   const dropDown_huggingface = `<div class="flex items-center gap-2 ml-auto" style="height:20px;margin-left:300px;top:5px;position:absolute;"> ${dd_base_hugging} </div>`;
   const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;margin-left:300px;position:absolute;top:3px;align-items:center;"> ${dd_base_pplabs} </div>`;
+  const dropDown_meta = `<div style="height:20px;margin-left:200px;position:absolute;"> ${dd_base_hugging} </div>`;
 
 
 
@@ -273,6 +274,23 @@
     }
   }
 
+  function scan_code_meta()
+  {
+    const lst = document.querySelectorAll('pre');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = block.querySelector('div[role="button"]')?.parentNode.closest('div')
+      if (btn_copy) {
+        btn_copy.parentNode.insertBefore(DOM.htmlToElements(dropDown_meta)[0], btn_copy);
+      }
+    }
+  }
+
 
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
@@ -347,6 +365,11 @@
         g_top = document.querySelector('div#ydc-content-area');
         use_mutation_observer = true;
       }
+      else if (g_chat_id === 'ch_meta') {
+        scan_code_mistral();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_meta, 3*1000);
+      }
       
 
       if (g_top && use_mutation_observer) {
@@ -410,6 +433,8 @@
       return 'ch_mistral';
     else if (location.href.startsWith('https://you.com/'))
       return 'ch_you';
+    else if (location.href.startsWith('https://www.meta.ai'))
+      return 'ch_meta';
     else
      return null;
   }
@@ -447,7 +472,7 @@
        || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini'
        || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
        || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface'
-       || g_chat_id === 'ch_you')
+       || g_chat_id === 'ch_you' || g_chat_id === 'ch_meta')
       handle_chat_code();
 
     await init_prompt_inject();
@@ -465,7 +490,11 @@
       }
     }
   }
-  window.addEventListener('load', win_load);
+
+  if (Browser.is_ff)
+    window.addEventListener('pageshow', win_load);
+  else
+    window.addEventListener('load', win_load);
 
 
   function update_prompt(txt)

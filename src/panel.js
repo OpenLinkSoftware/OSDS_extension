@@ -163,8 +163,10 @@ function showPopup(tabId)
 
   DOM.iSel("chat_btn").onclick = async (e) =>{ 
     const curTabs = await getCurTab();
-    if (curTabs.length > 0)
+    if (curTabs.length > 0) {
       Browser.api.runtime.sendMessage({cmd: 'gpt_page_content', tabId:curTabs[0].id, url:curTabs[0].url});
+      close();
+    }
   }
 
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(gData.tab_index); }

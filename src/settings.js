@@ -163,6 +163,13 @@ class Settings {
                         "cib-text-input","#shadow-root", "textarea#searchbox"]
   },
 
+  "meta":{
+    "name": "Meta AI", 
+    "url": "https://www.meta.ai",
+    "location.startsWith": "https://www.meta.ai",
+    "prompt.selector": "textarea"
+  },
+
   "perplexity_labs": {
     "name": "Perplexity Labs", 
     "url": "https://labs.perplexity.ai/",
