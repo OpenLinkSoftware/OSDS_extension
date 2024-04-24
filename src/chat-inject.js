@@ -120,7 +120,7 @@
 
   function scan_code_claude()
   {
-    const lst = document.querySelectorAll('div.contents pre > div');
+    const lst = document.querySelectorAll('pre > div');
     for(const v of lst) 
     {
       const hdr = v.querySelector('div')

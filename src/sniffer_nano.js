@@ -382,7 +382,7 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        sel: {closest:'div.code-block'}, 
                        code:'code'
                      }, 
-             claude: { top:'div.contents pre div select#code_type option:checked', 
+             claude: { top:'pre > div select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
