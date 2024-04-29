@@ -50,7 +50,9 @@ class SPARQL_Upload {
       } 
       else 
       {
-        if (!this.oidc.isSessionForIdp(this.idp_url)) {
+        const rc = await this.oidc.restoreConn();
+
+        if (!rc || !this.oidc.isSessionForIdp(this.idp_url)) {
             await this.oidc.logout();
         }
         if (!this.oidc.getWebId()) {
@@ -300,7 +302,9 @@ class SuperLinks {
       } 
       else 
       {
-        if (!this.oidc.isSessionForIdp(this.idp_url)) {
+        const rc = await this.oidc.restoreConn();
+
+        if (!rc || !this.oidc.isSessionForIdp(this.idp_url)) {
             await this.oidc.logout();
         }
         if (!this.oidc.getWebId()) {
@@ -397,8 +401,8 @@ class SuperLinks {
       } else {
         this.messages.snackbar_show("Sponge error:"+e.toString(), null); 
       }
-      return {statusCode: e.statusCode, data: null};
       console.log(e);
+      return {statusCode: e.statusCode, data: null};
     }
   
     return {statusCode:0, data:null};
@@ -466,7 +470,7 @@ class SuperLinks {
             var val = JSON.parse(data);
             var links = val.results.bindings;
             if (links.length == 0) {
-//              alert("Empty SuperLinks resultSet was received from server");
+              // Empty SuperLinks resultSet was received from server
               return {statusCode: rc.status, data: null};
             }
           } catch(e) {
@@ -482,16 +486,15 @@ class SuperLinks {
         if (rc.status==401 || rc.status==403) {
           this.logout();
           this.check_login(true); // Browser.openTab(REDIR_URL);
-          return null;
-          return {statusCode: rc.status, data: null};
         } else {
           this.state = 'init';
           this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, "Error:"+rc.status); 
-          return {statusCode: rc.status, data: null};
         }
+        return {statusCode: rc.status, data: null};
       }
   
-    } catch(e) {
+    } 
+    catch(e) {
       this.messages.throbber_hide();
       this.state = 'init';
       if (e.statusCode == 403 || e.statusCode == 401) {
@@ -502,7 +505,8 @@ class SuperLinks {
         this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, e.toString());
       }
       return {statusCode: e.statusCode, data: null};
-    } finally {
+    } 
+    finally {
       this.messages.throbber_hide();
     }
   }
@@ -510,7 +514,7 @@ class SuperLinks {
   apply_super_links(data)
   {
     if (data)
-      Browser.api.tabs.sendMessage(this.tabId, { property: 'super_links_data', data : data });
+      Browser.api.tabs.sendMessage(this.tabId, { cmd: 'super_links_data', data : data });
   }
 
   
@@ -569,7 +573,7 @@ class SuperLinks {
       }
     }
 
-    if (!rc || (rc && !data)) {
+    if (!rc || (rc && !rc.data)) {
       if (rc.statusCode == 401 || rc.statusCode == 403) {
         this.logout();
         this.check_login(true);
@@ -609,8 +613,8 @@ class SuperLinks {
       }
     }
 
-    if (!rc || (rc && !data)) {
-//??--      alert("Empty SuperLinks resultSet was received from server");
+    if (!rc || (rc && !rc.data)) {
+      // Empty SuperLinks resultSet was received from server
       if (rc.statusCode == 401 || rc.statusCode == 403) {
         this.logout();
         this.check_login(true);

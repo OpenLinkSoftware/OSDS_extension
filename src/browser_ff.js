@@ -21,13 +21,12 @@
 var Browser = {
     is_chrome: false,
     is_ff: true,
-    isEdgeWebExt: false,
     is_safari: false,
 
     api: null,
 
     openTab : function(uri, tab_index) {
-      if (Browser.isEdgeWebExt || Browser.is_safari) {
+      if (Browser.is_safari) {
         if (tab_index!==undefined) 
           Browser.api.tabs.create({url:uri, index:tab_index+1 });
         else

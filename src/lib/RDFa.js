@@ -3280,7 +3280,7 @@ return env;
 
 }
 
-
+/**
 
 if (document.data === undefined) {
    var checker = function() {
@@ -3295,3 +3295,4 @@ if (document.data === undefined) {
    }
    checker();
 }
+**/

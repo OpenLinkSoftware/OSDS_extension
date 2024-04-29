@@ -20,20 +20,24 @@ SRC_DIR=$EXT_SRC
 DST_DIR=$EXT_DIRNAME
 
 
-#copy common files                                       
-for I_DIR in background.html background.js chat-inject.js content.css converters.js frame.js datablock.js; do
+#copy common files
+for I_DIR in background.html background.js chat-inject.js chat-srv.js content.css converters.js datablock.js; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in dataview.css handlers.js helpers.js helpers_ui.js html_gen.js oidc-webid-inject.js OidcWebid.js options.html options.js; do
+for I_DIR in dataview.css frame_scan.js frame_text.js handlers.js helpers.js helpers_ui.js html_gen.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in page_panel.html page_panel.js panel.html panel.js settings.js sniffer.js tabs.css; do
+for I_DIR in oidc-webid-inject.js OidcWebid.js options.html options.js page_panel.html page_panel.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in ttl_gen.js utils.js ; do
+for I_DIR in panel.html panel.js settings.js sniffer.js sniffer_nano.js social_sniffer.js super_links.js ; do
+  cp -va $SRC_DIR/$I_DIR $DST_DIR/
+done
+
+for I_DIR in tabs.css ttl_gen.js utils.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 

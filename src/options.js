@@ -22,7 +22,7 @@ var gPref = null;
 var yasqe_slinks = null;
 var yasqe_srv = null;
 var gPromptId = 0;
-
+var g_prompt_view = null;
 
 DOM.ready(() => { init(); })
 
@@ -52,6 +52,10 @@ async function init()
            var s = yasqe_slinks.getValue();
            yasqe_slinks.setValue(s);
 	}
+	else if (ui.newPanel[0].id == "tabs-4") {
+           var s = g_prompt_view.getValue();
+           g_prompt_view.setValue(s);
+	}
     }
   });
 
@@ -64,7 +68,7 @@ async function init()
        createShareLink : null,
 	     persistent: null,
     });
-    yasqe_slinks.setSize("100%", 480);
+    yasqe_slinks.setSize("100%", 280);
 
     yasqe_srv = YASQE.fromTextArea(document.getElementById('sparql-query'), {
 			lineNumbers: true,
@@ -74,8 +78,13 @@ async function init()
 			createShareLink : null,
 			persistent: null,
     });
-
     yasqe_srv.setSize("100%", 420);
+
+    g_prompt_view = CodeMirror.fromTextArea(DOM.qSel('textarea#prompt-injects'), {
+      lineNumbers: true
+    });
+    g_prompt_view.setSize("100%", "250");
+
   } catch(e) {
     console.log(e);
   }
@@ -122,6 +131,9 @@ async function init()
    typeInTextarea('{page_url}', DOM.qSel('#prompt-query'));
   }
 
+  DOM.iSel('prompt-validate').onclick = () => { 
+    validate_prompt_injects(true);
+  }
   
   await enableCtrls();
 
@@ -129,6 +141,49 @@ async function init()
 
 
 }
+
+
+async function validate_prompt_injects(showOk)
+{
+    try {
+      const s = g_prompt_view.getValue();
+      const v = gPref.validate_prompt_injects(s);
+      if (v.rc !== 1)
+        alert(v.err);
+      else {
+        if (showOk) {
+          alert("Descripton is Valid!");
+          const chat = await gPref.getValue("ext.osds.chat-srv")
+          load_chat_list(s, chat);
+        }
+      }
+      return v.rc;
+    } catch(e) { 
+      return 0;
+    }
+}
+
+function load_chat_list(data, sel)
+{
+    try {
+      const chat_list = JSON.parse(data);
+      const chat_keys = Object.keys(chat_list);
+      const dd = DOM.qSel('#chat-srv')
+      let dd_html = [];
+      for(const key of chat_keys) {
+        const v = chat_list[key]
+        if (v["prompt.selector"])
+          dd_html.push(`<option id="${key}" > ${v.name} </option>`);
+      }
+      dd.innerHTML = dd_html.join('\n');
+    } catch(e) { console.log(e)}
+
+    const el = DOM.qSel('#chat-srv #'+sel)
+    if (el)
+      el.selected = true;
+}
+
+
 
 function typeInTextarea(newText, el) {
   const [start, end] = [el.selectionStart, el.selectionEnd];
@@ -393,8 +448,20 @@ async function loadPref()
     DOM.iSel('super-links-retries').value = await gPref.getValue("ext.osds.super_links.retries");
     DOM.iSel('super-links-retries-timeout').value = await gPref.getValue("ext.osds.super_links.retries_timeout");
 
-    var model = await gPref.getValue("ext.osds.gpt-model");
-    DOM.qSel('#gpt-model #'+model).selected=true;
+    var model = await gPref.getValue("osds.chatgpt_model");
+    model = model.replaceAll('.','\\.');
+    DOM.qSel('#chatgpt-model #'+model).selected = true; 
+    DOM.iSel('chatgpt_max_tokens').value = await gPref.getValue("osds.chatgpt_max_tokens");
+    DOM.iSel('chatgpt_temp').value = await gPref.getValue("osds.chatgpt_temp");
+    DOM.iSel('chatgpt_token').value = await gPref.getValue("osds.chatgpt_openai_token");
+    DOM.iSel('chatgpt_prompt').value = await gPref.getValue("osds.chatgpt_prompt");
+
+    // tab ChatGPT
+    const data = await gPref.getValue("ext.osds.def_prompt_inject")
+    var chat = await gPref.getValue("ext.osds.chat-srv")
+
+    load_chat_list(data, chat);
+    g_prompt_view.setValue(data);
 
     var tokens = await gPref.getValue("ext.osds.gpt-tokens");
     DOM.qSel('#gpt-max-tokens').value=tokens;
@@ -434,7 +501,7 @@ function add_prompt_row(item, selected)
   const tbody = DOM.qSel('#prompt-list');
   var r = tbody.insertRow(-1);
   var readonly = '';
-  var del = '<button id="prompt_del" class="prompt_del" width="21" height="21"><img src="lib/css/img/trash.png"/></button>';
+  var del = '<button id="prompt_del" class="prompt_del" width="20" height="20"><img src="lib/css/img/trash.png"/></button>';
 
   if (item.myid === 'jsonld' || item.myid === 'turtle') {
     readonly = 'readonly="readonly"';
@@ -543,7 +610,8 @@ function click_prompt_default(ev)
     lst[0].dispatchEvent(new Event('click'));
   }
 
-  DOM.qSel('#gpt-model #gpt35').selected=true;
+  g_prompt_view.setValue(gPref.def_prompt_inject);
+  validate_prompt_injects();
   DOM.qSel('#gpt-max-tokens').value='4096';
 }
 
@@ -598,6 +666,12 @@ function prompt_to_lst()
 
 async function savePref()
 {
+   const rc = await validate_prompt_injects();
+   if (rc!==1) {
+     alert("Changes weren't saved");
+     return;
+   }
+   
    var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
    await gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
@@ -661,7 +735,18 @@ async function savePref()
    v = DOM.iSel('super-links-retries-timeout').value.trim();
    await gPref.setValue("ext.osds.super_links.retries_timeout", parseInt(v, 10));
 
-   await gPref.setValue("ext.osds.gpt-model", DOM.qSel('#gpt-model option:checked').id);
+   await gPref.setValue("ext.osds.chat-srv", DOM.qSel('#chat-srv option:checked').id);
+   await gPref.setValue("osds.chatgpt_model", DOM.qSel('#chatgpt-model option:checked').id);
+
+   v = DOM.iSel('chatgpt_max_tokens').value.trim();
+   await gPref.setValue("osds.chatgpt_max_tokens", parseInt(v, 10));
+   await gPref.setValue("osds.chatgpt_temp", DOM.iSel('chatgpt_temp').value.trim());
+   await gPref.setValue("osds.chatgpt_openai_token", DOM.iSel('chatgpt_token').value.trim());
+   await gPref.setValue("osds.chatgpt_prompt", DOM.iSel('chatgpt_prompt').value.trim());
+
+
+    // tab ChatGPT
+   gPref.setValue('ext.osds.def_prompt_inject', g_prompt_view.getValue()); //??--  DOM.qSel('textarea#prompt-injects').value);
    await gPref.setValue("ext.osds.gpt-tokens", DOM.iSel('gpt-max-tokens').value);
 
    v = prompt_to_lst();
@@ -670,6 +755,7 @@ async function savePref()
 
 
    Browser.api.runtime.sendMessage({'cmd': 'reloadSettings'});
+   alert("Settings were Saved !");
 }
 
 

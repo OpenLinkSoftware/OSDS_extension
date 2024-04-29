@@ -111,14 +111,116 @@ class Settings {
   +'{selected_text}\n'
   +'"""\n\n';
 
+//    this.def_prompt_query_jsonld = ''
+//  +'Disregard any previous instructions. \n'
+//  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note, I don\'t want any HTML tags included in the output. \n'
+//  +'"""\n'
+//  +'{selected_text}\n'
+//  +'"""\n\n';
 
     this.def_prompt_query_jsonld = ''
   +'Disregard any previous instructions. \n'
-  +'Using a code-block, generate a representation of this information in JSON-LD using schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note, I don\'t want any HTML tags included in the output. \n'
+  +'Using a code-block, generate a comprehensive representation of this information in JSON-LD using valid schema.org terms, setting @base to {page_url} and expanding @context accordingly. Note the following. \n'
+  +'1. Use @vocab properly. \n'
+  +'2. I don\'t want any HTML tags included in the output. \n'
   +'"""\n'
   +'{selected_text}\n'
   +'"""\n\n';
+
+    this.def_prompt_srv = 'openai';
+    this.def_prompt_inject = ''+
+`{ 
+  "openai": {
+    "name": "OpenAI Chat", 
+    "url": "https://chat.openai.com/?model=gpt-4",
+    "location.startsWith": "https://chat.openai.com",
+    "prompt.selector": "#prompt-textarea",
+    "prompt.css.removeClass": "resize-none",
+    "prompt.css.addClass": "resize"
+  },
+
+  "uriburner": {
+    "name": "OpenLink Data Twingler", 
+    "url": "https://linkeddata.uriburner.com/chat",
+    "location.startsWith": "https://linkeddata.uriburner.com/chat",
+    "prompt.selector": "textarea.message_input",
+    "prompt_in_new_window": true
+  },
+
+  "opal_qa": {
+    "name": "OPAL Chat (net-qa)", 
+    "url": "https://netid-qa.openlinksw.com:8443/chat",
+    "location.startsWith": "https://netid-qa.openlinksw.com:8443/chat",
+    "prompt.selector": "textarea.message_input",
+    "prompt_in_new_window": true
+  },
+
+  "ms_copilot":{
+    "name": "MS Copilot", 
+    "url": "https://copilot.microsoft.com",
+    "location.startsWith": "https://copilot.microsoft.com",
+    "prompt.selector": ["cib-serp","#shadow-root", "cib-action-bar#cib-action-bar-main","#shadow-root",
+                        "cib-text-input","#shadow-root", "textarea#searchbox"]
+  },
+
+  "meta":{
+    "name": "Meta AI", 
+    "url": "https://www.meta.ai",
+    "location.startsWith": "https://www.meta.ai",
+    "prompt.selector": "textarea"
+  },
+
+  "perplexity_labs": {
+    "name": "Perplexity Labs", 
+    "url": "https://labs.perplexity.ai/",
+    "location.startsWith": "https://labs.perplexity.ai",
+    "prompt.selector": "main textarea"
+  },
+
+  "perplexity": {
+    "name": "Perplexity", 
+    "url": "https://www.perplexity.ai/",
+    "location.startsWith": "https://www.perplexity.ai",
+    "prompt.selector": "main textarea"
+  },
+
+  "huggingface": {
+    "name": "HuggingChat", 
+    "url": "https://huggingface.co/chat",
+    "location.startsWith": "https://huggingface.co/chat",
+    "prompt.selector": "div#app textarea"
+  },
+
+  "claude": {
+    "name": "Claude Chat", 
+    "url": "https://claude.ai/chat",
+    "location.startsWith": "https://claude.ai/chat",
+    "prompt.selector": "fieldset div.ProseMirror[contenteditable=true][enterkeyhint=enter]"
+  },
+
+  "gemini": {
+    "name":"Google Gemini",
+    "url": "https://gemini.google.com/",
+    "location.startsWith": "https://gemini.google.com/app",
+    "prompt.selector": "chat-app main rich-textarea  div.textarea[contenteditable=true]"
+  },
+
+  "mistral": {
+    "name":"Mistral Chat",
+    "url": "https://chat.mistral.ai/chat/",
+    "location.startsWith": "https://chat.mistral.ai/chat",
+    "prompt.selector": "textarea"
+  },
   
+  "you": {
+    "name":"You Chat",
+    "url": "https://you.com",
+    "location.startsWith": "https://you.com",
+    "prompt.selector": "textarea#search-input-textarea"
+  }
+  
+}
+`;     
 
     this._data = (data!== undefined && data!==null) ? data:null;
   }
@@ -209,6 +311,25 @@ class Settings {
       return val;
 
     switch(id) {
+      case "osds.chatgpt_prompt":
+          val = "What do you know about {words} ?";
+          break;
+      case "ext.osds.chat-srv":
+          val = this.def_prompt_srv;
+          break;
+      case "osds.chatgpt_model":
+          val = "gpt-3.5-turbo";
+          break;
+      case "osds.chatgpt_openai_token":
+          val = "sk-xxxxxx";
+          break;
+      case "osds.chatgpt_temp":
+          val = "1";
+          break;
+      case "osds.chatgpt_max_tokens":
+          val = "32000";
+          break;
+
       case "upload_sparql_endpoint":
           val = "https://linkeddata.uriburner.com/sparql";
           break;
@@ -232,13 +353,13 @@ class Settings {
           val = "0";
           break;
       case "ext.osds.handle_xml":
-          val = "1";
+          val = "0";
           break;
       case "ext.osds.handle_csv":
-          val = "1";
+          val = "0";
           break;
       case "ext.osds.handle_json":
-          val = "1";
+          val = "0";
           break;
       case "ext.osds.handle_all":
           val = "1";
@@ -296,11 +417,13 @@ class Settings {
           val = 'gpt35';
           break;
       case "ext.osds.gpt-tokens":
-          val = '4096';
+          val = '32000';
           break;
       case "ext.osds.prompt-lst":
           val = [];
           break;
+      case "ext.osds.def_prompt_inject":
+          val = this.def_prompt_inject;
     }
     return val;
   }
@@ -551,6 +674,28 @@ class Settings {
        return h_url + docURL;
   }
 
+  validate_prompt_injects(str)
+  { 
+    try {
+      const data = JSON.parse(str);
+      for(const key of Object.keys(data)) 
+      {
+        const el = data[key];
+        if (!el['name'])
+          throw new Error(`item "${key}" must have attribute "name"`)
+        if (!el['url'])
+          throw new Error(`item "${key}" must have attribute "url"`)
+        if (!el["location.startsWith"])
+          throw new Error(`item "${key}" must have attribute "location.startsWith"`)
+        if (!el['prompt.selector'])
+          throw new Error(`item "${key}" must have attribute "prompt.selector"`)
+      }
+      return {rc:1, data};
+    } catch(e) {
+      console.log(e);
+      return {rc:0, err:e.toString()}
+    }
+  }
 
 }
 

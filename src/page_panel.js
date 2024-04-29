@@ -18,8 +18,6 @@
  *
  */
 
-// React when the browser action's icon is clicked.
-
 
 var items;
 var $ = jQuery;
@@ -44,26 +42,34 @@ var gOidc = new OidcWeb();
 
 DOM.ready(() =>
 {
-  if (Browser.is_safari) {
-      var el = DOM.qSel("body.sniffer");
-      el.classList.add("sniffer_sf");
-      el.classList.remove("sniffer");
-
-      el = DOM.qSel("div.content");
-      el.classList.add("content_sf");
-      el.classList.remove("content");
-  }
-
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
+  selectTab('micro');
+
+  gOidc.restoreConn().then(rc => {
+    Download_exec_update_state();
+  })
+
+  async function click_login() {
+     if (gOidc.getWebId()) {
+       await gOidc.logout();
+       Download_exec_update_state();
+     } else {
+       Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
+       gOidc.login();
+     }
+  } 
+
+  DOM.iSel('oidc-login-btn').onclick = (e) => { click_login() }
+  DOM.iSel('oidc-login-btn1').onclick = (e) => { click_login() }
 
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
+  $("#login-dlg").hide();
 
+  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
-
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
-
   DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
 
   DOM.iSel("rest_btn").onclick = (e) => { 
@@ -74,7 +80,6 @@ DOM.ready(() =>
   }
 
   DOM.iSel("download_btn").onclick = (e) => { Download_exec() }
-
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
@@ -112,20 +117,43 @@ DOM.ready(() =>
   DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
 
 
+  DOM.qSel('.osds_popup #osds_popup_retry').onclick = () => {
+     DOM.qSel('.osds_popup').style.display = 'none';
+     Browser.api.runtime.sendMessage({cmd: "osds_popup_retry" });
+     return false;
+  };
+  DOM.qSel('.osds_popup #osds_popup_cancel').onclick = () => {
+     DOM.qSel('.osds_popup').style.display = 'none';
+     Browser.api.runtime.sendMessage({cmd: "osds_popup_cancel" });
+     return false;
+  };
+
+
   Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-      if (request.property == "super_links_msg_show") {
+      if (request.cmd == "super_links_msg_show") {
           if (request.message) {
             DOM.qSel('.super_links_msg #super_links_msg_text').innerHTML = request.message;
             $(".super_links_msg").css("display","flex");
           }
       }
-      else if (request.property == "super_links_msg_hide") {
+      else if (request.cmd == "super_links_msg_hide") {
           $(".super_links_msg").css("display","none");
       }
-      else if (request.property == "super_links_snackbar") {
+      else if (request.cmd == "super_links_snackbar") {
           if (request.msg1) {
             showSnackbar(request.msg1, request.msg2);
           }
+      }
+      else if (request.cmd === "osds_msg_show") {
+          if (request.message) {
+            DOM.qSel('.osds_popup #osds_popup_msg').innerText = request.message;
+            DOM.qSel('.osds_popup').style.display = 'block';
+          }
+      }
+      else if (request.cmd === "osds_msg_hide") {
+          var el = DOM.qSel('.osds_popup');
+          if (el)
+            el.style.display = 'none';
       }
   });
 
@@ -525,8 +553,51 @@ async function Sparql_exec()
 }
 
 
-function Download_exec_update_state() 
+function Login_exec()
 {
+  Download_exec_update_state();
+
+  var dlg = $( "#login-dlg" ).dialog({
+    resizable: true,
+    width:500,
+    height:200,
+    modal: true,
+    buttons: {
+      "OK": function() {
+        $(this).dialog( "destroy" );
+      }
+    }
+  });
+
+  return false;
+}
+
+
+async function Download_exec_update_state(pod) 
+{
+  try {
+    const webid = gOidc.getWebId();
+    const webid_href = DOM.iSel('oidc-webid');
+    const webid1_href = DOM.iSel('oidc-webid1');
+
+    webid1_href.href = webid_href.href = webid ? webid :'';
+    webid1_href.title = webid_href.title = webid ? webid :'';
+    webid1_href.style.display = webid_href.style.display = webid ? 'initial' :'none';
+
+    const oidc_login_btn = DOM.iSel('oidc-login-btn');
+    const oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
+    oidc_login_btn1.innerText = oidc_login_btn.innerText = webid ? 'Logout' : 'Login';
+
+    const login_tab = DOM.iSel('login_btn');
+    if (webid) {
+      login_tab.title = "Logged as "+webid;
+      login_tab.src = "images/uid.png";
+    } else {
+      login_tab.title = "Solid Login";
+      login_tab.src = "images/slogin24.png";
+    }
+  } catch(e) {}  
+
   var cmd = $('#save-action option:selected').attr('id');
   if (cmd==='filesave')
     $('#save-file').show();
@@ -534,12 +605,15 @@ function Download_exec_update_state()
     $('#save-file').hide();
 
   if (cmd==='fileupload') {
+    $('#login-fmt-item').show();
     $('#oidc-upload').show();
   } 
   else if (cmd==='sparqlupload') {
+    $('#login-fmt-item').show();
     $('#oidc-upload').hide();
   }
   else {
+    $('#login-fmt-item').hide();
     $('#oidc-upload').hide();
   }
 
@@ -564,6 +638,9 @@ function Download_exec_update_state()
     $('#save-fmt-item').show();    
     $('#save-sparql-item').hide();    
   }
+
+  if (pod)
+    await gOidc.checkSession();
 
   var oidc_url = document.getElementById('oidc-url');
   oidc_url.value = (gOidc.storage || '') + (filename || '');
@@ -592,7 +669,7 @@ async function Download_exec()
     Download_exec_update_state();
   });
 
-  Download_exec_update_state();
+  await Download_exec_update_state(1);
 
   var isFileSaverSupported = false;
   try {
@@ -603,10 +680,6 @@ async function Download_exec()
     $('#save-action').prop('disabled', true);
   }
 
-  if (Browser.isEdgeWebExt)
-    $('#save-action').prop('disabled', true);
-
-  
   var filename = null;
   var fmt = "jsonld";
 
@@ -686,6 +759,8 @@ async function Download_exec()
 
 async function save_data(action, fname, fmt, callback)
 {
+  Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
+
   if (action==="sparqlupload") 
   {
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
@@ -739,6 +814,12 @@ async function save_data(action, fname, fmt, callback)
     }
     else if (action==="fileupload") 
     {
+      const webId = await gOidc.checkSession();
+      if (!webId) {
+        showInfo("You must be LoggedIn for Upload")
+        return;
+      }
+
      var contentType = "text/plain;charset=utf-8";
 
      if (fmt==="jsonld")
@@ -750,33 +831,13 @@ async function save_data(action, fname, fmt, callback)
      else
        contentType = "text/turtle;charset=utf-8";
 
-      putResource(gOidc, fname, retdata.txt, contentType, null)
-        .then(response => {
-          showInfo('Saved');
-        })
-        .catch(error => {
-          console.error('Error saving document', error)
-
-          let message
-
-          switch (error.status) {
-            case 0:
-            case 405:
-              message = 'this location is not writable'
-              break
-            case 401:
-            case 403:
-              message = 'you do not have permission to write here'
-              break
-            case 406:
-              message = 'enter a name for your resource'
-              break
-            default:
-              message = error.message
-              break
-          }
-          showInfo('Unable to save:' +message);
-        })
+     DOM.qSel('.super_links_msg').style.display = 'flex';
+     let v = await gOidc.putResource(fname, retdata.txt, contentType);
+     DOM.qSel('.super_links_msg').style.display = 'none';
+     if (v.rc===1)
+        showInfo('Saved', fname);
+     else
+        showInfo('Unable to save: ' +v.err);
     }
     else {
       selectTab("src");
@@ -812,9 +873,22 @@ async function prepare_data(for_query, curTab, fmt)
 }
 
 
-function showInfo(msg)
+function showInfo(msg, href)
 {
-  $('#alert-msg').prop('textContent',msg);
+  let el;
+
+  el = DOM.iSel('alert-msg');
+  el.textContent = msg;
+
+  el = DOM.iSel('alert_href')
+  if (href) {
+    el.href = href;
+    el.innerText = href
+    DOM.Show(el);
+  } else {
+    DOM.Hide(el);
+  }
+
   $('#alert-dlg').dialog({
     resizable: true,
     height:180,
@@ -831,9 +905,11 @@ function showInfo(msg)
 Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
 {
   try {
-    if (request.cmd === "store_updated" && request.key === "oidc.session")
+    if (request.cmd === "store_updated" && request.key === "oidc_code")
     {
-      Download_exec_update_state(); 
+      gOidc.restoreConn().then(rc => {
+        Download_exec_update_state(1); 
+      })
     }
  
 

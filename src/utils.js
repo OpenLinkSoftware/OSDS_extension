@@ -303,19 +303,81 @@ function fixedEncodeURIComponent (str) {
 }
 
 
-function fetchWithTimeout(url, options, timeout) 
-{
-  return Promise.race([
-    fetch(url, options),
-    new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), timeout)
-    )
-  ]);
+async function fetchWithTimeout(url, options = {}, timeout) {
+  const _timeout = timeout || 60000;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  const response = await fetch(url, {
+    ...options,
+    signal: controller.signal  
+  });
+  clearTimeout(id);
+
+  return response;
 }
+
+
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+async function req_openai(v) 
+{
+    const openai_token = v.token;
+    const model = v.model || "gpt-3.5-turbo";
+    const req = v.req;
+    const temp = v.temperature || 1;
+    const system_msg = "You are a helpful assistant."
+
+    const calc_len = gpt3encoder.countTokens(req+system_msg)+1;
+    const max_tokens = v.max_tokens-calc_len;
+
+    var payload = {
+      "model": model,
+      messages: [
+        {
+          role: "system",
+          "content": system_msg
+        },
+        {
+          role: "user",
+          "content": req
+        }
+      ],
+       "temperature": temp,
+       "max_tokens": max_tokens
+    };
+
+    var options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+          Authorization: `Bearer ${openai_token}`,
+      },
+      body: JSON.stringify(payload)
+    }
+
+    try {
+      var rc = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', options, 60000);
+      if (rc.ok) {
+        var data = await rc.json();
+        if (data.object === 'chat.completion' && data.choices && data.choices.length > 0) {
+          const text = data.choices[0].message.content
+          return {rc:1, text};
+        }
+        return {rc:0, err:'Could not parse OpenAI response'}
+      } else {
+        return {rc:0, err:'HTTP='+rc.status}
+      }
+    } catch(e) {
+      return {rc:0, err:e.toString()}
+    }
+}
+
+
 
 async function showSnackbar(text1, text2) {
     const tm = 15000;
@@ -354,10 +416,10 @@ DOM.htmlToElements = (html) => {
     template.innerHTML = html;
     return template.content.childNodes;
   }
-DOM.qShow = (sel) => { DOM.qSel(sel).classList.remove('hidden'); };
-DOM.qHide = (sel) => { DOM.qSel(sel).classList.add('hidden'); };
-DOM.Show = (el) => { el.classList.remove('hidden'); };
-DOM.Hide = (el) => { el.classList.add('hidden'); };
+DOM.qShow = (sel) => { DOM.qSel(sel)?.classList.remove('hidden'); };
+DOM.qHide = (sel) => { DOM.qSel(sel)?.classList.add('hidden'); };
+DOM.Show = (el) => { el?.classList.remove('hidden'); };
+DOM.Hide = (el) => { el?.classList.add('hidden'); };
 DOM.ready = (fn) => {
   // If we're early to the party
   document.addEventListener("DOMContentLoaded", fn);
@@ -366,7 +428,26 @@ DOM.ready = (fn) => {
     fn();
   }
 }
-
+// query elements even deeply within shadow doms. e.g.:
+// ts-app::shadow paper-textarea::shadow paper-input-container
+DOM.querySelectorDeep = (selector, root = document) => {
+  let currentRoot = root;
+  let partials = selector.split('::shadow');
+  let elems = currentRoot.querySelectorAll(partials[0]);
+  for (let i = 1; i < partials.length; i++) {
+    let partial = partials[i];
+    let elemsInside = [];
+    for (let j = 0; j < elems.length; j++) {
+      let shadow = elems[j].shadowRoot;
+      if (shadow) {
+        const matchesInShadow = shadow.querySelectorAll(partial);
+        elemsInside = elemsInside.concat([... matchesInShadow]);
+      }
+    }
+    elems = elemsInside;
+  }
+  return elems;
+}
 
 function debounce(callback, wait) {
     let timeout;

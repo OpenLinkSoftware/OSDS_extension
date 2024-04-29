@@ -56,6 +56,7 @@
         <script type="text/javascript" src="ttl_gen.js"></script>
         <script type="text/javascript" src="html_gen.js"></script>
         <script type="text/javascript" src="datablock.js"></script>
+        <script type="text/javascript" src="sniffer_nano.js"></script>
         <script type="text/javascript" src="panel.js"></script>
 
         <link rel="stylesheet" href="dataview.css" />
@@ -82,14 +83,6 @@
           }
  	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
 
-	  .btn-p {
-	    font-size: 14px;
-	    padding: 6px 12px;
-	    border-radius: 4px;
-	    border: 1px solid grey;
-	    background-color: white;
-	  }
-
         </style>
 
     </head>
@@ -100,13 +93,14 @@
         <div style="width:16px;">
           <img src="images/throbber.gif" class="super_links_img">
         </div>
-        <div>&nbsp;Preparing&nbsp;Super&nbsp;Links</div>
+        <div>&nbsp;Uploading&nbsp;data</div>
       </div>
 
 
       <div class="popup" id="alert-dlg" title="Info">
         <p id="alert-msg">
         </p>
+        <a id="alert_href" href=""></a>
       </div>
 
 
@@ -137,10 +131,14 @@
             </SELECT>
         </div>
 
+        <div id="login-fmt-item" class="popup_frm_row">
+          <button id="oidc-login-btn">Login </button>
+          <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> 
+        </div>
 
         <div id="save-sparql-item" style="display:flex; flex-direction:column">
           <div class="popup_frm_row">
-            <div class="popup_frm_label6">Endpoint&nbsp;URL:</div>
+            <label class="popup_frm_label6" for="save-sparql-endpoint">Endpoint&nbsp;URL:</label>
             <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql">
           </div>
           <div class="popup_frm_row">
@@ -174,12 +172,24 @@
         </div>
       </div>
 
+      <div class="popup" id="login-dlg" title="Login via OIDC provider">
+        <p/>
+        <table id="oidc-login1" style="font-size: 14px;">
+         <tr >
+          <td> <button id="oidc-login-btn1">Login</button> </td>
+          <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
+         </tr>
+
+        </table>
+      </div>
+
 <!---------END POPUP --------------------->
 
       <div class="top"></div>
 
       <div class="btn_block">
-         <input type="image" id="chat_btn" class="image_btn" src="images/chat.png" title="ChatGPT">
+         <input type="image" id="login_btn" class="image_btn" src="images/slogin24.png" title="Solid Login">
+         <input type="image" id="chat_btn" class="image_btn" src="images/robot.svg" title="LLM Chat">
          <input type="image" id="slink_btn" class="image_btn" src="images/slink24.png" title="Super Links">
          <input type="image" id="sparql_btn" class="image_btn" src="images/osds-icon-query-24.png" title="LOD Cloud Lookup Query using SPARQL Query Language">
          <input type="image" id="rww_btn" class="image_btn" src="images/osds-icon-annotate-24.png" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
@@ -191,13 +201,13 @@
 
       <div class="content">
       <ul class="tabs" role="tablist">
-        <li id="tab-micro" >
-          <input type="radio" name="tabs" id="itab-micro" checked />
-          <label for="itab-micro" role="tab" aria-selected="true" tabindex="0" 
+        <li id="tab-micro" class="hidden">
+          <input type="radio" name="tabs" id="itab-micro" />
+          <label for="itab-micro" role="tab" aria-selected="false" 
                  title="Structured Data encoded using HTML5 Microdata Notation" >
             Microdata
           </label>
-          <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="false">
+          <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="ture">
             <table class="wait">
               <tr>
                 <td><img src="images/throbber.gif" width="16" /></td>
@@ -207,9 +217,9 @@
           </div>
         </li>
 
-        <li id="tab-jsonld">
+        <li id="tab-jsonld" class="hidden">
           <input type="radio" name="tabs" id="itab-jsonld" />
-          <label for="itab-jsonld" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-jsonld" role="tab" aria-selected="false"
                  title="Metadata encoded using JSON-LD Notation" >
             JSON-LD
           </label>
@@ -220,24 +230,24 @@
                 <td>Processing data...</td>
               </tr>
             </table>
-          </div>
-          <table class="loader" style="display:none">
-            <tr>
-              <td>
+            <table class="loader" style="display:none">
+              <tr>
+                <td>
                   <br>&nbsp;&nbsp;
                   <button id="load_jsonld" style="display:none">Load JSON-LD data</button> &nbsp; 
                   <span id="throbber" style="display:none">
                     <img src="images/throbber.gif" width="16"/>Loading...
                   </span>
-              </td>
-              <td></td>
-            </tr>
-          </table>
+                </td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
         </li>
 
-        <li id="tab-turtle">
+        <li id="tab-turtle" class="hidden">
           <input type="radio" name="tabs" id="itab-turtle" />
-          <label for="itab-turtle" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-turtle" role="tab" aria-selected="false"
                  title="Metadata encoded using RDF-Turtle Notation" >
             Turtle
           </label>
@@ -248,12 +258,24 @@
                 <td>Processing data...</td>
               </tr>
             </table>
+            <table class="loader" style="display:none">
+              <tr>
+                <td>
+                  <br>&nbsp;&nbsp;
+                  <button id="load_turtle" style="display:none">Load Turtle data</button> &nbsp; 
+                  <span id="throbber" style="display:none">
+                    <img src="images/throbber.gif" width="16"/>Loading...
+                  </span>
+                </td>
+                <td></td>
+              </tr>
+            </table>
           </div>
         </li>
 
-        <li id="tab-rdfa">
+        <li id="tab-rdfa" class="hidden">
           <input type="radio" name="tabs" id="itab-rdfa" />
-          <label for="itab-rdfa" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-rdfa" role="tab" aria-selected="false"
                  title="Metadata encoded using RDFa Notation" >
             RDFa
           </label>
@@ -267,9 +289,9 @@
           </div>
         </li>
 
-        <li id="tab-rdf">
+        <li id="tab-rdf" class="hidden">
           <input type="radio" name="tabs" id="itab-rdf" />
-          <label for="itab-rdf" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-rdf" role="tab" aria-selected="false"
                  title="Metadata encoded using RDF/XML Notation" >
             RDF/XML
           </label>
@@ -295,25 +317,9 @@
           </div>
         </li>
 
-        <li id="tab-posh">
-          <input type="radio" name="tabs" id="itab-posh" />
-          <label for="itab-posh" role="tab" aria-selected="false" tabindex="0"
-                 title="Metadata encoded using Plain Old Semantic HTML Notation" >
-            POSH
-          </label>
-          <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-json">
+        <li id="tab-json" class="hidden">
           <input type="radio" name="tabs" id="itab-json" />
-          <label for="itab-json" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-json" role="tab" aria-selected="false"
                  title="Metadata encoded using JSON Notation" >
             JSON
           </label>
@@ -327,9 +333,9 @@
           </div>
         </li>
 
-        <li id="tab-jsonl">
+        <li id="tab-jsonl" class="hidden">
           <input type="radio" name="tabs" id="itab-jsonl" />
-          <label for="itab-jsonl" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-jsonl" role="tab" aria-selected="false"
                  title="Metadata encoded using JSONL Notation" >
             JSONL
           </label>
@@ -343,9 +349,9 @@
           </div>
         </li>
 
-        <li id="tab-csv">
+        <li id="tab-csv" class="hidden">
           <input type="radio" name="tabs" id="itab-csv" />
-          <label for="itab-csv" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-csv" role="tab" aria-selected="false"
                  title="Metadata encoded using CSV Notation" >
             CSV
           </label>
@@ -359,14 +365,20 @@
           </div>
         </li>
 
-        <li id="tab-rss">
+        <li id="tab-rss" class="hidden">
           <input type="radio" name="tabs" id="itab-rss" />
-          <label for="itab-rss" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-rss" role="tab" aria-selected="false"
                  title="Metadata encoded using RSS Notation" >
             RSS
           </label>
           <div id="rss_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="loader">
+            <table class="wait" style="display:none">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+            <table class="loader" style="display:none">
               <tr>
                 <td>
                     <br>&nbsp;&nbsp;
@@ -381,14 +393,20 @@
           </div>
         </li>
 
-        <li id="tab-atom">
+        <li id="tab-atom" class="hidden">
           <input type="radio" name="tabs" id="itab-atom" />
-          <label for="itab-atom" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-atom" role="tab" aria-selected="false"
                  title="Metadata encoded using Atom Notation" >
             Atom
           </label>
           <div id="atom_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="loader">
+            <table class="wait" style="display:none">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+            <table class="loader" style="display:none">
               <tr>
                 <td>
                     <br>&nbsp;&nbsp;
@@ -403,9 +421,9 @@
           </div>
         </li>
 
-        <li id="tab-markdown">
+        <li id="tab-markdown" class="hidden">
           <input type="radio" name="tabs" id="itab-markdown" />
-          <label for="itab-markdown" role="tab" aria-selected="false" tabindex="0"
+          <label for="itab-markdown" role="tab" aria-selected="false"
                  title="Metadata encoded using Markdown Notation" >
             Markdown
           </label>
@@ -422,13 +440,29 @@
           </div>
         </li>
 
+        <li id="tab-posh" >
+          <input type="radio" name="tabs" id="itab-posh" />
+          <label for="itab-posh" role="tab" aria-selected="false"
+                 title="Metadata encoded using Plain Old Semantic HTML Notation" >
+            POSH
+          </label>
+          <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="false">
+            <table class="wait">
+              <tr>
+                <td><img src="images/throbber.gif" width="16" /></td>
+                <td>Processing data...</td>
+              </tr>
+            </table>
+          </div>
+        </li>
+
         <li id="tab-src">
           <input type="radio" name="tabs" id="itab-src" />
           <div id="src_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
             <table style="width: 100%;height:40px;">
               <tr>
                 <td>
-                  <button id="src_exit" style="margin:5px; margin-left:10px;" class="btn-p">Exit</button>
+                  <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
                 </td>
               </tr>
             </table>
@@ -444,8 +478,8 @@
           <div id="cons_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
 
             <div style="display:flex; flex-direction:row; align-items:baseline;">
-              <button id="rest_exec" style="margin:10px; margin-left:15px;" class="btn-p">Run</button>
-              <button id="rest_exit" class="btn-p">Exit</button>
+              <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
+              <button id="rest_exit" >Exit</button>
             </div>
             <div class="rest_path">
               <span class="rest_frm_label5">URL</span>

@@ -34,6 +34,8 @@ var chk_setting = {
       "ext.osds.pref.user": ""
     };
 
+var g_chat = new ChatService();
+
   async function reload_settings()
   {
     chk_setting["ext.osds.handle_all"] = await setting.getValue("ext.osds.handle_all");
@@ -41,9 +43,10 @@ var chk_setting = {
     chk_setting["ext.osds.handle_json"] = await setting.getValue("ext.osds.handle_json");
     chk_setting["ext.osds.handle_xml"] = await setting.getValue("ext.osds.handle_xml");
 
-  
     chk_setting['ext.osds.pref.user.chk'] = await setting.getValue('ext.osds.pref.user.chk');
     chk_setting['ext.osds.pref.user'] = await setting.getValue('ext.osds.pref.user');
+
+    await g_chat.load_settings()
   }
 
   reload_settings();
@@ -235,7 +238,7 @@ var chk_setting = {
 
     var chk_xml = chk_setting["ext.osds.handle_xml"];
     var chk_csv = chk_setting["ext.osds.handle_csv"];
-    var chk_json = chk_setting["ext.osds.handle_csv"];
+    var chk_json = chk_setting["ext.osds.handle_json"];
 
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
@@ -448,46 +451,43 @@ var chk_setting = {
 /**** End WebRequest ****/
 
 
-
-
-var tabsBrowserAction = {};
-
-function handleCloseTab(tabId, info) {
-  delete tabsBrowserAction[tabId];
-}
-
-function handleOpenTab(tabId) {
-  tabsBrowserAction[tabId] = false;
-}
-
-function storeBrowserAction(tabId, show) {
-  tabsBrowserAction[tabId] = show;
-}
-
-function getBrowserActionState(tabId) {
-  return tabsBrowserAction[tabId];
-}
-
-
-Browser.api.tabs.onRemoved.addListener(handleCloseTab);
-Browser.api.tabs.onUpdated.addListener(handleOpenTab);
-
-
-function setPageAction(tabId, show)
+async function handle_super_links_chatgpt(sender, chatgpt_req, event)
 {
-  storeBrowserAction(tabId, show);
+  const setting = new Settings();
+  const curTab = sender.tab.id;
 
-  if (Browser.is_ff || Browser.is_chrome || Browser.is_safari) {
-    if (show)
-      Browser.api.browserAction.enable(tabId);
+  try {
+    const model = await setting.getValue("osds.chatgpt_model");
+    let temperature = await setting.getValue("osds.chatgpt_temp");
+    const token = await setting.getValue("osds.chatgpt_openai_token");
+    let max_tokens = await setting.getValue("osds.chatgpt_max_tokens");
+
+    try {
+      max_tokens = parseInt(max_tokens,10);
+      if (max_tokens <= 0)
+        max_tokens = 4096;
+    } catch(e) { 
+      max_tokens = 4096;
+    }
+    try {
+      temperature = parseFloat(temperature).toFixed(2);
+      temperature = parseFloat(temperature);
+      if (temperature <0 || temperature >1)
+        temperature = 1;
+    } catch(e) { 
+      temperature = 1;
+    }
+
+    Browser.api.tabs.sendMessage(curTab, {cmd:'super_links_msg_show', message: 'Send OpenAI request' });
+
+    const ret = await req_openai({token, model, temperature, max_tokens, req: chatgpt_req})
+    if (ret.rc === 1)
+      Browser.api.tabs.sendMessage(curTab, {cmd:"super_links_chatgpt_return", req:chatgpt_req, resp:ret.text, event});
     else
-      Browser.api.browserAction.disable(tabId);
-  }
-  else {
-    if (show)
-      Browser.api.pageAction.show(tabId);
-    else
-      Browser.api.pageAction.hide(tabId);
+      Browser.api.tabs.sendMessage(curTab, {cmd:"super_links_chatgpt_return", err:ret.err, event});
+  } 
+  finally {
+    Browser.api.tabs.sendMessage(curTab, { cmd: 'super_links_msg_hide' });
   }
 }
 
@@ -498,12 +498,10 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     if (request.cmd === "openIfHandled")
     {
       var tabId = request.tabId;
-      var tab = pages[request.tabId];
+      var tab = pages[tabId];
       if (tab) {
         var url = page_panel_url+"?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext;
-        if (!Browser.is_safari) {
-          Browser.openTab(url);
-        }
+        Browser.openTab(url);
         sendResponse({'cmd': request.cmd, 'opened':true, url});
         return true;
       } 
@@ -516,12 +514,10 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     {
       reload_settings();
     }
-/**
-    else
+    else if (request.cmd === "super_links_chatgpt")
     {
-      sendResponse({}); // stop
+      handle_super_links_chatgpt(sender, request.req, request.event);
     }
-**/
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
@@ -532,34 +528,7 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
 Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
-    if (request.property === "status")
-    {
-      var doc_URL = request.doc_URL;
-      var tabId = sender.tab.id;
-      var show_action = request.data_exists;
-      var sparql_pattern = /\/sparql\/?$/gmi;
-      var url = new URL(doc_URL);
-      var setting = new Settings();
-      var action_for_params =  await setting.getValue("ext.osds.pref.show_action");
-      var settings = new Settings();
-      var chk_all = "0";
-
-      if (!Browser.is_safari)
-          chk_all = await setting.getValue("ext.osds.handle_all");
-
-      if (doc_URL && url.search.length>0
-          && (sparql_pattern.test(doc_URL) || action_for_params) )
-      {
-        show_action = true;
-      }
-
-      setPageAction(tabId, show_action);
-      
-      if (!show_action && chk_all && chk_all!=="1") {
-            setPageAction(tabId, true);
-      }
-    }
-    else if (request.cmd === "actionSuperLinks")
+    if (request.cmd === "actionSuperLinks")
     {
       var curTab = await getCurTab();
       if (curTab.length > 0)
@@ -571,17 +540,32 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
       if (curTab.length > 0)
         actionSPARQL_Upload(null, curTab[0], request);
     }
-/**
-    else
-    {
-      sendResponse({}); // stop
-    }
-**/
   } catch(e) {
     console.log("OSDS: onMsg="+e);
   }
 
 });
+
+
+
+Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+{
+  try {
+    if (request.cmd === "gpt_window_reg")  {  //receive that chat is opened
+      g_chat.reg_chat_window(sender.tab, request.chat_id)
+    }
+    else if (request.cmd === "gpt_window_unreg")  {  //receive that chat is opened
+      g_chat.unreg_chat_window(sender.tab)
+    }
+    else if (request.cmd === "gpt_page_content" && request.tabId)  { // request from popup panel
+      g_chat.askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
+    }
+  } catch(e) {
+    console.log("OSDS: onMsg="+e);
+  }
+
+});
+
 
 ////////// Context Menu
 
@@ -595,180 +579,18 @@ if (Browser.is_ff || Browser.is_chrome) {
     Browser.api.contextMenus.create(
         {"title": "Ask ChatGPT", 
          "contexts":["selection"],
-         "onclick": askChatGPT_selection});
+         "onclick": g_chat.askChatGPT_selection});
 
     Browser.api.contextMenus.create(
         {"title": "Ask ChatGPT for Page Content", 
          "contexts":["page"],
-         "onclick": askChatGPT_page_content});
+         "onclick": g_chat.askChatGPT_page_content});
 
          
   } catch(e) {
     console.log(e);
   }
 }
-
-var g_chatTab = null;
-var g_waited_ask = null;
-
-async function activateChatWin(winId, tabId, ask, timeout)
-{
-  if (Browser.is_ff) {
-    await Browser.api.windows.update(winId, {focused: true});
-    await Browser.api.tabs.update(tabId, {active: true});
-  } 
-  else {
-    Browser.api.windows.update(winId, {focused: true}, (window) => {
-      Browser.api.tabs.update(tabId, {active: true})
-    })
-  }
-
-  if (timeout > 0)
-    await sleep(timeout);
-
-  const model = await setting.getValue('ext.osds.gpt-model');
-  var max_len = parseInt(await setting.getValue('ext.osds.gpt-tokens'), 10);
-  if (max_len == 0)
-    max_len = 4096;
-  
-///gpt-35 max_tokens = 4096
-// gpt4 max-tokens = 8192  // 32768
-  const myprompt = await setting.getValue('ext.osds.prompt');
-
-  var prompt_query = setting.def_prompt_query_jsonld;
-
-  if (myprompt) {
-    if (myprompt.myid === 'jsonld')
-      prompt_query = setting.def_prompt_query_jsonld;
-    else if (myprompt.myid === 'turtle')
-      prompt_query = setting.def_prompt_query_turtle;
-    else if (myprompt.text && myprompt.text.length > 1)
-      prompt_query = myprompt.text;
-  }
-
-  prompt_query = prompt_query.replace("{page_url}", ask.url);
-
-  const pattern_len = gpt3encoder.countTokens(prompt_query);
-
-  var text = ask.text; 
-  var txt_encoded = gpt3encoder.encode(text);
-
-  if (pattern_len + txt_encoded.length > max_len) {
-    const len = Math.max(1, max_len - pattern_len);
-    txt_encoded.splice(len);
-    text = gpt3encoder.decode(txt_encoded);
-  }
-
-  prompt_query = prompt_query.replace("{selected_text}", text);
-//  console.log(prompt_query);
-
-  Browser.api.tabs.sendMessage(tabId, {cmd:"gpt_prompt", text:prompt_query});
-}
-
-async function openChatWin()
-{
-  const chat_url = "https://chat.openai.com";
-  // Open GPT window
-  if (Browser.is_ff)
-    Browser.api.tabs.create({url:chat_url});
-  else {
-    const model = await setting.getValue('ext.osds.gpt-model');
-    const _url = chat_url+(model==='gpt4'?'/?model=gpt-4':'/?model=text-davinci-002-render-sha')
-    window.open(_url);
-  }
-}
-
-function askChatGPT(ask, tab, mode) 
-{
-  ask["mode"] = mode;
-
-  function handle_resp(resp)
-  {
-    if (resp && resp.ping === 1) {
-      // GPT window opened
-      if (resp.winId && resp.tabId) {
-        activateChatWin(resp.winId, resp.tabId, ask);
-      }
-      else {
-        g_waited_ask = ask;
-        openChatWin();
-      }
-    }
-    else {
-      g_waited_ask = ask;
-      openChatWin();
-    }
-  }
-  
-  if (g_chatTab) {
-    if (Browser.is_ff)
-      Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"})
-        .then(resp => { handle_resp(resp)})
-        .catch(err => {
-          console.log(err);
-        });
-    else
-      Browser.api.tabs.sendMessage(g_chatTab.id, {cmd:"gpt_ping"}, handle_resp);
-  }
-  else {
-    g_waited_ask = ask;
-    openChatWin();
-  }
-}
-
-function askChatGPT_selection(info, tab) 
-{
-  askChatGPT({text:info.selectionText, url:info.pageUrl}, tab, 'selection');
-}
-
-function askChatGPT_page_content(info, tab) 
-{
-  function handle_resp(resp)
-  {
-    if (resp && resp.page_content) {
-//      console.log(resp);
-      askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
-    }
-  }
-
-  if (Browser.is_ff)
-    Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"})
-      .then(resp => { handle_resp(resp)})
-      .catch(err => {
-          console.log(err);
-      });
-  else
-    Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"}, handle_resp);
-}
-
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
-{
-  try {
-    if (request.cmd === "gpt_window_reg")  {  //receive that chat is opened
-      const tab = g_chatTab = sender.tab; //??TODO reg win
-      // send back tabId and winId
-      Browser.api.tabs.sendMessage(tab.id, {cmd:"gpt_win_tab", tabId:tab.id, winId:tab.windowId});
-
-      if (g_waited_ask) {
-        activateChatWin(g_chatTab.windowId, g_chatTab.id, g_waited_ask, 3000)
-        g_waited_ask = null;
-      }
-
-    }
-    else if (request.cmd === "gpt_window_unreg")  {  //receive that chat is opened
-      const tab = sender.tab;
-      g_waited_ask = null;
-      g_chatTab = null;
-    }
-    else if (request.cmd === "gpt_page_content" && request.tabId)  {
-      askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
-    }
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
-  }
-
-});
-
 
 
 var gSuperLinks = null;
@@ -781,13 +603,13 @@ async function actionSuperLinks(info, tab) {
   var msg = 
        { 
          throbber_show: function (txt) {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_show', message: txt });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_show', message: txt });
          },
          throbber_hide: function () {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_hide' });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_hide' });
          },
          snackbar_show: function (msg1, msg2) {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_snackbar', msg1, msg2 });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_snackbar', msg1, msg2 });
          },
        }
 
@@ -811,19 +633,19 @@ async function actionSPARQL_Upload(info, tab, request) {
   var msg = 
        { 
          throbber_show: function (txt) {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_show', message: txt });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_show', message: txt });
          },
          throbber_hide: function () {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_msg_hide' });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_hide' });
          },
          snackbar_show: function (msg1, msg2) {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'super_links_snackbar', msg1, msg2 });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_snackbar', msg1, msg2 });
          },
          msg_show: function(msg) {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'osds_msg_show', message: msg });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'osds_msg_show', message: msg });
          },
          msg_hide: function() {
-            Browser.api.tabs.sendMessage(tab.id, { property: 'osds_msg_hide' });
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'osds_msg_hide' });
          }
        }
 
@@ -847,7 +669,12 @@ async function actionSPARQL_Upload(info, tab, request) {
 Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
-    if (request.cmd === "close_oidc_web")
+    if (request.cmd === "reset_uploads")
+    {
+      gSuperLInks = null;
+      gSPARQL_Upload = null;
+    }
+    else if (request.cmd === "close_oidc_web")
     {
       var curWin = await getCurWin();
       var curTab = await getCurTab();
