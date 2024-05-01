@@ -113,7 +113,7 @@
             else if (location.href.startsWith('https://copilot.microsoft.com')) {
                nano = Nano.sniff_nanotation_ms_copilot(nano);
             }
-            else if (location.href.startsWith('https://gemini.google.com/app')) {
+            else if (location.href.startsWith('https://gemini.google.com/')) {
               nano = Nano.sniff_nanotation_chat(nano, 'gemini');
             }
             else if (location.href.startsWith('https://claude.ai/chat/')) {
