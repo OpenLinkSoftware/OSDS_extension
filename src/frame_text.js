@@ -25,9 +25,19 @@
   }
 
 
+  function getContent()
+  {
+    let lst = [];
+    for(const v of document.body.childNodes) {
+      if (v.nodeName !== 'SCRIPT' && v.nodeName !== 'STYLE')
+        lst.push(v.innerText);
+    }
+    return lst.join('');
+  }
+
   function frame_text()
   {
-    var txt = document.body ? document.body.innerText : null;
+    var txt = document.body ? getContent() : null;
 
     if (txt === undefined || (txt!==null && txt.length==0))
       txt = frame_getSelectionString(document.body);

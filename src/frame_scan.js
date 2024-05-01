@@ -24,10 +24,19 @@
     return selString;
   }
 
+  function getContent()
+  {
+    let lst = [];
+    for(const v of document.body.childNodes) {
+      if (v.nodeName !== 'SCRIPT' && v.nodeName !== 'STYLE')
+        lst.push(v.innerText);
+    }
+    return lst.join('');
+  }
 
   function scan_dom()
   {
-    let page_content = document.body.innerText;
+    let page_content = getContent(); // document.body.innerText;
 
     if (!page_content|| (page_content && page_content.length == 0))
       page_content = frame_getSelectionString(document.body);

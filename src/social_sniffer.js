@@ -809,7 +809,7 @@ class Social {
     if (rc)
       return {text:rc, dom:0};
 
-    let page_content = document.body.innerText;
+    let page_content = this.getContent(); //document.body.innerText;
 
     if (!page_content|| (page_content && page_content.length == 0))
       page_content = this.getSelectionString(document.body, window);
@@ -820,7 +820,7 @@ class Social {
       let ancs = {}
       for(const v of document.querySelectorAll('a')) 
         if (v.href)
-          ancs[v.textContent] = v.href
+          ancs[v.innerText] = v.href
 
       let links = [];
       for(const text of Object.keys(ancs))
@@ -916,6 +916,16 @@ class Social {
   }
 
   
+  getContent()
+  {
+    let lst = [];
+    for(const v of document.body.childNodes) {
+      if (v.nodeName !== 'SCRIPT' && v.nodeName !== 'STYLE')
+        lst.push(v.innerText);
+    }
+    return lst.join('');
+  }
+
   getSelectionString(el, win) 
   {
         win = win || window;

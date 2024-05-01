@@ -373,41 +373,46 @@ Nano.sniff_nanotation_ms_copilot = (nano) =>
 Nano.sniff_nanotation_chat = (nano, chat_id) =>
     {
       const chats = { 
-             openai: { top:'div#__next main pre select#code_type option:checked', 
+             openai: { menu:'div#__next main pre select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
 
-             gemini: { top:'model-response message-content code-block select#code_type option:checked', 
+             openai_play: { menu:'div[data-panel] select#code_type option:checked', 
+                       sel: { parentNode:3 }, 
+                       code_all:'pre code code ~ *'
+                     }, 
+
+             gemini: { menu:'model-response message-content code-block select#code_type option:checked', 
                        sel: {closest:'div.code-block'}, 
                        code:'code'
                      }, 
-             claude: { top:'pre > div select#code_type option:checked', 
+             claude: { menu:'pre > div select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
-             perplexity: { top:'div#__next main pre select#code_type option:checked', 
+             perplexity: { menu:'div#__next main pre select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
-             perplexity_labs: { top:'div#__next main pre select#code_type option:checked',  
+             perplexity_labs: { menu:'div#__next main pre select#code_type option:checked',  
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
 
-             mistral: { top:'pre select#code_type option:checked', 
+             mistral: { menu:'pre select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
-             huggingface: { top:'select#code_type option:checked', 
+             huggingface: { menu:'select#code_type option:checked', 
                        sel: { parentNode:3 },
                        code:'pre code'
                      }, 
-             you: { top:'div#ydc-content-area select#code_type option:checked', 
+             you: { menu:'div#ydc-content-area select#code_type option:checked', 
                        sel: { parentNode:3 },
                        code:'pre code'
                      }, 
-             meta: { top:'select#code_type option:checked', 
+             meta: { menu:'select#code_type option:checked', 
                        sel: { parentNode:5 },
                        code:'pre code'
                      }, 
@@ -419,7 +424,7 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
 
       var el_pre, el_code;
       
-      var lst = DOM.qSelAll(fmt.top);
+      var lst = DOM.qSelAll(fmt.menu);
       for (var el of lst) {
         const el_type = el.id;
 
@@ -433,32 +438,41 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
         }
 
         if (el_pre) {
-          el_code = el_pre.querySelector(fmt.code);
-          if (el_code) {
+          let text = null;
+          if (fmt.code) {
+            text = el_pre.querySelector(fmt.code)?.textContent;
+          }
+          else if (fmt.code_all) {
+             let lst = []
+             for(const v of el_pre.querySelectorAll(fmt.code_all))
+               lst.push(v.textContent);
+             text = lst.join('');
+          }
+          if (text) {
             switch(el_type) {
               case 'turtle':
-                nano.ttl.push(el_code.textContent);
+                nano.ttl.push(text);
                 break;
               case 'jsonld':
-                nano.jsonld.push(el_code.textContent);
+                nano.jsonld.push(text);
                 break;
               case 'json':
-                nano.json.push(el_code.textContent);
+                nano.json.push(text);
                 break;
               case 'csv':
-                nano.csv.push(el_code.textContent);
+                nano.csv.push(text);
                 break;
               case 'rdfxml':
-                nano.rdf.push(el_code.textContent);
+                nano.rdf.push(text);
                 break;
               case 'markdown':
-                nano.md.push(el_code.textContent);
+                nano.md.push(text);
                 break;
               case 'rss':
-                nano.rss.push(el_code.textContent);
+                nano.rss.push(text);
                 break;
               case 'atom':
-                nano.atom.push(el_code.textContent);
+                nano.atom.push(text);
                 break;
             }
           }
