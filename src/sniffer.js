@@ -107,6 +107,9 @@
             if (location.href.startsWith('https://chat.openai.com')) {
                nano = Nano.sniff_nanotation_chat(nano, 'openai');
             }
+            else if (location.href.startsWith('https://platform.openai.com/playground')) {
+               nano = Nano.sniff_nanotation_chat(nano, 'openai_play');
+            }
             else if (location.href.startsWith('https://copilot.microsoft.com')) {
                nano = Nano.sniff_nanotation_ms_copilot(nano);
             }

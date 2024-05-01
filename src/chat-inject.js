@@ -96,6 +96,9 @@
   const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;margin-left:300px;position:absolute;top:3px;align-items:center;"> ${dd_base_pplabs} </div>`;
   const dropDown_meta = `<div style="height:20px;margin-left:200px;position:absolute;"> ${dd_base_hugging} </div>`;
 
+  const dropDown_openai_play = `<div style="display:flex; flex-direction:row; margin-left:200px; height=24px;align-items:center">
+           ${dd_base_hugging} </div>`;
+
 
 
   function scan_code_openai()
@@ -114,6 +117,23 @@
       if (!dd_el && btn_copy.parentNode === title) {
         title.insertBefore(DOM.htmlToElements(dropDown_openai)[0], btn_copy);
       }
+    }
+  }
+
+
+  function scan_code_openai_play()
+  {
+    const lst = document.querySelectorAll('div[data-panel] pre');
+    for(const v of lst) 
+    {
+      const hdr = v.parentNode
+      const dd_el = hdr.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = hdr.querySelector('button')
+      if (btn_copy)
+      	hdr.insertBefore(DOM.htmlToElements(dropDown_openai_play)[0], btn_copy);
     }
   }
 
@@ -296,6 +316,8 @@
       if (g_top) {
         if (g_chat_id === 'ch_openai') 
           scan_code_openai();
+        else if (g_chat_id === 'ch_openai_play') 
+          scan_code_openai();
         else if (g_chat_id === 'ch_copilot')
           scan_code_ms_copilot()
         else if (g_chat_id === 'ch_claude') 
@@ -322,6 +344,10 @@
         scan_code_openai();
         g_top = document.querySelector('div#__next');
         use_mutation_observer = true;
+      }
+      else if (g_chat_id === 'ch_openai_play') {
+        scan_code_openai_play();
+        setInterval(scan_code_openai_play, 5*1000);
       }
       else if (g_chat_id === 'ch_copilot') {
         scan_code_ms_copilot();
@@ -417,6 +443,8 @@
   {
     if (location.host==='chat.openai.com')
       return 'ch_openai';
+    else if (location.href.startsWith('https://platform.openai.com/playground'))
+      return 'ch_openai_play';
     else if (location.href.startsWith('https://copilot.microsoft.com'))
       return 'ch_copilot';
     else if (location.href.startsWith('https://claude.ai/chat'))
@@ -468,7 +496,7 @@
   {
     g_chat_id = getChatID();
 
-    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot' 
+    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_openai_play' || g_chat_id === 'ch_copilot' 
        || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini'
        || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
        || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface'
