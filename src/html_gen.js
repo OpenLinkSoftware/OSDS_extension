@@ -30,6 +30,8 @@ class HTML_Gen {
     this.docURI = _docURI;
     this.bnode_types = bnode_types || {};
     this.test_esc = /[!'()*&?#$:@=;+.\/]/;
+    this.reg_img = /\.(jpg|jpeg|png|gif|svg|webp|tiff)$/;
+    this.reg_img_data = /^data:image\/(png|gif|jpg|jpeg|webp|tiff)/;
     this.subst_list = {
       "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
             "http://www.w3.org/2000/01/rdf-schema#label": "Label",
@@ -348,23 +350,20 @@ class HTML_Gen {
 
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
-        s_val = (new URL(s_val)).href;
+        const s_href = (new URL(s_val)).href;
+        const s_path = (new URL(s_val)).pathname;
 
-        if ( s_val.match(/\.(jpg|png|gif|svg|webp)$/) ) {
+        if ( this.reg_img.test(s_path)) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${s_href}" title="${s_href}"><img src="${s_href}" style="max-width: ${width}px;" /></a>`;
         } 
-        if ( s_val.match(/\.(jpg|png|gif|svg|webp)[?#].*/) ) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
-        }
         if (prop && (prop ==='http://schema.org/image' || prop ==='https://schema.org/image')) {
           var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
+          return `<a ${sid} href="${s_href}" title="${s_href}"><img src="${s_href}" style="max-width: ${width}px;" /></a>`;
         } 
-        return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
+        return `<a ${sid} href="${s_href}"> ${this.decodeURI(s_href)} </a>`;
       } 
-      else if ( s_val.match(/^data:image\/(png|gif|jpg|webp)/) ) 
+      else if (this.reg_img_data.test(s_val)) 
       {
           var width = (is_key!==undefined && is_key)?200:300;
           return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
