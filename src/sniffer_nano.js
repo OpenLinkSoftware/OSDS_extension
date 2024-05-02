@@ -98,6 +98,10 @@ Nano.sniff_nanotation_Document = (doc_Texts) =>
         var comment = /^ *#/;
         var ret = {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], csv:[], md:[], rss:[], atom:[]};
 
+        if (!doc_Texts)
+            return {exists: false, data: ret};
+
+
         function isWhitespace(c) 
         {
             var cc = c.charCodeAt(0);
@@ -310,8 +314,7 @@ Nano.sniff_nanotation_Document = (doc_Texts) =>
             || ret.csv.length > 0 || ret.md.length > 0|| ret.rss.length > 0 || ret.atom.length > 0)
             return {exists: true, data: ret}; 
         else
-            return {exists: false, data: {ttl:[], ttl_curly:[], jsonld:[], json:[], jsonl:[], rdf:[], 
-                    csv:[], md:[], rss:[], atom:[]}};
+            return {exists: false, data: ret};
     }
 
 
@@ -383,7 +386,7 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        code_all:'pre code code ~ *'
                      }, 
 
-             gemini: { menu:'model-response message-content code-block select#code_type option:checked', 
+             gemini: { menu:'message-content code-block select#code_type option:checked', 
                        sel: {closest:'div.code-block'}, 
                        code:'code'
                      }, 

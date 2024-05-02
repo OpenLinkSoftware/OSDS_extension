@@ -157,7 +157,7 @@
 
   function scan_code_gemini()
   {
-    const lst = document.querySelectorAll('model-response message-content code-block');
+    const lst = document.querySelectorAll('message-content code-block');
     for(const v of lst) 
     {
       const dd_el = v.querySelector('#code_type');
