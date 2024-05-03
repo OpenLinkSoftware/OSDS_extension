@@ -346,12 +346,13 @@ class OidcWeb {
   async loadProfile(webId) 
   {
     var uri = new URL(webId);
-
-    if (uri.hash === '#this')
-      webId = base.toString();
+    const uri_hash = uri.hash;
 
     uri.hash = uri.search = uri.query = '';
     const base = uri.toString();
+
+    if (uri_hash === '#this')
+      webId = base.toString();
 
     try {
       var rc = await this.fetchProfile(webId);
