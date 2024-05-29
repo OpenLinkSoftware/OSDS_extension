@@ -104,7 +104,7 @@
             nano = {ttl:[], ttl_curly:[], jsonld:[], rdf:[], json:[], jsonl:[], csv:[], md:[], 
     		rss:[], atom:[]};
 
-            if (location.href.startsWith('https://chat.openai.com')) {
+            if (location.href.startsWith('https://chat.openai.com') || location.href.startsWith('https://chatgpt.com')) {
                nano = Nano.sniff_nanotation_chat(nano, 'openai');
             }
             else if (location.href.startsWith('https://platform.openai.com/playground')) {

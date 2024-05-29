@@ -132,8 +132,8 @@ class Settings {
 `{ 
   "openai": {
     "name": "OpenAI Chat", 
-    "url": "https://chat.openai.com/?model=gpt-4",
-    "location.startsWith": "https://chat.openai.com",
+    "url": "https://chatgpt.com/",
+    "location.startsWith": "https://chatgpt.com",
     "prompt.selector": "#prompt-textarea",
     "prompt.css.removeClass": "resize-none",
     "prompt.css.addClass": "resize"

@@ -39,6 +39,20 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
+
+  const dd_base_openai = `<span>Data format:</span>
+           <SELECT id="code_type" class="dark:bg-token-main-surface-secondary text-xs">
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+
   const dd_base_openai_play = `<span style="background-color: green;">Data format:</span>
            <SELECT style="all:revert;" id="code_type" >
                  <OPTION id="none" selected></OPTION>
@@ -89,7 +103,7 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
 
-  const dropDown_openai = `<div class="flex items-center gap-2 ml-auto" style="height=24px;"> ${dd_base} </div>`;
+  const dropDown_openai = `<div class="flex items-center gap-2" style="height=24px;"> ${dd_base_openai} </div>`;
 
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base} </div>`;
@@ -454,7 +468,7 @@
 
   function getChatID()
   {
-    if (location.host==='chat.openai.com')
+    if (location.host==='chat.openai.com' || location.host==='chatgpt.com')
       return 'ch_openai';
     else if (location.href.startsWith('https://platform.openai.com/playground'))
       return 'ch_openai_play';

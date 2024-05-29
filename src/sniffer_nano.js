@@ -377,7 +377,7 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
     {
       const chats = { 
              openai: { menu:'div#__next main pre select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
+                       sel: {parentNode:4}, 
                        code:'code'
                      }, 
 
