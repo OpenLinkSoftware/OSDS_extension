@@ -787,7 +787,7 @@ class Social {
   {
     let rc = null;
     try {
-      if (loc.origin === 'https://twitter.com') 
+      if (loc.origin === 'https://twitter.com' || loc.origin === 'https://x.com') 
         rc = this.scan_twitter(loc);
       else if (loc.origin === 'https://www.linkedin.com')
         rc = this.scan_linkedin(loc);
@@ -920,7 +920,7 @@ class Social {
   {
     let lst = [];
     for(const v of document.body.childNodes) {
-      if (v.nodeName !== 'SCRIPT' && v.nodeName !== 'STYLE')
+      if (v.nodeName !== 'SCRIPT' && v.nodeName !== 'NOSCRIPT' && v.nodeName !== 'STYLE')
         lst.push(v.innerText);
     }
     return lst.join('');
