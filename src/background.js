@@ -568,25 +568,31 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
 
 
 ////////// Context Menu
-
 if (Browser.is_ff || Browser.is_chrome) {
   try {
     Browser.api.contextMenus.create(
-        {"title": "Super Links", 
-         "contexts":["page"],
-         "onclick": actionSuperLinks});
+        {title: "Super Links", contexts:["page"], id: "mn-superlinks"});
 
     Browser.api.contextMenus.create(
-        {"title": "Ask ChatGPT", 
-         "contexts":["selection"],
-         "onclick": g_chat.askChatGPT_selection});
+        {title: "Ask ChatGPT", contexts:["selection"], id: "mn-askLLM-sel"});
 
     Browser.api.contextMenus.create(
-        {"title": "Ask ChatGPT for Page Content", 
-         "contexts":["page"],
-         "onclick": g_chat.askChatGPT_page_content});
+        {title: "Ask ChatGPT for Page Content", contexts:["page"], id: "mn-askLLM-page"});
 
-         
+    Browser.api.contextMenus.onClicked.addListener((info, tab) => {
+      switch (info.menuItemId) {
+        case "mn-superlinks":
+          actionSuperLinks(info, tab);
+          break;
+        case "mn-askLLM-sel":
+          g_chat.askChatGPT_selection(info, tab)
+          break;
+        case "mn-askLLM-page":
+          g_chat.askChatGPT_page_content(info, tab)
+          break;
+      }
+    });
+
   } catch(e) {
     console.log(e);
   }
