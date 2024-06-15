@@ -705,7 +705,7 @@ async function handle_docData(data, is_data_exists, tab_index)
       }
     }
 
-    Browser.api.tabs.executeScript(g_tabId, {file:"frame_text.js", allFrames:true}, frames_data);
+    Browser.api.tabs.executeScript(g_tabId, {file:"frame_text.js", allFrames:true, runAt: 'document_start'}, frames_data);
 
   } catch(e) {
     console.log("OSDS: onMsg="+e);

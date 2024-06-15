@@ -213,7 +213,7 @@ class ChatService {
 
     function scan_frames()
     {
-      Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true}, handle_frames);
+      Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true, runAt: 'document_start'}, handle_frames);
     }
 
     function handle_resp(resp)
