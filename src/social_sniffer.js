@@ -535,63 +535,6 @@ class Social {
   }
 
 
-  scan_reddit_01(loc) 
-  {
-    let page_content = []; 
-    const base = loc.href
-
-    // === for  /comments/  =====
-    const title = document.querySelector('shreddit-title')?.title
-    const auth_el = document.querySelector('shreddit-post')?.querySelector('faceplate-tracker[noun="user_profile"] a')
-    const auth = auth_el?.innerText
-    const auth_href = auth_el?.href;
-
-    const community_el = document.querySelector('shreddit-post').querySelector('faceplate-tracker[noun="community"] a')
-    const community = community_el?.innerText
-    const community_href = community_el?.href;
-
-    const post_text = document.querySelector('shreddit-post')?.querySelector('div[slot="text-body"]')?.innerText 
-    const post_imgs = document.querySelector('shreddit-post')?.querySelectorAll('img[role="presentation"]')
-    const post_video = document.querySelector('shreddit-post')?.querySelectorAll('video')
-
-    if (title)
-      page_content.push(`### ${title}`);
-    if (auth && auth_href)
-      page_content.push(`### Author ${auth}  ${auth_href}\n`);
-    if (community && community_href)
-      page_content.push(`### Community ${community}  ${community_href}\n`);
-    
-    if (post_text)
-      page_content.push(post_text)
-    if (post_imgs)
-      for(const img of post_imgs)
-        page_content.push(`![Image](${img.src})`);  
-    if (post_video)
-      for(const v of post_video)
-        page_content.push(`![Video](${v.src})`);  
-
-    const comm = document.querySelectorAll('shreddit-comment')
-    if (comm)
-      for(const c of comm)
-      {
-        const permalink = c.permalink
-        const ts = c.querySelector('time')?.datetime
-        const auth_list = c.querySelectorAll('faceplate-tracker[noun="comment_author"] a')
-        const comm_list = c.querySelectorAll('div[id$=content] p')
-        for(let i=0; i < auth_list.length; i++) 
-        {
-          page_content.push(`#### ${auth_list[i].innerText}  ${auth_list[i].href}`);
-          page_content.push(`     ${comm_list[i]}`);
-        }
-      }
-
-    if (page_content.length> 0)
-      return page_content.join('\n');
-    else
-      return null;
-  }
-
-
   scan_reddit_1(loc) 
   {
     let page_content = []; 

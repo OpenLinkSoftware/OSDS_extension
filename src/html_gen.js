@@ -30,6 +30,8 @@ class HTML_Gen {
     this.docURI = _docURI;
     this.bnode_types = bnode_types || {};
     this.test_esc = /[!'()*&?#$:@=;+.\/]/;
+    this.reg_audio = /\.(mp3|m4a|flac|wav|wma|aac|aiff|ogg)$/;
+    this.reg_video = /\.(mp4|mov|wmv|avi|flv|mkv)$/;
     this.reg_img = /\.(jpg|jpeg|png|gif|svg|webp|tiff)$/;
     this.reg_img_data = /^data:image\/(png|gif|jpg|jpeg|webp|tiff)/;
     this.subst_list = {
@@ -353,20 +355,27 @@ class HTML_Gen {
         const s_href = (new URL(s_val)).href;
         const s_path = (new URL(s_val)).pathname;
 
-        if ( this.reg_img.test(s_path)) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_href}" title="${s_href}"><img src="${s_href}" style="max-width: ${width}px;" /></a>`;
-        } 
-        if (prop && (prop ==='http://schema.org/image' || prop ==='https://schema.org/image')) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_href}" title="${s_href}"><img src="${s_href}" style="max-width: ${width}px;" /></a>`;
-        } 
-        return `<a ${sid} href="${s_href}"> ${this.decodeURI(s_href)} </a>`;
+        if (this.reg_img.test(s_path) 
+           || (prop && (prop ==='http://schema.org/image' || prop ==='https://schema.org/image')))
+        {
+          return this.gen_img_link(sid, s_href, is_key);
+        }
+        else if (this.reg_video.test(s_path) 
+           || (prop && (prop ==='http://schema.org/video' || prop ==='https://schema.org/video')))
+        {
+          return this.gen_video_link(sid, s_href, is_key);
+        }
+        else if (this.reg_audio.test(s_path) 
+           || (prop && (prop ==='http://schema.org/audio' || prop ==='https://schema.org/audio')))
+        {
+          return this.gen_audio_link(sid, s_href, is_key);
+        }
+        else
+          return `<a ${sid} href="${s_href}"> ${this.decodeURI(s_href)} </a>`;
       } 
       else if (this.reg_img_data.test(s_val)) 
-      {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
+      { 
+          return this.gen_img_link(sid, s_val, is_key);
       }
       else if ( s_val.match(/^mailto:/) ) 
       {
@@ -379,6 +388,23 @@ class HTML_Gen {
       return this.pre(s_val);
   }
 
+  gen_img_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    return `<a ${sid} href="${href}" title="${href}"><img src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
+
+  gen_video_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    return `<a ${sid} href="${href}" title="${href}"><video controls crossorigin src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
+
+  gen_audio_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    return `<a ${sid} href="${href}" title="${href}"><audio controls preload="none" crossorigin src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
 
   pref_link(val, pref, sid) 
   {
