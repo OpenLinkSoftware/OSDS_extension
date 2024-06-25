@@ -370,6 +370,14 @@ class HTML_Gen {
         {
           return this.gen_audio_link(sid, s_href, is_key);
         }
+        else if ((prop && (prop ==='http://schema.org/embedUrl' || prop ==='https://schema.org/embedUrl')) 
+                 && (s_href.startsWith('https://youtu.be/') ||
+                     s_href.startsWith('https://www.youtube.com/watch') ||
+                     s_href.startsWith('https://www.youtube.com/embed/')
+                    ))
+        {
+          return this.gen_embed_link(sid, s_href, is_key);
+        }
         else
           return `<a ${sid} href="${s_href}"> ${this.decodeURI(s_href)} </a>`;
       } 
@@ -404,6 +412,17 @@ class HTML_Gen {
   {
     const width = (is_key!==undefined && is_key)?200:300;
     return `<a ${sid} href="${href}" title="${href}"><audio controls preload="none" crossorigin src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
+
+  gen_embed_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    if (href.startsWith('https://www.youtube.com/watch?v='))
+      href = href.replace('https://www.youtube.com/watch?v=','https://www.youtube.com/embed/')
+    else if (href.startsWith('https://youtu.be'))
+      href = href.replace('https://youtu.be/','https://www.youtube.com/embed/')
+
+    return `<iframe width="360" height="200" src="${href}" title="YouTube video player" frameborder="0"; autoplay; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
   }
 
   pref_link(val, pref, sid) 
