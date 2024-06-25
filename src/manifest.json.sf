@@ -3,7 +3,7 @@
   "short_name": "OSD Sniffer",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "3.3.11",
+  "version": "3.3.12",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
@@ -55,5 +55,5 @@
   ],
 
   "content_security_policy": 
-    "script-src 'self' 'unsafe-eval' safari-web-extension://lib; object-src 'self' safari-web-extension://lib; style-src 'self' 'unsafe-inline' safari-web-extension://lib https://solid.openlinksw.com; media-src 'self' blob: https://* 'unsafe-inline' safari-web-extension://lib ;"
+    "script-src 'self' 'unsafe-eval' safari-web-extension://lib; object-src 'self' safari-web-extension://lib; style-src 'self' 'unsafe-inline' safari-web-extension://lib https://solid.openlinksw.com; media-src 'self' blob: https://* http://* 'unsafe-inline' safari-web-extension://lib ;"
 }

@@ -3,7 +3,7 @@
   "short_name": "osds",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "3.3.11",
+  "version": "3.3.12",
   "manifest_version": 2,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
@@ -54,5 +54,5 @@
     "contextMenus"
   ],
   "content_security_policy": 
-    "script-src 'self' 'unsafe-eval' moz-extension://lib; object-src 'self' moz-extension://lib; style-src 'self' 'unsafe-inline' moz-extension://lib https://solid.openlinksw.com; media-src 'self' blob: https://* 'unsafe-inline' moz-extension://lib ;"
+    "script-src 'self' 'unsafe-eval' moz-extension://lib; object-src 'self' moz-extension://lib; style-src 'self' 'unsafe-inline' moz-extension://lib https://solid.openlinksw.com; media-src 'self' blob: https://* http://* 'unsafe-inline' moz-extension://lib ;"
 }
