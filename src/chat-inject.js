@@ -108,7 +108,7 @@
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base} </div>`;
 
-  const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-right:70px; height=24px;" class="text-text-500">
+  const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-left:200px; height=24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
 
   const dropDown_gemini = `<div style="display:flex; flex-direction:row; height=24px;">
@@ -171,13 +171,14 @@
     for(const v of lst) 
     {
       const hdr = v.querySelector('div')
-      const dd_el = hdr.querySelector('#code_type');
+      const dd_el = v.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const btn_copy = hdr.querySelector('button')
-      if (btn_copy)
-      	hdr.insertBefore(DOM.htmlToElements(dropDown_claude)[0], btn_copy);
+      if (v.childNodes.length > 1) {
+        v.childNodes[0].append(DOM.htmlToElements(dropDown_claude)[0]);
+        v.childNodes[0].style['display']='flex';
+      }
     }
   }
 
