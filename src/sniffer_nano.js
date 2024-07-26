@@ -394,6 +394,10 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
+             claude1: { menu:'div > select#code_type option:checked', 
+                       sel: { parentNode:4 }, 
+                       code:'code'
+                     }, 
              perplexity: { menu:'div#__next main pre select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'

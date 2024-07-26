@@ -118,6 +118,7 @@
             }
             else if (location.href.startsWith('https://claude.ai/chat/')) {
               nano = Nano.sniff_nanotation_chat(nano, 'claude');
+              nano = Nano.sniff_nanotation_chat(nano, 'claude1');
             }
             else if (location.href.startsWith('https://www.perplexity.ai')) {
               nano = Nano.sniff_nanotation_chat(nano, 'perplexity');

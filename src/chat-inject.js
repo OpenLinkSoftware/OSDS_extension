@@ -167,7 +167,7 @@
 
   function scan_code_claude()
   {
-    const lst = document.querySelectorAll('pre > div');
+    let lst = document.querySelectorAll('pre > div');
     for(const v of lst) 
     {
       const hdr = v.querySelector('div')
@@ -178,6 +178,20 @@
       if (v.childNodes.length > 1) {
         v.childNodes[0].append(DOM.htmlToElements(dropDown_claude)[0]);
         v.childNodes[0].style['display']='flex';
+      }
+    }
+
+    lst = document.querySelectorAll('div > code');
+    for(const v of lst) 
+    {
+      const blk = v.parentNode.parentNode.parentNode;
+      const child = blk.childNodes;
+      if (child.length >= 3) {
+        const title = child[0];
+        const dd_el = title.querySelector('#code_type');
+        if (dd_el)
+          continue;
+        title.childNodes[0].insertAdjacentHTML('afterend', dropDown_claude);
       }
     }
   }
