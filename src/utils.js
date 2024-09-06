@@ -458,3 +458,28 @@ function debounce(callback, wait) {
     };
 }
 
+async function setRule_OnBehalfOf(chk, UID) {
+  if (chk==="1" && UID && UID.length > 1) {
+      await Browser.api.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: [2],
+          addRules: [{
+            "id": 2,
+            "priority": 1,
+            "action": {
+              "type": "modifyHeaders",
+              "requestHeaders": [
+                { "header": "On-Behalf-Of", "operation": "set", "value": UID }
+              ]
+            },
+            "condition": {
+              "resourceTypes": ["main_frame", "sub_frame"]
+            }
+          }]
+      });
+  }
+  else {
+      await Browser.api.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [2]
+      });  
+  }
+}

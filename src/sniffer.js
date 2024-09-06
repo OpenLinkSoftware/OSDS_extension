@@ -138,6 +138,9 @@
             else if (location.href.startsWith('https://www.meta.ai')) {
               nano = Nano.sniff_nanotation_chat(nano, 'meta');
             }
+            else if (location.href.startsWith('https://openperplex.com')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'openperplex');
+            }
 
         } catch (e) {
             console.log("OSDS:" + e);

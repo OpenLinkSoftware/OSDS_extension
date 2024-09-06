@@ -147,6 +147,22 @@ class Settings {
     "prompt_in_new_window": true
   },
 
+  "assist": {
+    "name": "OpenLink Personal Assistant", 
+    "url": "https://linkeddata.uriburner.com/assist",
+    "location.startsWith": "https://linkeddata.uriburner.com/assist",
+    "prompt.selector": "textarea.message_input",
+    "prompt_in_new_window": true
+  },
+
+  "assist-mental": {
+    "name": "OpenLink Personal Assistant-Metal", 
+    "url": "https://linkeddata.uriburner.com/assist-metal",
+    "location.startsWith": "https://linkeddata.uriburner.com/assist-metal",
+    "prompt.selector": "textarea#user-input",
+    "prompt_in_new_window": false
+  },
+
   "opal_qa": {
     "name": "OPAL Chat (net-qa)", 
     "url": "https://netid-qa.openlinksw.com:8443/chat",

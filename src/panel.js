@@ -63,6 +63,8 @@ function showPopup(tabId)
     if (Browser.is_ff) {
       Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data' })
         .then(response => {
+          if (Browser.api.runtime.lastError)
+            return;
           if (!response || !response.ping) {
             hideDataTabs();
             selectTab('cons');
@@ -77,6 +79,8 @@ function showPopup(tabId)
     } else {
       Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data'},
         function(response) { 
+          if (Browser.api.runtime.lastError)
+            return;
           if (!response || !response.ping) {
             hideDataTabs();
             selectTab('cons');
@@ -213,6 +217,10 @@ async function loadPopup()
   if (chk_all && chk_all!=="1") {
     Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
        function(resp) {
+            if (Browser.api.runtime.lastError) {
+              showPopup(tabId);
+              return;
+            }
             if (resp && resp.opened) {
                close();
             }
@@ -698,14 +706,27 @@ async function handle_docData(data, is_data_exists, tab_index)
       }
       else
       {
-        hideDataTabs();
+        hideDatsaTabs();
 
         selectTab('cons');
         g_RestCons.show();
       }
     }
 
-    Browser.api.tabs.executeScript(g_tabId, {file:"frame_text.js", allFrames:true, runAt: 'document_start'}, frames_data);
+    if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+      let frames = await Browser.api.scripting.executeScript({ 
+                      target: {tabId: g_tabId, allFrames:true},
+                      injectImmediately: true,  
+//                      runAt: 'document_start',
+                      files: ['frame_text.js']
+                    });
+      let lst = [];
+      for(var v of frames)
+        lst.push(v.result);
+      frames_data(lst);
+    }
+    else
+      Browser.api.tabs.executeScript(g_tabId, {file:"frame_text.js", allFrames:true, runAt: 'document_start'}, frames_data);
 
   } catch(e) {
     console.log("OSDS: onMsg="+e);
@@ -1032,9 +1053,10 @@ async function save_data(action, fname, fmt, callback)
   {
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
     var sparql_graph = $('#save-sparql-graph').val().trim();
+    var data = [];
     var exec_cmd = { cmd:'actionSPARQL_Upload', 
                      baseURI: gData.baseURL,
-                     data:[], 
+                     qdata:[], 
                      sparql_ep:sparqlendpoint,
                      sparql_graph, 
                      sparql_check:null
@@ -1051,8 +1073,23 @@ async function save_data(action, fname, fmt, callback)
       if (DOM.qSel(`#${v}-chk`).checked) {
         var dt = await prepare_data(true, v, fmt);
         if (dt)
-          exec_cmd.data.push(dt);
+          data.push(dt);
       }
+    }
+
+    const handler = new Convert_Turtle();
+    try {
+      for(var v of data) {
+        if (v.error && !v.txt)
+          showInfo('Unable prepare data:' +v.error)
+        var ttl_data = await handler.prepare_query(v.txt, exec_cmd.baseURI);
+        var query = ttl_data.map(item => ({prefixes: item.prefixes, triples: item.triples}));;
+        exec_cmd.qdata = exec_cmd.qdata.concat(query);
+      }
+    } catch(ex) {
+      console.log(ex);
+      showInfo(ex);
+      return;
     }
 
     if (document.querySelector('#save-sparql-check-res').checked) {
@@ -1217,7 +1254,8 @@ function showInfo(msg, href)
 
   $('#alert-dlg').dialog({
     resizable: true,
-    height:180,
+    height:250,
+    width:450,
     modal: true,
     buttons: {
       "OK": function() {

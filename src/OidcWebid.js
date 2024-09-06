@@ -98,39 +98,22 @@ class OidcWeb {
      const height = 500;
      const alogin = autologin ? '&autologin=1' : ''
 
-
-     const _url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
+     const url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
                          : this.login_url;
 
-     if (Browser.is_ff) {
-       const left = window.screenX + (window.innerWidth - width) / 2;
-       const top = window.screenY + (window.innerHeight - height) / 2;
-
-       Browser.api.windows.create({
-         url: _url,
+     if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+       let args = {
+         url,
          type: 'popup',
          height,
          width,
-         top,
-         left,
-         allowScriptsToClose : true,
          focused: true
-       });
-     }
-     else {
-       this.popupCenter({url: _url, title:"Login", w:width, h:height});
-     }
-  }
-
-  login2(idp_url) 
-  {
-     const width = 700;
-     const height = 500;
-
-//     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
-     const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
-
-     if (Browser.is_ff) {
+       }
+       if (Browser.is_ff_v3)
+         args['allowScriptsToClose'] = true;
+       Browser.api.windows.create(args);
+     } 
+     else if (Browser.is_ff) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
@@ -144,8 +127,47 @@ class OidcWeb {
          allowScriptsToClose : true,
          focused: true
        });
+     }
+     else {
+       this.popupCenter({url, title:"Login", w:width, h:height});
+     }
+  }
 
-     } else {
+  login2(idp_url) 
+  {
+     const width = 700;
+     const height = 500;
+
+     const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
+
+     if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+       let args = {
+         url,
+         type: 'popup',
+         height,
+         width,
+         focused: true
+       }
+       if (Browser.is_ff_v3)
+         args['allowScriptsToClose'] = true;
+       Browser.api.windows.create(args);
+     } 
+     else if (Browser.is_ff) {
+       const left = window.screenX + (window.innerWidth - width) / 2;
+       const top = window.screenY + (window.innerHeight - height) / 2;
+
+       Browser.api.windows.create({
+         url,
+         type: 'popup',
+         height,
+         width,
+         top,
+         left,
+         allowScriptsToClose : true,
+         focused: true
+       });
+     } 
+     else {
        this.popupCenter({url, title:"Login", w:width, h:height});
      }
   }

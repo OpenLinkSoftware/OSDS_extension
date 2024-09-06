@@ -53,7 +53,7 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
 
-  const dd_base_openai_play = `<span style="background-color: green;">Data format:</span>
+  const dd_base_openai_play = `<span style="background-color: lightgreen;">Data format:</span>
            <SELECT style="all:revert;" id="code_type" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
@@ -78,7 +78,7 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
-  const dd_base_pplabs = `<span style="background-color: green;">Data format:</span>
+  const dd_base_pplabs = `<span style="background-color: lightgreen;">Data format:</span>
            <SELECT id="code_type" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
@@ -126,6 +126,8 @@
   const dropDown_openai_play = `<div style="display:flex; flex-direction:row; margin-left:200px; height=24px;align-items:center">
            ${dd_base_openai_play} </div>`;
 
+  const dropDown_openperplex = `<div style="display:flex; flex-direction:row; justify-content:center; align-items:center">
+           ${dd_base_openai_play} </div>`;
 
 
   function scan_code_openai()
@@ -134,7 +136,9 @@
     for(const v of lst) 
     {
       let i=0;
-      const title = v.children[0].children[0];
+      const title = v?.children[0]?.children[0];
+      if (!title)
+        continue;
       let btn_copy = title.querySelector('button');
       while(btn_copy.parentNode!=title && i < 10) {
         btn_copy = btn_copy.parentNode
@@ -303,6 +307,26 @@
     }
   }
 
+  function scan_code_openperplex()
+  {
+    const lst = document.querySelectorAll('div#app pre');
+    for(const v of lst) 
+    {
+      const code = v.querySelector('code');
+      if (!code)
+        continue;
+
+      const block = v.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      block.insertBefore(DOM.htmlToElements(dropDown_openperplex)[0], v);
+    }
+  }
+
+
+  
   function scan_code_huggingface()
   {
     const lst = document.querySelectorAll('pre');
@@ -384,8 +408,9 @@
       
       if (g_chat_id === 'ch_openai') {
         scan_code_openai();
-        g_top = document.querySelector('div#__next');
-        use_mutation_observer = true;
+//        g_top = document.querySelector('div#__next');
+//        use_mutation_observer = true;
+        setInterval(scan_code_openai, 5*1000);
       }
       else if (g_chat_id === 'ch_openai_play') {
         scan_code_openai_play();
@@ -438,7 +463,12 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_meta, 3*1000);
       }
-      
+      else if (g_chat_id === 'ch_openperplex') {
+        scan_code_mistral();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_openperplex, 3*1000);
+      }
+
 
       if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
@@ -505,6 +535,8 @@
       return 'ch_you';
     else if (location.href.startsWith('https://www.meta.ai'))
       return 'ch_meta';
+    else if (location.href.startsWith('https://openperplex.com'))
+      return 'ch_openperplex';
     else
      return null;
   }
@@ -542,7 +574,7 @@
        || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini'
        || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
        || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface'
-       || g_chat_id === 'ch_you' || g_chat_id === 'ch_meta')
+       || g_chat_id === 'ch_you' || g_chat_id === 'ch_meta' || g_chat_id == 'ch_openperplex')
       handle_chat_code();
 
     await init_prompt_inject();

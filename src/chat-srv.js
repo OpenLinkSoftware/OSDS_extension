@@ -138,18 +138,17 @@ class ChatService {
   {
     if (this.prompt_id && this.prompt_url) {
       // Open GPT window
-      if (Browser.is_ff)
-        Browser.api.tabs.create({url:this.prompt_url});
-      else
-        window.open(this.prompt_url);
+      Browser.createTab(this.prompt_url);
     }
   }
 
 
-  askChatGPT(ask, tab, mode) 
+  async askChatGPT(ask, tab, mode) 
   {
     const self = this;
     ask["mode"] = mode;
+
+    await this.load_settings();
 
     if (this.chatTabSrv && this.chatTabSrv !== this.prompt_id) {
       this.chatTabSrv = null;
@@ -158,6 +157,9 @@ class ChatService {
 
     function handle_resp(resp)
     {
+      if (Browser.api.runtime.lastError)
+        return;
+
       if (resp && resp.ping === 1 && resp.chat_id === self.prompt_id) {
 
         // GPT window opened
@@ -211,18 +213,32 @@ class ChatService {
         self.askChatGPT({text:page_text, url:info.pageUrl}, tab, 'content');
     }
 
-    function scan_frames()
+    async function scan_frames()
     {
-      Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true, runAt: 'document_start'}, handle_frames);
+      if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+        let frames = await Browser.api.scripting.executeScript({ 
+                      target: {tabId: g_tabId, allFrames:true},
+                      injectImmediately: true,  
+                      files: ['frame_scan.js']
+                    });
+        let lst = [];
+        for(var v of frames)
+          lst.push(v.result);
+        handle_frames(lst);
+      }
+      else
+        Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true, runAt: 'document_start'}, handle_frames);
     }
 
-    function handle_resp(resp)
+    async function handle_resp(resp)
     {
+      if (Browser.api.runtime.lastError)
+        return;
       // content received send it to ChatService
       if (resp && resp.page_content) {
         if (resp.dom && resp.dom===1 && resp.frames>0) {
           page_text = resp.page_content;
-          scan_frames();
+          await scan_frames();
         }
         else
           self.askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
