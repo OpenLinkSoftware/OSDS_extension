@@ -40,6 +40,8 @@ const GVars = {
     clear: async function() {
         const settings = new Settings();
         await settings.setValue('g.Pages', '{}');
+        await settings.setValue('g.ChatTab', '');
+        await settings.setValue('g.ChatTabAsk', '');
     },
     updatePage: async function(tabId, val) {
         const settings = new Settings();
