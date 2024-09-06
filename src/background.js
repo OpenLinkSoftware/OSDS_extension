@@ -23,9 +23,7 @@
 (function () {
 
 var page_panel_url = Browser.api.runtime.getURL("page_panel.html");
-var g_chat = new ChatService();
 
-  g_chat.load_settings();
 
 async function handle_super_links_chatgpt(sender, chatgpt_req, event)
 {
@@ -135,17 +133,23 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 
 
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
     if (request.cmd === "gpt_window_reg")  {  //receive that chat is opened
-      g_chat.reg_chat_window(sender.tab, request.chat_id)
+      const chat = new ChatService();
+      await chat.load_settings();
+      chat.reg_chat_window(sender.tab, request.chat_id)
     }
     else if (request.cmd === "gpt_window_unreg")  {  //receive that chat is opened
-      g_chat.unreg_chat_window(sender.tab)
+      const chat = new ChatService();
+      await chat.load_settings();
+      chat.unreg_chat_window(sender.tab)
     }
     else if (request.cmd === "gpt_page_content" && request.tabId)  { // request from popup panel
-      g_chat.askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
+      const chat = new ChatService();
+      await chat.load_settings();
+      chat.askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
     }
   } catch(e) {
     console.log("OSDS: onMsg="+e);
@@ -170,16 +174,24 @@ if (Browser.is_ff || Browser.is_chrome) {
         {title: "Ask ChatGPT for Page Content", contexts:["page"], id: "mn-askLLM-page"});
     });
 
-    Browser.api.contextMenus.onClicked.addListener((info, tab) => {
+    Browser.api.contextMenus.onClicked.addListener(async (info, tab) => {
       switch (info.menuItemId) {
         case "mn-superlinks":
           actionSuperLinks(info, tab);
           break;
         case "mn-askLLM-sel":
-          g_chat.askChatGPT_selection(info, tab)
+          {
+            const chat = new ChatService();
+            await chat.load_settings();
+            chat.askChatGPT_selection(info, tab)
+          }
           break;
         case "mn-askLLM-page":
-          g_chat.askChatGPT_page_content(info, tab)
+          {
+            const chat = new ChatService();
+            await chat.load_settings();
+            chat.askChatGPT_page_content(info, tab)
+          }
           break;
       }
     });
@@ -234,12 +246,10 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
   try {
     if (request.cmd === "reset_uploads")
     {
-console.log("reset_uploads")
       await Actions.clear();
     }
     else if (request.cmd === "close_oidc_web")
     {
-console.log("close_oidc_web")
       var curWin = await getCurWin();
       var curTab = await getCurTab();
       if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
@@ -250,7 +260,6 @@ console.log("close_oidc_web")
     }
     else if (request.cmd === "close_oidc_web_slogin")
     {
-console.log("close_oidc_web")
       var curWin = await getCurWin();
       var curTab = await getCurTab();
       if (request.url && curTab.length > 0 && curTab[0].windowId === curWin.id
@@ -259,7 +268,6 @@ console.log("close_oidc_web")
       }
 
       if (await Actions.useSuperLinks()) {
-console.log("== continue SuperLinks")
         var slinks = new SuperLinks();
         await slinks.load_state();
         if (slinks && slinks.state) {
@@ -272,7 +280,6 @@ console.log("== continue SuperLinks")
         }
       }
       else if (await Actions.useSPARQL_Uploads()) {
-console.log("== continue SPARQL_Upload")
         var sparql = new SPARQL_Upload();
         await sparql.load_state();
         if (sparql && sparql.state) {
@@ -287,7 +294,6 @@ console.log("== continue SPARQL_Upload")
     }
     else if (request.cmd === "osds_popup_retry")
     {
-console.log("osds_popup_retry")
       if (await Actions.useSPARQL_Uploads()) {
         var sparql = new SPARQL_Upload();
         await sparql.load_state();
@@ -302,7 +308,6 @@ console.log("osds_popup_retry")
     }
     else if (request.cmd === "osds_popup_cancel")
     {
-console.log("osds_popup_cancel")
       if (await Actions.useSPARQL_Uploads()) {
         await Actions.clear();
       }

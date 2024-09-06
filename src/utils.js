@@ -483,3 +483,12 @@ async function setRule_OnBehalfOf(chk, UID) {
       });  
   }
 }
+
+async function waitUntil(promise) {
+  const keepAlive = setInterval(chrome.runtime.getPlatformInfo, 25 * 1000);
+  try {
+    return await promise;
+  } finally {
+    clearInterval(keepAlive);
+  }
+}

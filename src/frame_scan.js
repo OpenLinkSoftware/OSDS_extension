@@ -28,8 +28,13 @@
   {
     let lst = [];
     for(const v of document.body.childNodes) {
-      if (v.nodeName !== 'SCRIPT' && v.nodeName !== 'STYLE')
+      if (v.nodeName !== 'SCRIPT' 
+          && v.nodeName !== 'STYLE' 
+          && v.nodeName !== 'NOSCRIPT' 
+          && v.nodeName !== 'IFRAME') 
+      {
         lst.push(v.innerText);
+      }
     }
     return lst.join('');
   }
