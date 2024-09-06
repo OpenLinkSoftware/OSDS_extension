@@ -199,13 +199,13 @@ class ChatService {
         }
         else {
           self.waited_ask = ask;
-          await this.saveState();
+          await self.saveState();
           self.openChatWin();
         }
       }
       else {
         self.waited_ask = ask;
-        await this.saveState();
+        await self.saveState();
         self.openChatWin();
       }
     }

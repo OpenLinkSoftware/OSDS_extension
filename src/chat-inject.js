@@ -585,7 +585,9 @@
       window.onbeforeunload = function () 
       {
         // unregister chat in background
-        Browser.api.runtime.sendMessage({cmd:"gpt_window_unreg"});
+        try {
+          Browser.api.runtime.sendMessage({cmd:"gpt_window_unreg"});
+        } catch(_) {}
 
         if (gMutationObserver)
           gMutationObserver.disconnect()
