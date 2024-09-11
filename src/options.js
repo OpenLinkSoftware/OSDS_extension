@@ -369,7 +369,7 @@ async function loadPref()
 
     var chk_json = await gPref.getValue("ext.osds.handle_json");
     DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
-
+/**
     if (Browser.is_safari) {
       DOM.iSel("chk_try_handle_all").checked = false;
       DOM.iSel("chk_try_handle_all").disabled = true;
@@ -378,7 +378,9 @@ async function loadPref()
       DOM.iSel("chk_try_handle_csv").checked = true;
       DOM.iSel("chk_try_handle_json").checked = true;
     } 
-    else {
+    else 
+**/
+    {
       var chk_all = await gPref.getValue("ext.osds.handle_all");
       DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
 

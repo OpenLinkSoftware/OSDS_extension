@@ -62,7 +62,6 @@
 		85B1CC3927B70B1B0031698A /* options.html in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1B27B70B1B0031698A /* options.html */; };
 		85B1CC3A27B70B1B0031698A /* page_panel.html in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1C27B70B1B0031698A /* page_panel.html */; };
 		85B1CC3B27B70B1B0031698A /* utils.js in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1D27B70B1B0031698A /* utils.js */; };
-		85B1CC3C27B70B1B0031698A /* background.html in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1E27B70B1B0031698A /* background.html */; };
 		85B1CC3D27B70B1B0031698A /* browser.js in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1F27B70B1B0031698A /* browser.js */; };
 		85B1CC3E27B70B1B0031698A /* CREDITS in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC2027B70B1B0031698A /* CREDITS */; };
 		85B1CC3F27B70B1B0031698A /* settings.js in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC2127B70B1B0031698A /* settings.js */; };
@@ -91,7 +90,6 @@
 		85B1CC5727B70B1B0031698A /* options.html in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1B27B70B1B0031698A /* options.html */; };
 		85B1CC5827B70B1B0031698A /* page_panel.html in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1C27B70B1B0031698A /* page_panel.html */; };
 		85B1CC5927B70B1B0031698A /* utils.js in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1D27B70B1B0031698A /* utils.js */; };
-		85B1CC5A27B70B1B0031698A /* background.html in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1E27B70B1B0031698A /* background.html */; };
 		85B1CC5B27B70B1B0031698A /* browser.js in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC1F27B70B1B0031698A /* browser.js */; };
 		85B1CC5C27B70B1B0031698A /* CREDITS in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC2027B70B1B0031698A /* CREDITS */; };
 		85B1CC5D27B70B1B0031698A /* settings.js in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CC2127B70B1B0031698A /* settings.js */; };
@@ -205,7 +203,6 @@
 		85B1CC1B27B70B1B0031698A /* options.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = options.html; path = Resources/options.html; sourceTree = "<group>"; };
 		85B1CC1C27B70B1B0031698A /* page_panel.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = page_panel.html; path = Resources/page_panel.html; sourceTree = "<group>"; };
 		85B1CC1D27B70B1B0031698A /* utils.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = utils.js; path = Resources/utils.js; sourceTree = "<group>"; };
-		85B1CC1E27B70B1B0031698A /* background.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = background.html; path = Resources/background.html; sourceTree = "<group>"; };
 		85B1CC1F27B70B1B0031698A /* browser.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = browser.js; path = Resources/browser.js; sourceTree = "<group>"; };
 		85B1CC2027B70B1B0031698A /* CREDITS */ = {isa = PBXFileReference; lastKnownFileType = text; name = CREDITS; path = Resources/CREDITS; sourceTree = "<group>"; };
 		85B1CC2127B70B1B0031698A /* settings.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = settings.js; path = Resources/settings.js; sourceTree = "<group>"; };
@@ -382,7 +379,6 @@
 				85B1CC1B27B70B1B0031698A /* options.html */,
 				85B1CC1C27B70B1B0031698A /* page_panel.html */,
 				85B1CC1D27B70B1B0031698A /* utils.js */,
-				85B1CC1E27B70B1B0031698A /* background.html */,
 				85B1CC1F27B70B1B0031698A /* browser.js */,
 				85B1CC2027B70B1B0031698A /* CREDITS */,
 				85B1CC2127B70B1B0031698A /* settings.js */,
@@ -563,7 +559,6 @@
 				85B1CC5727B70B1B0031698A /* options.html in Resources */,
 				85B27E3F2BC0976B0085F466 /* frame_scan.js in Resources */,
 				85B1CC5C27B70B1B0031698A /* CREDITS in Resources */,
-				85B1CC5A27B70B1B0031698A /* background.html in Resources */,
 				85B1CC4727B70B1B0031698A /* images in Resources */,
 				857D79752C8FA5440067699F /* background_web.js in Resources */,
 				85B1CC5D27B70B1B0031698A /* settings.js in Resources */,
@@ -609,7 +604,6 @@
 				85B1CC3927B70B1B0031698A /* options.html in Resources */,
 				85B27E402BC0976B0085F466 /* frame_scan.js in Resources */,
 				85B1CC3E27B70B1B0031698A /* CREDITS in Resources */,
-				85B1CC3C27B70B1B0031698A /* background.html in Resources */,
 				85B1CC2927B70B1B0031698A /* images in Resources */,
 				857D79762C8FA5440067699F /* background_web.js in Resources */,
 				85B1CC3F27B70B1B0031698A /* settings.js in Resources */,

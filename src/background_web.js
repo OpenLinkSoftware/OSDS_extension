@@ -64,13 +64,14 @@ var chk_setting = {
     var ext = "";
     var path_name = (new URL(url)).pathname.toLowerCase();
 
-
+/***
     if (Browser.is_safari) {
       chk_all = "0";
       handle_csv = true;
       handle_json = true;
       handle_xml = true;
     }
+**/
 
     if (path_name.endsWith(".rdf")) {
       handle = true;
@@ -168,7 +169,7 @@ var chk_setting = {
   }
 
 
-  if ((Browser.is_ff && !Browser.is_ff_v3) || !Browser.is_safari) {
+  if (Browser.is_ff && !Browser.is_ff_v3 && !Browser.is_safari) {
     Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
           var chk = chk_setting['ext.osds.pref.user.chk'];
@@ -224,12 +225,14 @@ var chk_setting = {
     var content_type = null;
     var could_handle = false;
 
+/**
     if (Browser.is_safari) {
       chk_all = "0";
       handle_csv = true;
       handle_json = true;
       handle_xml = true;
     }
+**/
 
     if (headerContent) {
 
