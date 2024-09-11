@@ -11,6 +11,10 @@
 		850E492A2A5621BB00B26DA8 /* chat-inject.js in Resources */ = {isa = PBXBuildFile; fileRef = 850E49282A5621BB00B26DA8 /* chat-inject.js */; };
 		855CC5D92913179800F4F450 /* tabs.css in Resources */ = {isa = PBXBuildFile; fileRef = 855CC5D82913179800F4F450 /* tabs.css */; };
 		855CC5DA2913179800F4F450 /* tabs.css in Resources */ = {isa = PBXBuildFile; fileRef = 855CC5D82913179800F4F450 /* tabs.css */; };
+		857D79752C8FA5440067699F /* background_web.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D79742C8FA5440067699F /* background_web.js */; };
+		857D79762C8FA5440067699F /* background_web.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D79742C8FA5440067699F /* background_web.js */; };
+		857D797B2C8FCDBA0067699F /* service_worker_sf.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D797A2C8FCDB90067699F /* service_worker_sf.js */; };
+		857D797C2C8FCDBA0067699F /* service_worker_sf.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D797A2C8FCDB90067699F /* service_worker_sf.js */; };
 		85B1CBBA27B70B1A0031698A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B1CBB927B70B1A0031698A /* AppDelegate.swift */; };
 		85B1CBBC27B70B1A0031698A /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B1CBBB27B70B1A0031698A /* SceneDelegate.swift */; };
 		85B1CBBF27B70B1A0031698A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CBBD27B70B1A0031698A /* LaunchScreen.storyboard */; };
@@ -150,6 +154,8 @@
 /* Begin PBXFileReference section */
 		850E49282A5621BB00B26DA8 /* chat-inject.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = "chat-inject.js"; path = "Resources/chat-inject.js"; sourceTree = "<group>"; };
 		855CC5D82913179800F4F450 /* tabs.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = tabs.css; path = Resources/tabs.css; sourceTree = "<group>"; };
+		857D79742C8FA5440067699F /* background_web.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = background_web.js; path = Resources/background_web.js; sourceTree = "<group>"; };
+		857D797A2C8FCDB90067699F /* service_worker_sf.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = service_worker_sf.js; path = Resources/service_worker_sf.js; sourceTree = "<group>"; };
 		859E4F8A27E6A01900A84BB4 /* OSDS (macOS)Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "OSDS (macOS)Release.entitlements"; sourceTree = "<group>"; };
 		85B1CBAA27B70B180031698A /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = ../Base.lproj/Main.html; sourceTree = "<group>"; };
 		85B1CBAB27B70B180031698A /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
@@ -341,6 +347,8 @@
 		85B1CC0427B70B1B0031698A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				857D797A2C8FCDB90067699F /* service_worker_sf.js */,
+				857D79742C8FA5440067699F /* background_web.js */,
 				85B27E462BC097840085F466 /* social_sniffer.js */,
 				85B27E472BC097840085F466 /* super_links.js */,
 				85B27E432BC097780085F466 /* sniffer_nano.js */,
@@ -548,6 +556,7 @@
 				85B1CC5B27B70B1B0031698A /* browser.js in Resources */,
 				85B1CC4527B70B1B0031698A /* AUTHORS in Resources */,
 				85B1CC5627B70B1B0031698A /* sniffer.js in Resources */,
+				857D797B2C8FCDBA0067699F /* service_worker_sf.js in Resources */,
 				85B1CC5127B70B1B0031698A /* panel.html in Resources */,
 				85B1CC4227B70B1B0031698A /* html_gen.js in Resources */,
 				85B27E482BC097840085F466 /* social_sniffer.js in Resources */,
@@ -556,6 +565,7 @@
 				85B1CC5C27B70B1B0031698A /* CREDITS in Resources */,
 				85B1CC5A27B70B1B0031698A /* background.html in Resources */,
 				85B1CC4727B70B1B0031698A /* images in Resources */,
+				857D79752C8FA5440067699F /* background_web.js in Resources */,
 				85B1CC5D27B70B1B0031698A /* settings.js in Resources */,
 				85B1CC4C27B70B1B0031698A /* datablock.js in Resources */,
 				85B1CC5827B70B1B0031698A /* page_panel.html in Resources */,
@@ -592,6 +602,7 @@
 				85B1CC3D27B70B1B0031698A /* browser.js in Resources */,
 				85B1CC2727B70B1B0031698A /* AUTHORS in Resources */,
 				85B1CC3827B70B1B0031698A /* sniffer.js in Resources */,
+				857D797C2C8FCDBA0067699F /* service_worker_sf.js in Resources */,
 				85B1CC3327B70B1B0031698A /* panel.html in Resources */,
 				85B1CC2427B70B1B0031698A /* html_gen.js in Resources */,
 				85B27E492BC097840085F466 /* social_sniffer.js in Resources */,
@@ -600,6 +611,7 @@
 				85B1CC3E27B70B1B0031698A /* CREDITS in Resources */,
 				85B1CC3C27B70B1B0031698A /* background.html in Resources */,
 				85B1CC2927B70B1B0031698A /* images in Resources */,
+				857D79762C8FA5440067699F /* background_web.js in Resources */,
 				85B1CC3F27B70B1B0031698A /* settings.js in Resources */,
 				85B1CC2E27B70B1B0031698A /* datablock.js in Resources */,
 				85B1CC3A27B70B1B0031698A /* page_panel.html in Resources */,
@@ -964,7 +976,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "macOS (Extension)/OSDS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -977,7 +989,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.16;
+				MARKETING_VERSION = 1.17;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -996,7 +1008,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "macOS (Extension)/OSDS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1009,7 +1021,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.16;
+				MARKETING_VERSION = 1.17;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -1031,7 +1043,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "macOS (App)/OSDS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1045,7 +1057,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.16;
+				MARKETING_VERSION = 1.17;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -1068,7 +1080,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "OSDS (macOS)Release.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 28;
+				CURRENT_PROJECT_VERSION = 29;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1082,7 +1094,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.16;
+				MARKETING_VERSION = 1.17;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
