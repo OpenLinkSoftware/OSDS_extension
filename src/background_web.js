@@ -43,9 +43,6 @@ var chk_setting = {
 
     chk_setting['ext.osds.pref.user.chk'] = await setting.getValue('ext.osds.pref.user.chk');
     chk_setting['ext.osds.pref.user'] = await setting.getValue('ext.osds.pref.user');
-
-    const g_chat = new ChatService();
-    await g_chat.load_settings()
   }
 
   reload_settings();
@@ -152,55 +149,26 @@ var chk_setting = {
   }
 
 
-//??TODO Safari
   if (Browser.is_safari) {
       Browser.api.webNavigation.onBeforeNavigate.addListener(
         (d) => {
-//?? check me
            return onBeforeLoadName(d.url, d.tabId);
         });
-/***
-      Browser.api.webNavigation.onTabReplaced.addListener(
-        (d) => {
-           // 
-          //????? return onTabReplaced(d.replacedTabId, d.tabId);
-        });
-***/
-      Browser.api.webNavigation.onCommitted.addListener(
-        (d) => {
-           // 
-          //????? return onCommitted(d.parentFrameId, d.url, d.tabId);
-        });
-      Browser.api.webNavigation.onHistoryStateUpdated.addListener(
-        (d) => {
-           // 
-          //????? return onCommitted(d.parentFrameId, d.url, d.tabId);
-        });
-/***
-      Browser.api.webNavigation.onCompleted.addListener(
-        (d) => {
-           //                          -1 = main
-          //????? return onCompleted(d.parentFrameId,  d.url, d.tabId);
-        });
-***/
   }
 
 
 
-  Browser.api.webRequest.onBeforeRequest.addListener(
+  if (!Browser.is_safari) {  // isn't supported by Safari
+    Browser.api.webRequest.onBeforeRequest.addListener(
         (d) => {
            return onBeforeLoadName(d.url, d.tabId);
         },
         {types: ["main_frame"], urls: ["file:///*"]}, 
         (Browser.is_chrome_v3 || Browser.is_ff_v3) ? [] :["blocking"]);
-
-  function onBeforeRequestLocal(d)
-  {
-    return onBeforeLoadName(d.url, d.tabId);
   }
 
 
-  if (Browser.is_ff || Browser.is_safari) {
+  if ((Browser.is_ff && !Browser.is_ff_v3) || !Browser.is_safari) {
     Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
           var chk = chk_setting['ext.osds.pref.user.chk'];
@@ -218,10 +186,12 @@ var chk_setting = {
   }
 
 
-  Browser.api.webRequest.onHeadersReceived.addListener(
+  if (!Browser.is_safari) {  // isn't supported by Safari
+    Browser.api.webRequest.onHeadersReceived.addListener(
   	onHeadersReceived, 
   	{types: ["main_frame"], urls: ["<all_urls>"]}, 
         (Browser.is_chrome_v3 || Browser.is_ff_v3) ? ["responseHeaders"] : ["responseHeaders", "blocking"] );
+  }
 
 
   function onHeadersReceived(d)

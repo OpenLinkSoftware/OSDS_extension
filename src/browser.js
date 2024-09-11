@@ -23,6 +23,7 @@ var Browser = {
     is_ff: false,
     is_safari: false,
     is_chrome_v3: true,
+    is_ff_v3: false,
 
     api: null,
 
@@ -43,7 +44,7 @@ var Browser = {
         window.open(uri);
     },
     createTab : function(url) {
-      if (Browser.is_ff || Browser.is_chrome_v3) {
+      if (Browser.is_ff || Browser.is_chrome_v3 || is_safari) {
         Browser.api.tabs.create({url:url});
       }
       else if (window && window.open)

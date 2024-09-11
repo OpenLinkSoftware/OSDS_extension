@@ -255,10 +255,10 @@ class ChatService {
 
     async function scan_frames()
     {
-      if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+      if (Browser.is_chrome_v3 || Browser.is_ff_v3 || Browser.is_safari) {
         let frames = await Browser.api.scripting.executeScript({ 
                       target: {tabId: tab.id, allFrames:true},
-                      injectImmediately: true,  
+                      injectImmediately: true,
                       files: ['frame_scan.js']
                     });
         let lst = [];

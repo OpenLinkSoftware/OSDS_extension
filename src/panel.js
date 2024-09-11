@@ -713,11 +713,10 @@ async function handle_docData(data, is_data_exists, tab_index)
       }
     }
 
-    if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+    if (Browser.is_chrome_v3 || Browser.is_ff_v3 || Browser.is_safari) {
       let frames = await Browser.api.scripting.executeScript({ 
                       target: {tabId: g_tabId, allFrames:true},
                       injectImmediately: true,  
-//                      runAt: 'document_start',
                       files: ['frame_text.js']
                     });
       let lst = [];

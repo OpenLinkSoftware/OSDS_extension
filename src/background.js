@@ -65,14 +65,14 @@ async function handle_super_links_chatgpt(sender, chatgpt_req, event)
   }
 }
 
-/***
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+
+Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
 {
   try {
-    if (request.cmd === "openIfHandled" && !Browser.is_chrome_v3 && !Browser.is_ff_v3) //??TODO FIXME for V3
+    if (request.cmd === "openIfHandled")
     {
       var tabId = request.tabId;
-      var tab = pages[tabId];
+      var tab = await GVars.getPage(tabId);
       if (tab) {
         var url = page_panel_url+"?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext;
         Browser.createTab(url);
@@ -87,31 +87,6 @@ Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse
     else if (request.cmd === "super_links_chatgpt")
     {
       handle_super_links_chatgpt(sender, request.req, request.event);
-    }
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
-  }
-
-});
-**/
-
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
-{
-  try {
-    if (request.cmd === "openIfHandled" && (Browser.is_chrome_v3 || Browser.is_ff_v3))
-    {
-      var tabId = request.tabId;
-      var tab = await GVars.getPage(tabId);
-      if (tab) {
-        var url = page_panel_url+"?url="+encodeURIComponent(tab.url)+"&type="+tab.type+"&ext="+tab.ext;
-        Browser.createTab(url);
-        sendResponse({'cmd': request.cmd, 'opened':true, url});
-        return true;
-      } 
-      else {
-        sendResponse({'cmd': request.cmd, 'opened':false});
-        return true;
-      }
     }
     else if (request.cmd === "actionSuperLinks")
     {
@@ -159,7 +134,6 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 
 ////////// Context Menu
-if (Browser.is_ff || Browser.is_chrome) {
   try {
     Browser.api.runtime.onInstalled.addListener((d) => {
       if(d.reason !== "install" && d.reason !== "update") return;
@@ -199,7 +173,6 @@ if (Browser.is_ff || Browser.is_chrome) {
   } catch(e) {
     console.log(e);
   }
-}
 
 
 
@@ -319,6 +292,8 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
 
 });
 
-
+Browser.api.tabs.onRemoved.addListener(async function(tabId, removed) {
+ await GVars.deletePage(tabId);
+})
 
 })();

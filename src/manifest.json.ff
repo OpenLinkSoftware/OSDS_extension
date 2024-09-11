@@ -50,7 +50,6 @@
     "webRequest", 
     "contextMenus",
     "scripting",
-    "webNavigation",
     "declarativeNetRequest"
   ],
   "content_security_policy": { 

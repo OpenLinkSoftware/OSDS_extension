@@ -159,7 +159,9 @@ class SPARQL_Upload {
 
       if (relogin) 
       {
-        await this.oidc.logout();
+        try {
+          await this.oidc.logout();
+        } catch(_) {}
         this.state = 'login';
         await this.save_state();
         this.oidc.login2(this.idp_url);
@@ -170,7 +172,9 @@ class SPARQL_Upload {
         const rc = await this.oidc.restoreConn();
 
         if (!rc || !this.oidc.isSessionForIdp(this.idp_url)) {
+          try { 
             await this.oidc.logout();
+          } catch(_) {}
         }
         if (!this.oidc.getWebId()) {
           this.state = 'login';
@@ -188,7 +192,9 @@ class SPARQL_Upload {
   
   async logout()
   {
-    await this.oidc.logout();
+    try {
+      await this.oidc.logout();
+    } catch(_) {}
   }
 
   
@@ -448,7 +454,9 @@ class SuperLinks {
 
       if (relogin) 
       {
-        await this.oidc.logout();
+        try {
+          await this.oidc.logout();
+        } catch(_) {}
         this.state = 'login';
         await this.save_state();
         this.oidc.login2(this.idp_url);
@@ -459,7 +467,9 @@ class SuperLinks {
         const rc = await this.oidc.restoreConn();
 
         if (!rc || !this.oidc.isSessionForIdp(this.idp_url)) {
+          try {
             await this.oidc.logout();
+          } catch(_) {}
         }
         if (!this.oidc.getWebId()) {
           this.state = 'login';
@@ -477,7 +487,9 @@ class SuperLinks {
   
   async logout()
   {
-    await this.oidc.logout();
+    try {
+      await this.oidc.logout();
+    } catch(_) {}
   }
 
   
