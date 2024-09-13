@@ -37,9 +37,14 @@ async function recvMessage(event)
     return;
 
   const authData = (ev.startsWith(prefix_code)) ? ev.substring(prefix_code.length) : ev.substring(prefix_code1.length);
+  const auth = JSON.parse(atob(authData));
+
+  const callback_url = new URL(auth.url);
+  if (callback_url.searchParams.get('app') !== 'osds')
+    return;
+  
   await save_data('oidc_code', authData);
 
-  const auth = JSON.parse(atob(authData));
 //??  const options = {url:auth.url, restorePreviousSession: true};
   const options = {url:auth.url};
   const ret = await solidClientAuthentication.default.handleIncomingRedirect(options);

@@ -77,8 +77,10 @@ class OidcWeb {
     const options = Browser.is_safari ? { solid: true, store: this.jstore} : { solid: true } ;
 
     this.authClient = solidClientAuthentication.default;
-    this.login_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html#relogin';
-    this.login2_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html';
+    this.login_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html'
+                    +`?app=osds&mode=${Browser.is_ff?"Bearer":"DPop"}#relogin`;
+    this.login2_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html'
+                     +`?app=osds&mode=${Browser.is_ff?"Bearer":"DPop"}`;
   }
 
 
@@ -98,7 +100,7 @@ class OidcWeb {
      const height = 500;
      const alogin = autologin ? '&autologin=1' : ''
 
-     const url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
+     const url = idp_url ? this.login2_url+'&idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
                          : this.login_url;
 
      if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
@@ -138,7 +140,7 @@ class OidcWeb {
      const width = 700;
      const height = 500;
 
-     const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
+     const url = this.login2_url+'&idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
 
      if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
        let args = {

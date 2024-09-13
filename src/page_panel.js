@@ -254,7 +254,7 @@ function load_data_from_url(loc)
             headers: {
               'Accept': hdr_accept,
               'Cache-control': 'no-cache'
-            },
+            }
           };
 
       fetchWithTimeout(url, options, 30000)
