@@ -140,7 +140,7 @@ class ChatService {
         prompt_query = this.setting.def_prompt_query_jsonld;
       else if (myprompt.myid === 'turtle')
         prompt_query = this.setting.def_prompt_query_turtle;
-      else if (myprompt.text && myprompt.text.length > 1)
+      else if (myprompt?.text.length > 1)
         prompt_query = myprompt.text;
     }
 

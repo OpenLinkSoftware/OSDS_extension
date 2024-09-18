@@ -256,7 +256,7 @@ class Rest_Cons {
   parse_params(search)
   {
     var params = [];
-    var s = search && search.length > 1 ? search.substring(1) : "";
+    var s = search?.length > 1 ? search.substring(1) : "";
     var lst = s.split('&');
     for(var v of lst) 
     {
@@ -460,7 +460,7 @@ function debounce(callback, wait) {
 
 async function setRule_OnBehalfOf(chk, UID) {
   if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
-    if (chk==="1" && UID && UID.length > 1) {
+    if (chk==="1" && UID?.length > 1) {
       try { 
         const oldRules = await Browser.api.declarativeNetRequest.getDynamicRules();
         const oldRuleIds = oldRules.map(rule => rule.id);
