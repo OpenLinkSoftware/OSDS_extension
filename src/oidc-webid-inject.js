@@ -44,14 +44,7 @@ async function recvMessage(event)
     return;
   
   await save_data('oidc_code', authData);
-
-//??  const options = {url:auth.url, restorePreviousSession: true};
-  const options = {url:auth.url};
-  const ret = await solidClientAuthentication.default.handleIncomingRedirect(options);
-  if (ret && ret.tokens) {
-    await save_data('oidc_saved_tokens', JSON.stringify(ret.tokens));
-    Browser.api.runtime.sendMessage({cmd:'store_updated', key:'oidc_code'});
-  }
+  Browser.api.runtime.sendMessage({cmd:'store_updated', key:'oidc_code'});
 
   setTimeout(function (){
      if (ev.startsWith(prefix_code1))
