@@ -269,7 +269,7 @@ class SPARQL_Upload {
     var max_bytes = 30000;
     var pref_len = 10;
     var pref_sz;
-    var insert_cmd = this.sparql_graph.length > 1
+    var insert_cmd = this.sparql_graph?.length > 1
                  ? 'INSERT INTO GRAPH <' + this.sparql_graph + '> {\n'
                  : 'INSERT DATA { \n';
 
