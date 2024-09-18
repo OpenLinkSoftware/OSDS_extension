@@ -78,9 +78,9 @@ class OidcWeb {
 
     this.authClient = solidClientAuthentication.default;
     this.login_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html'
-                    +`?app=osds&mode=${Browser.is_ff?"Bearer":"DPop"}#relogin`;
+                    +`?app=osds&mode=${Browser.is_ff||Browser.is_safari?"Bearer":"DPop"}#relogin`;
     this.login2_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html'
-                     +`?app=osds&mode=${Browser.is_ff?"Bearer":"DPop"}`;
+                     +`?app=osds&mode=${Browser.is_ff||Browser.is_safari?"Bearer":"DPop"}`;
   }
 
 
