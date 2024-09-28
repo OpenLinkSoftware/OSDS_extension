@@ -79,7 +79,7 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
   const dd_base_pplabs = `<span style="background-color: lightgreen;">Data format:</span>
-           <SELECT id="code_type" >
+           <SELECT id="code_type" class="bg-offsetPlus dark:bg-offsetPlusDark" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
                  <OPTION id="jsonld">JSON-LD</OPTION>
@@ -103,7 +103,7 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
 
-  const dropDown_openai = `<div class="flex items-center gap-2" style="height=24px;"> ${dd_base_openai} </div>`;
+  const dropDown_openai = `<div class="flex items-center gap-2" style="height=24px;margin-right:150px"> ${dd_base_openai} </div>`;
 
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base} </div>`;
@@ -116,11 +116,12 @@
   const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
-  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
-  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textMainDark" style="height:24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
+  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;"> ${dd_base_pplabs} </div>`;
+
   const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
   const dropDown_huggingface = `<div style="margin-left:300px; display:flex; flex-flow:row; height:18px; align-items:center;"> ${dd_base_hugging} </div>`;
-  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;margin-left:300px;position:absolute;top:3px;align-items:center;"> ${dd_base_pplabs} </div>`;
+  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;align-items:center;"> ${dd_base_pplabs} </div>`;
   const dropDown_meta = `<div style="height:20px;margin-left:200px;position:absolute;"> ${dd_base_hugging} </div>`;
 
   const dropDown_openai_play = `<div style="display:flex; flex-direction:row; margin-left:200px; height=24px;align-items:center">
@@ -132,22 +133,16 @@
 
   function scan_code_openai()
   {
-    const lst = document.querySelectorAll('div#__next main pre');
+    const lst = document.querySelectorAll('main pre');
     for(const v of lst) 
     {
-      let i=0;
-      const title = v?.children[0]?.children[0];
-      if (!title)
+      const hdr = v.children[0];
+      const dd_el = hdr.querySelector('#code_type');
+      if (dd_el)
         continue;
-      let btn_copy = title.querySelector('button');
-      while(btn_copy.parentNode!=title && i < 10) {
-        btn_copy = btn_copy.parentNode
-        i++
-      }
-      const dd_el = title.querySelector('#code_type');
-      if (!dd_el && btn_copy.parentNode === title) {
-        title.insertBefore(DOM.htmlToElements(dropDown_openai)[0], btn_copy);
-      }
+
+      const btn_copy = hdr.querySelector('button')
+      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
     }
   }
 
@@ -188,7 +183,7 @@
     lst = document.querySelectorAll('div > code');
     for(const v of lst) 
     {
-      const blk = v.parentNode.parentNode.parentNode;
+      const blk = v.parentNode.parentNode.parentNode.parentNode;
       const child = blk.childNodes;
       if (child.length >= 3) {
         const title = child[0];
@@ -261,7 +256,7 @@
 
   function scan_code_perplexity_labs()
   {
-    const lst = document.querySelectorAll('div#__next main pre');
+    const lst = document.querySelectorAll('main pre');
     for(const v of lst) 
     {
       const title = v.children[0].children[0];
@@ -276,17 +271,15 @@
 
   function scan_code_perplexity()
   {
-    const lst = document.querySelectorAll('div#__next main pre');
+    const lst = document.querySelectorAll('main pre');
     for(const v of lst) 
     {
       const dd_el = v.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const code = v.querySelector('code')?.parentNode;
-      const block = code?.parentNode;
-      if (code && block)
-        block.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], code);
+      const title = v.children[0].children[0];
+      title.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], title.children[0]);
     }
   }
 
@@ -348,15 +341,15 @@
     const lst = document.querySelectorAll('div#ydc-content-area  div[data-testid="youchat-code"] pre');
     for(const v of lst) 
     {
-      const block = v.parentNode;
+      const block = v.parentNode?.parentNode;
 
       const dd_el = block.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const btn = block.querySelector('div > div[data-eventactioncontent]')?.parentNode;
-      if (btn && block)
-        block.insertBefore(DOM.htmlToElements(dropDown_you)[0], btn);
+      const btn = block?.querySelector('div > button')?.parentNode;
+      if (btn)
+        btn.parentNode.insertBefore(DOM.htmlToElements(dropDown_you)[0], btn);
     }
   }
 
@@ -440,8 +433,9 @@
       }
       else if (g_chat_id === 'ch_perplexity') {
         scan_code_perplexity();
-        g_top = document.querySelector('div#__next');
-        use_mutation_observer = true;
+//        g_top = document.querySelector('div#__next');
+//        use_mutation_observer = true;
+        setInterval(scan_code_perplexity, 5*1000);
       }
       else if (g_chat_id === 'ch_mistral') {
         scan_code_mistral();
@@ -457,6 +451,7 @@
         scan_code_you();
         g_top = document.querySelector('div#ydc-content-area');
         use_mutation_observer = true;
+        setInterval(scan_code_you, 3*1000);
       }
       else if (g_chat_id === 'ch_meta') {
         scan_code_mistral();

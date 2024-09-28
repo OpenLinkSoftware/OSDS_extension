@@ -376,7 +376,7 @@ Nano.sniff_nanotation_ms_copilot = (nano) =>
 Nano.sniff_nanotation_chat = (nano, chat_id) =>
     {
       const chats = { 
-             openai: { menu:'div#__next main pre select#code_type option:checked', 
+             openai: { menu:'main pre select#code_type option:checked', 
                        sel: {parentNode:4}, 
                        code:'code'
                      }, 
@@ -398,11 +398,11 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        sel: { parentNode:4 }, 
                        code:'code'
                      }, 
-             perplexity: { menu:'div#__next main pre select#code_type option:checked', 
+             perplexity: { menu:'main pre select#code_type option:checked', 
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
-             perplexity_labs: { menu:'div#__next main pre select#code_type option:checked',  
+             perplexity_labs: { menu:'main pre select#code_type option:checked',  
                        sel: {closest:'pre'}, 
                        code:'code'
                      }, 
@@ -416,7 +416,7 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        code:'pre code'
                      }, 
              you: { menu:'div#ydc-content-area select#code_type option:checked', 
-                       sel: { parentNode:3 },
+                       sel: { parentNode:4 },
                        code:'pre code'
                      }, 
              meta: { menu:'select#code_type option:checked', 
