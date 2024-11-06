@@ -380,6 +380,10 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        sel: {parentNode:4}, 
                        code:'code'
                      }, 
+             openai1: { menu:'article pre select#code_type option:checked', 
+                       sel: {parentNode:4}, 
+                       code:'code'
+                     }, 
 
              openai_play: { menu:'div[data-panel] select#code_type option:checked', 
                        sel: { parentNode:3 }, 

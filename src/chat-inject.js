@@ -133,7 +133,18 @@
 
   function scan_code_openai()
   {
-    const lst = document.querySelectorAll('main pre');
+    let lst = document.querySelectorAll('main pre');
+    for(const v of lst) 
+    {
+      const hdr = v.children[0];
+      const dd_el = hdr.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = hdr.querySelector('button')
+      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+    }
+    lst = document.querySelectorAll('article pre');
     for(const v of lst) 
     {
       const hdr = v.children[0];
