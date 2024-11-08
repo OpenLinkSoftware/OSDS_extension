@@ -175,8 +175,12 @@ class HTML_Gen {
           str += this.format_id(item.s, id_list);
 
           var props = "";
-          props += this.format_props(item.props, id_list, true);
-          props += this.format_props(item.props, id_list, false);
+          var rc = this.format_props(item.props, id_list, true);
+          props += rc.str;
+          if (rc.type==='http://schema.org/ImageObject')
+            console.log(rc.type)
+          rc = this.format_props(item.props, id_list, false, rc.type);
+          props += rc.str;
 
           if (props.length > 0)
             str += `<tr class='major'> 
@@ -204,12 +208,13 @@ class HTML_Gen {
   }
 
 
-  format_props(props, id_list, only_rdf_type)
+  format_props(props, id_list, only_rdf_type, prop_type)
   {
       if (props=== undefined) 
         return "";
         
       var str = "";
+      var type = "";
 
       for (const [key, val] of Object.entries(props)) 
       {
@@ -234,13 +239,15 @@ class HTML_Gen {
                       </tr>`;
             }
             else {
-              var sval = this.iri2html(key, obj.iri, null, null, true);
+              var sval = this.iri2html(key, obj.iri, false, null, true, prop_type);
               var td_class = obj.typeid!==undefined || key===this.ns.RDF_TYPE ?" class='typeid'":"";
               str += `<tr class='data_row'>
                         <td ${td_class}> ${key_str} </td>
                         <td ${td_class} > ${sval} </td>
                       </tr>`;
             }
+            if (key===this.ns.RDF_TYPE)
+              type = obj.iri;
           } 
           else {
             var v = obj.value;
@@ -256,7 +263,7 @@ class HTML_Gen {
               sval = '"'+this.check_link(key, v)+'"@'+obj.lang;
             } 
             else {
-              sval = this.check_link(key, v);
+              sval = this.check_link(key, v, false, null, false, prop_type);
             }
             str += `<tr class='data_row'>
                       <td> ${key_str} </td>
@@ -265,7 +272,7 @@ class HTML_Gen {
           }
         } 
       }
-      return str;
+      return {str, type};
   }
 
   create_iri_for_type(obj, id)
@@ -332,7 +339,7 @@ class HTML_Gen {
        }
   }
 
-  iri2html(key, uri, is_key, myid, is_iri)
+  iri2html(key, uri, is_key, myid, is_iri, type)
   {
       var v = this.check_subst(uri, myid);
 
@@ -342,11 +349,11 @@ class HTML_Gen {
       else { 
         var pref = this.ns.has_known_ns(uri);
         var sid = myid ? ` ${myid} ` : '';
-        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(key, uri, is_key, sid, is_iri);
+        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(key, uri, is_key, sid, is_iri, type);
       }
   }
     
-  check_link(prop, val, is_key, sid, is_iri) 
+  check_link(prop, val, is_key, sid, is_iri, type) 
   {
       var s_val = String(val);
 
@@ -377,6 +384,18 @@ class HTML_Gen {
                     ))
         {
           return this.gen_embed_link(sid, s_href, is_key);
+        }
+        else if (type && type==='http://schema.org/ImageObject' && prop==='http://schema.org/url')
+        {
+          return this.gen_img_link(sid, s_href, is_key);
+        }
+        else if (type && type==='http://schema.org/VideoObject' && prop==='http://schema.org/contentUrl')
+        {
+          return this.gen_video_link(sid, s_href, is_key);
+        }
+        else if (type && type==='http://schema.org/AudioObject' && prop==='http://schema.org/contentUrl')
+        {
+          return this.gen_audio_link(sid, s_href, is_key);
         }
         else
           return `<a ${sid} href="${s_href}"> ${this.decodeURI(s_href)} </a>`;
