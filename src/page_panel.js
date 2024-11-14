@@ -254,7 +254,7 @@ function load_data_from_url(loc)
             headers: {
               'Accept': hdr_accept,
               'Cache-control': 'no-cache'
-            },
+            }
           };
 
       fetchWithTimeout(url, options, 30000)
@@ -767,7 +767,7 @@ async function save_data(action, fname, fmt, callback)
     var sparql_graph = $('#save-sparql-graph').val().trim();
     var exec_cmd = { cmd:'actionSPARQL_Upload', 
                      baseURI: gData.baseURL,
-                     data:[], 
+                     qdata:[], 
                      sparql_ep:sparqlendpoint,
                      sparql_graph, 
                      sparql_check:null
@@ -782,7 +782,22 @@ async function save_data(action, fname, fmt, callback)
     
     var dt = await prepare_data(true, getSelectedTab(), fmt);
     if (dt)
-      exec_cmd.data.push(dt);
+      data.push(dt);
+
+    const handler = new Convert_Turtle();
+    try {
+      for(var v of data) {
+        if (v.error && !v.txt)
+          showInfo('Unable prepare data:' +v.error)
+        var ttl_data = await handler.prepare_query(v.txt, exec_cmd.baseURI);
+        var query = ttl_data.map(item => ({prefixes: item.prefixes, triples: item.triples}));;
+        exec_cmd.qdata = exec_cmd.qdata.concat(query);
+      }
+    } catch(ex) {
+      console.log(ex);
+      showInfo(ex);
+      return;
+    }
 
     if (document.querySelector('#save-sparql-check-res').checked) {
       var settings = new Settings();
@@ -891,7 +906,8 @@ function showInfo(msg, href)
 
   $('#alert-dlg').dialog({
     resizable: true,
-    height:180,
+    height:250,
+    width:450,
     modal: true,
     buttons: {
       "OK": function() {

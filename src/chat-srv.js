@@ -21,7 +21,7 @@
 class ChatService {
   constructor() 
   {
-    this.tab = null; //chatTab = null;
+    this.tab = {};
     this.chatTabSrv = null;
     this.waited_ask = null;
     this.timeout = 3000
@@ -29,6 +29,35 @@ class ChatService {
     this.prompt_url = null;
     this.prompt_in_new_window = false;
     this.setting = new Settings();
+  }
+
+  async saveState() 
+  {
+    const v = {
+      id: this.tab ? this.tab.id : '',
+      winId: this.tab ? this.tab.winId : ''
+    }
+    try {
+      await this.setting.setValue('g.ChatTab', JSON.stringify(v));
+      await this.setting.setValue('g.ChatTabAsk', JSON.stringify(this.waited_ask || ''));
+    } catch(_) {
+    }
+  }
+
+  async loadState()
+  {
+    try {
+      var v = await this.setting.getValue('g.ChatTab');
+      if (v)
+        this.tab = JSON.parse(v);
+
+      v = await this.setting.getValue('g.ChatTabAsk');
+      if (v)
+        this.waited_ask = JSON.parse(v);
+      else
+        this.waited_ask = null;
+    } catch(_) {
+    }
   }
 
   async load_settings()
@@ -48,42 +77,47 @@ class ChatService {
       console.log(e);
       this.prompt_id = null;
     }
+    await this.loadState();
   }
 
-  reg_chat_window(tab, chat_id)
+  async reg_chat_window(tab, chat_id)
   {
     if (chat_id !== this.prompt_id)
       return;
 
-    this.tab = tab;
+    this.tab = {'id': tab.id, 'winId': tab.windowId};
+    await this.saveState();
     //send tabId, winId back to Chat Window
-    Browser.api.tabs.sendMessage(tab.id, {cmd:"gpt_win_tab", tabId:tab.id, winId:tab.windowId});
+    Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_win_tab", tabId:this.tab.id, winId:this.tab.winId});
 
     if (this.waited_ask) {
       this.activateChatWin(tab, this.waited_ask)
       this.waited_ask = null;
+      await this.saveState();
     }
   }
 
-  unreg_chat_window(tab)
+  async unreg_chat_window(tab)
   {
     if (this.tab && this.tab.id === tab.id) {
-      this.tab = null;
+      this.tab = {};
       this.waited_ask = null
+      await this.saveState();
     }
   }
 
   async activateChatWin(tab, ask)
   {
-    this.tab = tab
+    this.tab = {'id': tab.id, 'winId': tab.windowId};
+    await this.saveState();
 
-    if (Browser.is_ff) {
-      await Browser.api.windows.update(tab.windowId, {focused: true});
-      await Browser.api.tabs.update(tab.id, {active: true});
+    if (Browser.is_ff || Browser.is_chrome_v3) {
+      await Browser.api.windows.update(this.tab.winId, {focused: true});
+      await Browser.api.tabs.update(this.tab.id, {active: true});
     } 
     else {
-      Browser.api.windows.update(tab.windowId, {focused: true}, (window) => {
-        Browser.api.tabs.update(tab.id, {active: true})
+      Browser.api.windows.update(this.tab.winId, {focused: true}, (window) => {
+          Browser.api.tabs.update(this.tab.id, {active: true})
       })
     }
 
@@ -106,25 +140,13 @@ class ChatService {
         prompt_query = this.setting.def_prompt_query_jsonld;
       else if (myprompt.myid === 'turtle')
         prompt_query = this.setting.def_prompt_query_turtle;
-      else if (myprompt.text && myprompt.text.length > 1)
+      else if (myprompt?.text.length > 1)
         prompt_query = myprompt.text;
     }
 
     prompt_query = prompt_query.replace("{page_url}", ask.url);
     var text = ask.text; 
-/**
-    if (prompt_query.length + text.length > max_len) 
-    {
-      const pattern_len = gpt3encoder.countTokens(prompt_query);
-      var txt_encoded = gpt3encoder.encode(text);
 
-      if (pattern_len + txt_encoded.length > max_len) {
-        const len = Math.max(1, max_len - pattern_len);
-        txt_encoded.splice(len);
-        text = gpt3encoder.decode(txt_encoded);
-      }
-    }
-***/
     if (prompt_query.length + text.length > max_len) 
       text = text.substring(0, Math.max(1, max_len - prompt_query.length));
 
@@ -138,26 +160,37 @@ class ChatService {
   {
     if (this.prompt_id && this.prompt_url) {
       // Open GPT window
-      if (Browser.is_ff)
-        Browser.api.tabs.create({url:this.prompt_url});
-      else
-        window.open(this.prompt_url);
+      Browser.createTab(this.prompt_url);
     }
   }
 
 
-  askChatGPT(ask, tab, mode) 
+  async askChatGPT(ask, tab, mode) 
   {
     const self = this;
     ask["mode"] = mode;
 
+    await this.load_settings();
+
     if (this.chatTabSrv && this.chatTabSrv !== this.prompt_id) {
       this.chatTabSrv = null;
-      this.tab = null;
+      this.tab = {};
+      await this.saveState();
     }
 
-    function handle_resp(resp)
+    async function new_llm_win() {
+      self.waited_ask = ask;
+      await self.saveState();
+      self.openChatWin();
+    }
+
+    async function handle_resp(resp)
     {
+      if (Browser.api.runtime.lastError) {
+        new_llm_win();
+        return;
+      }
+
       if (resp && resp.ping === 1 && resp.chat_id === self.prompt_id) {
 
         // GPT window opened
@@ -166,28 +199,37 @@ class ChatService {
         }
         else {
           self.waited_ask = ask;
+          await self.saveState();
           self.openChatWin();
         }
       }
       else {
         self.waited_ask = ask;
+        await self.saveState();
         self.openChatWin();
       }
     }
   
     if (this.tab && this.tab.id) {
-      if (Browser.is_ff)
-        Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_ping"})
-          .then(resp => { handle_resp(resp)})
-          .catch(err => {
-            console.log(err);
-          });
-      else
-        Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_ping"}, handle_resp);
+      if (Browser.is_ff || Browser.is_chrome_v3) {
+        try {
+          const resp = await Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_ping"});
+          handle_resp(resp);
+        } catch(ex) {
+          console.log(ex);
+          new_llm_win();
+        }
+      }
+      else {
+        try {
+          Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_ping"}, handle_resp);
+        } catch(ex) {
+          console.log(ex);
+        }
+      }
     }
     else {
-      this.waited_ask = ask;
-      this.openChatWin();
+      new_llm_win();
     }
   }
 
@@ -211,18 +253,32 @@ class ChatService {
         self.askChatGPT({text:page_text, url:info.pageUrl}, tab, 'content');
     }
 
-    function scan_frames()
+    async function scan_frames()
     {
-      Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true}, handle_frames);
+      if (Browser.is_chrome_v3 || Browser.is_ff_v3 || Browser.is_safari) {
+        let frames = await Browser.api.scripting.executeScript({ 
+                      target: {tabId: tab.id, allFrames:true},
+                      injectImmediately: true,
+                      files: ['frame_scan.js']
+                    });
+        let lst = [];
+        for(var v of frames)
+          lst.push(v.result);
+        handle_frames(lst);
+      }
+      else
+        Browser.api.tabs.executeScript(tab.id, {file:"frame_scan.js", allFrames:true, runAt: 'document_start'}, handle_frames);
     }
 
-    function handle_resp(resp)
+    async function handle_resp(resp)
     {
+      if (Browser.api.runtime.lastError)
+        return;
       // content received send it to ChatService
       if (resp && resp.page_content) {
         if (resp.dom && resp.dom===1 && resp.frames>0) {
           page_text = resp.page_content;
-          scan_frames();
+          await scan_frames();
         }
         else
           self.askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
@@ -231,7 +287,7 @@ class ChatService {
     }
 
     // request page content from page content script
-    if (Browser.is_ff)
+    if (Browser.is_ff || Browser.is_chrome_v3)
       Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"})
         .then(resp => { handle_resp(resp)})
         .catch(err => {

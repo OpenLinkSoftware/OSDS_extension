@@ -77,8 +77,10 @@ class OidcWeb {
     const options = Browser.is_safari ? { solid: true, store: this.jstore} : { solid: true } ;
 
     this.authClient = solidClientAuthentication.default;
-    this.login_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html#relogin';
-    this.login2_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html';
+    this.login_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html'
+                    +`?app=osds&mode=DPoP#relogin`;
+    this.login2_url = 'https://openlinksoftware.github.io/solid-client-authn-js/Auth/login1.html'
+                     +`?app=osds&mode=DPoP`;
   }
 
 
@@ -98,39 +100,22 @@ class OidcWeb {
      const height = 500;
      const alogin = autologin ? '&autologin=1' : ''
 
-
-     const _url = idp_url ? this.login2_url+'?idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
+     const url = idp_url ? this.login2_url+'&idp='+encodeURIComponent(idp_url)+alogin+'#relogin'
                          : this.login_url;
 
-     if (Browser.is_ff) {
-       const left = window.screenX + (window.innerWidth - width) / 2;
-       const top = window.screenY + (window.innerHeight - height) / 2;
-
-       Browser.api.windows.create({
-         url: _url,
+     if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+       let args = {
+         url,
          type: 'popup',
          height,
          width,
-         top,
-         left,
-         allowScriptsToClose : true,
          focused: true
-       });
-     }
-     else {
-       this.popupCenter({url: _url, title:"Login", w:width, h:height});
-     }
-  }
-
-  login2(idp_url) 
-  {
-     const width = 700;
-     const height = 500;
-
-//     const url = this.login2_url+'?idp='+encodeURIComponent('https://linkeddata.uriburner.com')+'&slogin=1#relogin';
-     const url = this.login2_url+'?idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
-
-     if (Browser.is_ff) {
+       }
+       if (Browser.is_ff_v3)
+         args['allowScriptsToClose'] = true;
+       Browser.api.windows.create(args);
+     } 
+     else if (Browser.is_ff) {
        const left = window.screenX + (window.innerWidth - width) / 2;
        const top = window.screenY + (window.innerHeight - height) / 2;
 
@@ -144,8 +129,47 @@ class OidcWeb {
          allowScriptsToClose : true,
          focused: true
        });
+     }
+     else {
+       this.popupCenter({url, title:"Login", w:width, h:height});
+     }
+  }
 
-     } else {
+  login2(idp_url) 
+  {
+     const width = 700;
+     const height = 500;
+
+     const url = this.login2_url+'&idp='+encodeURIComponent(idp_url)+'&slogin=1#relogin';
+
+     if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+       let args = {
+         url,
+         type: 'popup',
+         height,
+         width,
+         focused: true
+       }
+       if (Browser.is_ff_v3)
+         args['allowScriptsToClose'] = true;
+       Browser.api.windows.create(args);
+     } 
+     else if (Browser.is_ff) {
+       const left = window.screenX + (window.innerWidth - width) / 2;
+       const top = window.screenY + (window.innerHeight - height) / 2;
+
+       Browser.api.windows.create({
+         url,
+         type: 'popup',
+         height,
+         width,
+         top,
+         left,
+         allowScriptsToClose : true,
+         focused: true
+       });
+     } 
+     else {
        this.popupCenter({url, title:"Login", w:width, h:height});
      }
   }
@@ -346,12 +370,13 @@ class OidcWeb {
   async loadProfile(webId) 
   {
     var uri = new URL(webId);
-
-    if (uri.hash === '#this')
-      webId = base.toString();
+    const uri_hash = uri.hash;
 
     uri.hash = uri.search = uri.query = '';
     const base = uri.toString();
+
+    if (uri_hash === '#this')
+      webId = base.toString();
 
     try {
       var rc = await this.fetchProfile(webId);

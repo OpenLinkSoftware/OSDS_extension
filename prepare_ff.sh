@@ -21,7 +21,7 @@ DST_DIR=$EXT_DIRNAME
 
 
 #copy common files
-for I_DIR in background.html background.js chat-inject.js chat-srv.js content.css converters.js datablock.js; do
+for I_DIR in background.js background_web.js chat-inject.js chat-srv.js content.css converters.js datablock.js; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
@@ -37,7 +37,7 @@ for I_DIR in panel.html panel.js settings.js sniffer.js sniffer_nano.js social_s
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in tabs.css ttl_gen.js utils.js ; do
+for I_DIR in service_worker_ff.js tabs.css ttl_gen.js utils.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 

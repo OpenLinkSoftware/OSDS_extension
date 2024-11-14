@@ -193,6 +193,9 @@ function typeInTextarea(newText, el) {
 
 function changeHandleAll()
 {
+   if (1==1)
+     return;
+
    var v = DOM.iSel('chk_try_handle_all').checked ? false : true;
      DOM.iSel('chk_try_handle_xml').disabled =  v;
      DOM.iSel('chk_try_handle_csv').disabled = v;
@@ -366,7 +369,7 @@ async function loadPref()
 
     var chk_json = await gPref.getValue("ext.osds.handle_json");
     DOM.iSel("chk_try_handle_json").checked = (chk_json==="1");
-
+/**
     if (Browser.is_safari) {
       DOM.iSel("chk_try_handle_all").checked = false;
       DOM.iSel("chk_try_handle_all").disabled = true;
@@ -375,7 +378,9 @@ async function loadPref()
       DOM.iSel("chk_try_handle_csv").checked = true;
       DOM.iSel("chk_try_handle_json").checked = true;
     } 
-    else {
+    else 
+**/
+    {
       var chk_all = await gPref.getValue("ext.osds.handle_all");
       DOM.iSel("chk_try_handle_all").checked = (chk_all==="1");
 
@@ -675,7 +680,8 @@ async function savePref()
    var uiterm_mode = DOM.qSel('#uiterm-mode option:checked').id;
    await gPref.setValue("ext.osds.uiterm.mode", uiterm_mode);
 
-   await gPref.setValue("ext.osds.pref.user.chk", DOM.iSel('chk_pref_user').checked?"1":"0");
+   const uid_chk = DOM.iSel('chk_pref_user').checked?"1":"0";
+   await gPref.setValue("ext.osds.pref.user.chk", uid_chk);
 
    await gPref.setValue("ext.osds.pref.show_action", DOM.iSel('chk_show_action_for_url_with_params').checked?"1":"0");
    await gPref.setValue("ext.osds.auto_discovery", DOM.iSel('chk_auto_discovery').checked?"1":"0");
@@ -688,9 +694,14 @@ async function savePref()
    await gPref.setValue("ext.osds.handle_json",DOM.iSel('chk_try_handle_json').checked?"1":"0");
    await gPref.setValue("ext.osds.handle_all", DOM.iSel('chk_try_handle_all').checked?"1":"0");
 
-   var pref_user = DOM.qSel('#pref_user option:checked');
-   if (pref_user)
+   const pref_user = DOM.qSel('#pref_user option:checked');
+   if (pref_user) {
      await gPref.setValue("ext.osds.pref.user", pref_user.text);
+     await setRule_OnBehalfOf(uid_chk, pref_user.text);
+   }
+   else
+     await setRule_OnBehalfOf(uid_chk, '');
+
 
    var import_srv = DOM.qSel('#import-srv option:checked').id;
    await gPref.setValue("ext.osds.import.srv", import_srv);

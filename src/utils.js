@@ -256,7 +256,7 @@ class Rest_Cons {
   parse_params(search)
   {
     var params = [];
-    var s = search && search.length > 1 ? search.substring(1) : "";
+    var s = search?.length > 1 ? search.substring(1) : "";
     var lst = s.split('&');
     for(var v of lst) 
     {
@@ -458,3 +458,52 @@ function debounce(callback, wait) {
     };
 }
 
+async function setRule_OnBehalfOf(chk, UID) {
+  if (Browser.is_chrome_v3 || Browser.is_ff_v3) {
+    if (chk==="1" && UID?.length > 1) {
+      try { 
+        const oldRules = await Browser.api.declarativeNetRequest.getDynamicRules();
+        const oldRuleIds = oldRules.map(rule => rule.id);
+        await Browser.api.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: oldRuleIds,
+          addRules: [{
+            "id": 1,
+            "priority": 1,
+            "action": {
+              "type": "modifyHeaders",
+              "requestHeaders": [
+                { "header": "On-Behalf-Of", "operation": "set", "value": UID }
+              ]
+            },
+            "condition": {
+              "resourceTypes": ["main_frame", "sub_frame", "xmlhttprequest"]
+            }
+          }]
+        });
+      } catch(ex) {
+        console.log(ex);
+      }
+    }
+    else {
+      try {
+        const oldRules = await Browser.api.declarativeNetRequest.getDynamicRules();
+        const oldRuleIds = oldRules.map(rule => rule.id);
+        if (oldRuleIds.length > 0) 
+          await Browser.api.declarativeNetRequest.updateDynamicRules({
+            removeRuleIds: oldRuleIds
+          });
+      } catch(ex) {
+        console.log(ex);
+      }  
+    }
+  }
+}
+
+async function waitUntil(promise) {
+  const keepAlive = setInterval(chrome.runtime.getPlatformInfo, 25 * 1000);
+  try {
+    return await promise;
+  } finally {
+    clearInterval(keepAlive);
+  }
+}

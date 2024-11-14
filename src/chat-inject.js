@@ -39,6 +39,33 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
+
+  const dd_base_openai = `<span>Data format:</span>
+           <SELECT id="code_type" class="dark:bg-token-main-surface-secondary text-xs">
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+
+  const dd_base_openai_play = `<span style="background-color: lightgreen;">Data format:</span>
+           <SELECT style="all:revert;" id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+
   const dd_base_rev = `<span>Data format:</span>
            <SELECT style="all:revert;" id="code_type" >
                  <OPTION id="none" selected></OPTION>
@@ -51,8 +78,8 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
-  const dd_base_pplabs = `<span style="background-color: green;">Data format:</span>
-           <SELECT id="code_type" >
+  const dd_base_pplabs = `<span style="background-color: lightgreen;">Data format:</span>
+           <SELECT id="code_type" class="bg-offsetPlus dark:bg-offsetPlusDark" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
                  <OPTION id="jsonld">JSON-LD</OPTION>
@@ -63,7 +90,7 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
-  const dd_base_hugging = `<span style="background-color: green;">Data format:</span>
+  const dd_base_hugging = `<span>Data format:</span>
            <SELECT style="all:revert;" id="code_type" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
@@ -76,12 +103,12 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
 
-  const dropDown_openai = `<div class="flex items-center gap-2 ml-auto" style="height=24px;"> ${dd_base} </div>`;
+  const dropDown_openai = `<div class="flex items-center gap-2" style="height=24px;margin-right:150px"> ${dd_base_openai} </div>`;
 
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base} </div>`;
 
-  const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-right:70px; height=24px;" class="text-text-500">
+  const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-left:200px; height=24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
 
   const dropDown_gemini = `<div style="display:flex; flex-direction:row; height=24px;">
@@ -89,55 +116,100 @@
   const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
-  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
-  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textMainDark" style="height:24px;margin-left:300px;top:10px;position:absolute;"> ${dd_base_rev} </div>`;
+  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;"> ${dd_base_pplabs} </div>`;
+
   const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
-  const dropDown_huggingface = `<div class="flex items-center gap-2 ml-auto" style="height:20px;margin-left:300px;top:5px;position:absolute;"> ${dd_base_hugging} </div>`;
-  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;margin-left:300px;position:absolute;top:3px;align-items:center;"> ${dd_base_pplabs} </div>`;
+  const dropDown_huggingface = `<div style="margin-left:300px; display:flex; flex-flow:row; height:18px; align-items:center;"> ${dd_base_hugging} </div>`;
+  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;align-items:center;"> ${dd_base_pplabs} </div>`;
   const dropDown_meta = `<div style="height:20px;margin-left:200px;position:absolute;"> ${dd_base_hugging} </div>`;
 
+  const dropDown_openai_play = `<div style="display:flex; flex-direction:row; margin-left:200px; height=24px;align-items:center">
+           ${dd_base_openai_play} </div>`;
+
+  const dropDown_openperplex = `<div style="display:flex; flex-direction:row; justify-content:center; align-items:center">
+           ${dd_base_openai_play} </div>`;
 
 
   function scan_code_openai()
   {
-    const lst = document.querySelectorAll('div#__next main pre');
+    let lst = document.querySelectorAll('main pre');
     for(const v of lst) 
     {
-      let i=0;
-      const title = v.children[0].children[0];
-      let btn_copy = title.querySelector('button');
-      while(btn_copy.parentNode!=title && i < 10) {
-        btn_copy = btn_copy.parentNode
-        i++
-      }
-      const dd_el = title.querySelector('#code_type');
-      if (!dd_el && btn_copy.parentNode === title) {
-        title.insertBefore(DOM.htmlToElements(dropDown_openai)[0], btn_copy);
-      }
+      const hdr = v.children[0];
+      const dd_el = hdr.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = hdr.querySelector('button')
+      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+    }
+    lst = document.querySelectorAll('article pre');
+    for(const v of lst) 
+    {
+      const hdr = v.children[0];
+      const dd_el = hdr.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = hdr.querySelector('button')
+      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
     }
   }
 
 
-  function scan_code_claude()
+  function scan_code_openai_play()
   {
-    const lst = document.querySelectorAll('pre > div');
+    const lst = document.querySelectorAll('div[data-panel] pre');
     for(const v of lst) 
     {
-      const hdr = v.querySelector('div')
+      const hdr = v.parentNode
       const dd_el = hdr.querySelector('#code_type');
       if (dd_el)
         continue;
 
       const btn_copy = hdr.querySelector('button')
       if (btn_copy)
-      	hdr.insertBefore(DOM.htmlToElements(dropDown_claude)[0], btn_copy);
+      	hdr.insertBefore(DOM.htmlToElements(dropDown_openai_play)[0], btn_copy);
+    }
+  }
+
+
+  function scan_code_claude()
+  {
+    let lst = document.querySelectorAll('pre > div');
+    for(const v of lst) 
+    {
+      const hdr = v.querySelector('div')
+      const dd_el = v.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      if (v.childNodes.length > 1) {
+        v.childNodes[0].append(DOM.htmlToElements(dropDown_claude)[0]);
+        v.childNodes[0].style['display']='flex';
+      }
+    }
+
+    lst = document.querySelectorAll('div > code');
+    for(const v of lst) 
+    {
+      const blk = v.parentNode.parentNode.parentNode.parentNode;
+      const child = blk.childNodes;
+      if (child.length >= 3) {
+        const title = child[0];
+        const dd_el = title.querySelector('#code_type');
+        if (dd_el)
+          continue;
+        title.childNodes[0].insertAdjacentHTML('afterend', dropDown_claude);
+      }
     }
   }
 
 
   function scan_code_gemini()
   {
-    const lst = document.querySelectorAll('model-response message-content code-block');
+    const lst = document.querySelectorAll('message-content code-block');
     for(const v of lst) 
     {
       const dd_el = v.querySelector('#code_type');
@@ -195,7 +267,7 @@
 
   function scan_code_perplexity_labs()
   {
-    const lst = document.querySelectorAll('div#__next main pre');
+    const lst = document.querySelectorAll('main pre');
     for(const v of lst) 
     {
       const title = v.children[0].children[0];
@@ -210,17 +282,15 @@
 
   function scan_code_perplexity()
   {
-    const lst = document.querySelectorAll('div#__next main pre');
+    const lst = document.querySelectorAll('main pre');
     for(const v of lst) 
     {
       const dd_el = v.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const code = v.querySelector('code')?.parentNode;
-      const block = code?.parentNode;
-      if (code && block)
-        block.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], code);
+      const title = v.children[0].children[0];
+      title.insertBefore(DOM.htmlToElements(dropDown_perplexity)[0], title.children[0]);
     }
   }
 
@@ -241,6 +311,26 @@
     }
   }
 
+  function scan_code_openperplex()
+  {
+    const lst = document.querySelectorAll('div#app pre');
+    for(const v of lst) 
+    {
+      const code = v.querySelector('code');
+      if (!code)
+        continue;
+
+      const block = v.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      block.insertBefore(DOM.htmlToElements(dropDown_openperplex)[0], v);
+    }
+  }
+
+
+  
   function scan_code_huggingface()
   {
     const lst = document.querySelectorAll('pre');
@@ -253,7 +343,7 @@
 
       const btn_copy = block.querySelector('button')
       if (btn_copy)
-        block.insertBefore(DOM.htmlToElements(dropDown_huggingface)[0], btn_copy);
+        block.insertBefore(DOM.htmlToElements(dropDown_huggingface)[0], v);
     }
   }
 
@@ -262,15 +352,15 @@
     const lst = document.querySelectorAll('div#ydc-content-area  div[data-testid="youchat-code"] pre');
     for(const v of lst) 
     {
-      const block = v.parentNode;
+      const block = v.parentNode?.parentNode;
 
       const dd_el = block.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const btn = block.querySelector('div > div[data-eventactioncontent]')?.parentNode;
-      if (btn && block)
-        block.insertBefore(DOM.htmlToElements(dropDown_you)[0], btn);
+      const btn = block?.querySelector('div > button')?.parentNode;
+      if (btn)
+        btn.parentNode.insertBefore(DOM.htmlToElements(dropDown_you)[0], btn);
     }
   }
 
@@ -296,6 +386,8 @@
       if (g_top) {
         if (g_chat_id === 'ch_openai') 
           scan_code_openai();
+        else if (g_chat_id === 'ch_openai_play') 
+          scan_code_openai();
         else if (g_chat_id === 'ch_copilot')
           scan_code_ms_copilot()
         else if (g_chat_id === 'ch_claude') 
@@ -320,8 +412,13 @@
       
       if (g_chat_id === 'ch_openai') {
         scan_code_openai();
-        g_top = document.querySelector('div#__next');
-        use_mutation_observer = true;
+//        g_top = document.querySelector('div#__next');
+//        use_mutation_observer = true;
+        setInterval(scan_code_openai, 5*1000);
+      }
+      else if (g_chat_id === 'ch_openai_play') {
+        scan_code_openai_play();
+        setInterval(scan_code_openai_play, 5*1000);
       }
       else if (g_chat_id === 'ch_copilot') {
         scan_code_ms_copilot();
@@ -347,8 +444,9 @@
       }
       else if (g_chat_id === 'ch_perplexity') {
         scan_code_perplexity();
-        g_top = document.querySelector('div#__next');
-        use_mutation_observer = true;
+//        g_top = document.querySelector('div#__next');
+//        use_mutation_observer = true;
+        setInterval(scan_code_perplexity, 5*1000);
       }
       else if (g_chat_id === 'ch_mistral') {
         scan_code_mistral();
@@ -364,13 +462,19 @@
         scan_code_you();
         g_top = document.querySelector('div#ydc-content-area');
         use_mutation_observer = true;
+        setInterval(scan_code_you, 3*1000);
       }
       else if (g_chat_id === 'ch_meta') {
         scan_code_mistral();
         g_top = document.querySelector('body');
         setInterval(scan_code_meta, 3*1000);
       }
-      
+      else if (g_chat_id === 'ch_openperplex') {
+        scan_code_mistral();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_openperplex, 3*1000);
+      }
+
 
       if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
@@ -415,8 +519,10 @@
 
   function getChatID()
   {
-    if (location.host==='chat.openai.com')
+    if (location.host==='chat.openai.com' || location.host==='chatgpt.com')
       return 'ch_openai';
+    else if (location.href.startsWith('https://platform.openai.com/playground'))
+      return 'ch_openai_play';
     else if (location.href.startsWith('https://copilot.microsoft.com'))
       return 'ch_copilot';
     else if (location.href.startsWith('https://claude.ai/chat'))
@@ -435,6 +541,8 @@
       return 'ch_you';
     else if (location.href.startsWith('https://www.meta.ai'))
       return 'ch_meta';
+    else if (location.href.startsWith('https://openperplex.com'))
+      return 'ch_openperplex';
     else
      return null;
   }
@@ -468,11 +576,11 @@
   {
     g_chat_id = getChatID();
 
-    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_copilot' 
+    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_openai_play' || g_chat_id === 'ch_copilot' 
        || g_chat_id === 'ch_claude' || g_chat_id === 'ch_gemini'
        || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
        || g_chat_id === 'ch_mistral' || g_chat_id === 'ch_huggingface'
-       || g_chat_id === 'ch_you' || g_chat_id === 'ch_meta')
+       || g_chat_id === 'ch_you' || g_chat_id === 'ch_meta' || g_chat_id == 'ch_openperplex')
       handle_chat_code();
 
     await init_prompt_inject();
@@ -483,7 +591,9 @@
       window.onbeforeunload = function () 
       {
         // unregister chat in background
-        Browser.api.runtime.sendMessage({cmd:"gpt_window_unreg"});
+        try {
+          Browser.api.runtime.sendMessage({cmd:"gpt_window_unreg"});
+        } catch(_) {}
 
         if (gMutationObserver)
           gMutationObserver.disconnect()

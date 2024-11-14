@@ -132,8 +132,8 @@ class Settings {
 `{ 
   "openai": {
     "name": "OpenAI Chat", 
-    "url": "https://chat.openai.com/?model=gpt-4",
-    "location.startsWith": "https://chat.openai.com",
+    "url": "https://chatgpt.com/",
+    "location.startsWith": "https://chatgpt.com",
     "prompt.selector": "#prompt-textarea",
     "prompt.css.removeClass": "resize-none",
     "prompt.css.addClass": "resize"
@@ -145,6 +145,22 @@ class Settings {
     "location.startsWith": "https://linkeddata.uriburner.com/chat",
     "prompt.selector": "textarea.message_input",
     "prompt_in_new_window": true
+  },
+
+  "assist": {
+    "name": "OpenLink Personal Assistant", 
+    "url": "https://linkeddata.uriburner.com/assist",
+    "location.startsWith": "https://linkeddata.uriburner.com/assist",
+    "prompt.selector": "textarea.message_input",
+    "prompt_in_new_window": true
+  },
+
+  "assist-mental": {
+    "name": "OpenLink Personal Assistant-Metal", 
+    "url": "https://linkeddata.uriburner.com/assist-metal",
+    "location.startsWith": "https://linkeddata.uriburner.com/assist-metal",
+    "prompt.selector": "textarea#user-input",
+    "prompt_in_new_window": false
   },
 
   "opal_qa": {

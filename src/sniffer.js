@@ -104,17 +104,22 @@
             nano = {ttl:[], ttl_curly:[], jsonld:[], rdf:[], json:[], jsonl:[], csv:[], md:[], 
     		rss:[], atom:[]};
 
-            if (location.href.startsWith('https://chat.openai.com')) {
+            if (location.href.startsWith('https://chat.openai.com') || location.href.startsWith('https://chatgpt.com')) {
                nano = Nano.sniff_nanotation_chat(nano, 'openai');
+               nano = Nano.sniff_nanotation_chat(nano, 'openai1');
+            }
+            else if (location.href.startsWith('https://platform.openai.com/playground')) {
+               nano = Nano.sniff_nanotation_chat(nano, 'openai_play');
             }
             else if (location.href.startsWith('https://copilot.microsoft.com')) {
                nano = Nano.sniff_nanotation_ms_copilot(nano);
             }
-            else if (location.href.startsWith('https://gemini.google.com/app')) {
+            else if (location.href.startsWith('https://gemini.google.com/')) {
               nano = Nano.sniff_nanotation_chat(nano, 'gemini');
             }
             else if (location.href.startsWith('https://claude.ai/chat/')) {
               nano = Nano.sniff_nanotation_chat(nano, 'claude');
+              nano = Nano.sniff_nanotation_chat(nano, 'claude1');
             }
             else if (location.href.startsWith('https://www.perplexity.ai')) {
               nano = Nano.sniff_nanotation_chat(nano, 'perplexity');
@@ -133,6 +138,9 @@
             }
             else if (location.href.startsWith('https://www.meta.ai')) {
               nano = Nano.sniff_nanotation_chat(nano, 'meta');
+            }
+            else if (location.href.startsWith('https://openperplex.com')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'openperplex');
             }
 
         } catch (e) {

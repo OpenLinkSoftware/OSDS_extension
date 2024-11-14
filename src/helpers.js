@@ -18,23 +18,139 @@
  *
  */
 
-class SPARQL_Upload {
-  constructor(tab, messages, req)
-  {
-    this.data = req.data;
-    this.sparql_ep = req.sparql_ep;
-    this.baseURI = req.baseURI;
-    this.sparql_graph = req.sparql_graph;
-    this.sparql_check = req.sparql_check;
+const Actions = {
+    clear: async function() {
+        const settings = new Settings();
+        await settings.setValue('g.SuperLinks', '');
+        await settings.setValue('g.SPARQL_Uploads', '');
+    },
+    useSuperLinks: async function() {
+        const settings = new Settings();
+        const v = await settings.getValue('g.SuperLinks');
+        return v ? true : false;
+    },
+    useSPARQL_Uploads: async function() {
+        const settings = new Settings();
+        const v = await settings.getValue('g.SPARQL_Uploads');
+        return v ? true : false;
+    }
+}
 
-    this.tab = tab;
-    this.messages = messages;
-    this.state = 'init';
+const GVars = {
+    clear: async function() {
+        const settings = new Settings();
+        await settings.setValue('g.Pages', '{}');
+        await settings.setValue('g.ChatTab', '');
+        await settings.setValue('g.ChatTabAsk', '');
+    },
+    updatePage: async function(tabId, val) {
+        const settings = new Settings();
+        try {
+          const v = await settings.getValue('g.Pages');
+          var pages = JSON.parse(v);
+          pages[tabId] = val;
+          await settings.setValue('g.Pages', JSON.stringify(pages));
+        } catch(ex) {
+        }
+    },
+    deletePage: async function(tabId) {
+        const settings = new Settings();
+        try {
+          const v = await settings.getValue('g.Pages');
+          var pages = JSON.parse(v);
+          delete pages[tabId];
+          await settings.setValue('g.Pages', JSON.stringify(pages));
+        } catch(ex) {
+        }
+    },
+    getPage: async function(tabId) {
+        const settings = new Settings();
+        try {
+          const v = await settings.getValue('g.Pages');
+          var pages = JSON.parse(v);
+          return pages[tabId];
+        } catch(ex) {
+        }
+    }
+}
+
+class SPARQL_Upload {
+  constructor(tab, req)
+  {
     this.oidc = new OidcWeb();
-    var u = new URL(this.sparql_ep);
-    this.idp_url = u.origin;
+    this.state = 'init';
+    this.init(tab, req);
   }
 
+  async save_state()
+  {
+    const v = {
+      qdata: this.qdata,
+      sparql_ep: this.sparql_ep,
+      baseURI: this.baseURI,
+      sparql_graph: this.sparql_graph,
+      sparql_check: this.sparql_check,
+      tab: this.tab,
+      state: this.state
+    }
+    const settings = new Settings();
+    await settings.setValue('g.SPARQL_Upload', JSON.stringify(v));
+  }
+
+  async load_state()
+  {
+     const settings = new Settings();
+     const state = await settings.getValue('g.SPARQL_Upload');
+     if (state) {
+       try {
+         const v = JSON.parse(state);
+         if (v.state)
+           this.state = v.state
+           this.tab = v.tab;
+           this.qdata = v.qdata;
+           this.sparql_ep = v.sparql_ep;
+           this.baseURI = this.baseURI;
+           this.sparql_graph = this.sparql_graph;
+           this.sparql_check = this.sparql_check;
+       } catch(_) {
+       }
+     }
+  }
+
+
+  async init(tab, req)
+  {
+    this.tab = tab;
+    if (req) {
+      this.qdata = req.qdata;
+      this.sparql_ep = req.sparql_ep;
+      this.baseURI = req.baseURI;
+      this.sparql_graph = req.sparql_graph;
+      this.sparql_check = req.sparql_check;
+      var u = new URL(this.sparql_ep);
+      this.idp_url = u.origin;
+    }
+
+    this.messages = 
+       { 
+         throbber_show: (txt) => {
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_show', message: txt });
+         },
+         throbber_hide: () => {
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_hide' });
+         },
+         snackbar_show: (msg1, msg2) => {
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_snackbar', msg1, msg2 });
+         },
+         msg_show: (msg) => {
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'osds_msg_show', message: msg });
+         },
+         msg_hide: () => {
+            Browser.api.tabs.sendMessage(tab.id, { cmd: 'osds_msg_hide' });
+         }
+       }
+  }
+  
 
   async check_login(relogin)
   {
@@ -43,8 +159,11 @@ class SPARQL_Upload {
 
       if (relogin) 
       {
-        await this.oidc.logout();
+        try {
+          await this.oidc.logout();
+        } catch(_) {}
         this.state = 'login';
+        await this.save_state();
         this.oidc.login2(this.idp_url);
         return false;
       } 
@@ -53,10 +172,13 @@ class SPARQL_Upload {
         const rc = await this.oidc.restoreConn();
 
         if (!rc || !this.oidc.isSessionForIdp(this.idp_url)) {
+          try { 
             await this.oidc.logout();
+          } catch(_) {}
         }
         if (!this.oidc.getWebId()) {
           this.state = 'login';
+          await this.save_state();
           this.oidc.login2(this.idp_url);
           return false;
         }
@@ -70,7 +192,9 @@ class SPARQL_Upload {
   
   async logout()
   {
-    await this.oidc.logout();
+    try {
+      await this.oidc.logout();
+    } catch(_) {}
   }
 
   
@@ -95,42 +219,31 @@ class SPARQL_Upload {
   async mexec()
   {
     this.state = `query`;
+    await this.save_state();
 
-    var handler = new Convert_Turtle();
     try {
-      for(var v of this.data) {
-        this.messages.throbber_show('&nbsp;Preparing&nbsp;data...');
+      this.messages.throbber_show('&nbsp;Preparing&nbsp;data...');
+      for(var v of this.qdata) {
 
-        if (v.error.length > 0 && v.txt.length == 0) {
-          
-          this.messages.snackbar_show('Unable prepare data:' +v.error);
+        var ret = await this.exec_sparql(v.prefixes, v.triples);
 
-        } else if (v.txt.length > 0) {
-          
-          var ttl_data = await handler.prepare_query(v.txt, this.baseURI);
-          for(var i=0; i < ttl_data.length; i++) {
+        this.messages.throbber_hide();
 
-            var ret = await this.exec_sparql(ttl_data[i].prefixes, ttl_data[i].triples);
+        if (!ret.rc) {
+          if (ret.status === 401 || ret.status === 403) {
+             this.logout();
+             this.state = 'init';
+             await this.save_state();
+             this.messages.msg_show(ret.error);
+             return false;
 
-            this.messages.throbber_hide();
-
-            if (!ret.rc) {
-              if (ret.status === 401 || ret.status === 403) {
-                 this.logout();
-                 this.state = 'init';
-                 this.messages.msg_show(ret.error);
-                 return false;
-
-              } else {
-                 this.state = 'init';
-                 this.messages.msg_show(ret.error);
-                 return false;
-              }
-            }
+          } else {
+             this.state = 'init';
+             await this.save_state();
+             this.messages.msg_show(ret.error);
+             return false;
           }
-
         }
-
       }
       if (this.sparql_check) {
         if (this.tab)
@@ -156,7 +269,7 @@ class SPARQL_Upload {
     var max_bytes = 30000;
     var pref_len = 10;
     var pref_sz;
-    var insert_cmd = this.sparql_graph.length > 1
+    var insert_cmd = this.sparql_graph?.length > 1
                  ? 'INSERT INTO GRAPH <' + this.sparql_graph + '> {\n'
                  : 'INSERT DATA { \n';
 
@@ -276,17 +389,63 @@ class SPARQL_Upload {
 }
 
 
-
 class SuperLinks {
-  constructor(url, tabId, messages)
+  constructor(url, tabId)
   {
     this.oidc = new OidcWeb();
-    this.doc_url = url;
-    this.tabId = tabId;
-    this.messages = messages;
     this.state = 'init';
     this.idp_url = 'https://linkeddata.uriburner.com';
+    this.init(url, tabId);
   }
+
+  async save_state()
+  {
+    const v = {
+      doc_url: this.doc_url,
+      tabId: this.tabId,
+      state: this.state
+    }
+    const settings = new Settings();
+    await settings.setValue('g.SuperLinks', JSON.stringify(v));
+  }
+
+  async load_state()
+  {
+     const settings = new Settings();
+     const state = await settings.getValue('g.SuperLinks');
+     if (state) {
+       try {
+         const v = JSON.parse(state);
+         if (v.state)
+           this.state = v.state
+           this.tabId = v.tabId;
+           this.doc_url = v.doc_url;
+       } catch(_) {
+       }
+     }
+  }
+
+
+
+  async init(url, tabId)
+  {
+    this.tabId = tabId;
+    this.doc_url = url;
+    this.messages = 
+       { 
+         throbber_show: (txt) => {
+            Browser.api.tabs.sendMessage(this.tabId, { cmd: 'super_links_msg_show', message: txt });
+         },
+         throbber_hide: () => {
+            Browser.api.tabs.sendMessage(this.tabId, { cmd: 'super_links_msg_hide' });
+         },
+         snackbar_show: (msg1, msg2) => {
+            Browser.api.tabs.sendMessage(this.tabId, { cmd: 'super_links_snackbar', msg1, msg2 });
+         },
+       }
+  }
+
+
 
   async check_login(relogin)
   {
@@ -295,8 +454,11 @@ class SuperLinks {
 
       if (relogin) 
       {
-        await this.oidc.logout();
+        try {
+          await this.oidc.logout();
+        } catch(_) {}
         this.state = 'login';
+        await this.save_state();
         this.oidc.login2(this.idp_url);
         return false;
       } 
@@ -305,10 +467,13 @@ class SuperLinks {
         const rc = await this.oidc.restoreConn();
 
         if (!rc || !this.oidc.isSessionForIdp(this.idp_url)) {
+          try {
             await this.oidc.logout();
+          } catch(_) {}
         }
         if (!this.oidc.getWebId()) {
           this.state = 'login';
+          await this.save_state();
           this.oidc.login2(this.idp_url);
           return false;
         }
@@ -322,7 +487,9 @@ class SuperLinks {
   
   async logout()
   {
-    await this.oidc.logout();
+    try {
+      await this.oidc.logout();
+    } catch(_) {}
   }
 
   
@@ -340,6 +507,7 @@ class SuperLinks {
   async request_superlinks(iter)
   {
     this.state = 'sponge';
+    await this.save_state();
 
     var LOGIN_URL = "https://linkeddata.uriburner.com/rdfdesc/login.vsp";
     
@@ -412,6 +580,7 @@ class SuperLinks {
   async exec_super_links_query(iter)
   {
     this.state = 'query';
+    await this.save_state();
 
     var SPARQL_URL = "https://linkeddata.uriburner.com/sparql";
 
@@ -478,7 +647,8 @@ class SuperLinks {
           }
         }
         
-        this.state = null;
+        this.state = '';
+        await this.save_state();
         return {statusCode: rc.status, data: data};
   
       } else {
@@ -488,6 +658,7 @@ class SuperLinks {
           this.check_login(true); // Browser.openTab(REDIR_URL);
         } else {
           this.state = 'init';
+          await this.save_state();
           this.messages.snackbar_show("Could not load data from: "+SPARQL_URL, "Error:"+rc.status); 
         }
         return {statusCode: rc.status, data: null};
@@ -497,6 +668,7 @@ class SuperLinks {
     catch(e) {
       this.messages.throbber_hide();
       this.state = 'init';
+      await this.save_state();
       if (e.statusCode == 403 || e.statusCode == 401) {
         this.logout();
         this.messages.snackbar_show("Fetch SuperLinks error:"+e.statusCode,"Trying Relogin and call SupeLinks again"); 

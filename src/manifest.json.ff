@@ -3,26 +3,29 @@
   "short_name": "osds",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "3.2.29",
-  "manifest_version": 2,
+  "version": "3.4.8",
+  "manifest_version": 3,
   "minimum_chrome_version": "18",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
-      "id": "osds@openlinksw.com"
-    }
-  },
+      "id": "osds@openlinksw.com",
+      "strict_min_version": "109.0"
+     }
+   },
   "icons": {
       "16":  "images/icon16.png",
       "48":  "images/icon48.png",
       "128": "images/icon128.png" },
-  "browser_action": {
+  "action": {
     "default_icon": "images/icon16.png",
     "default_title": "Show Document Metadata",
     "default_popup": "panel.html"
   },
   "background": {
-    "page": "background.html"
+    "scripts": ["lib/gpt3-encoder.js", "browser.js", "settings.js", "utils.js", "helpers.js", 
+                "lib/solid-client-authn.bundle.js", "OidcWebid.js", "chat-srv.js", "background_web.js", 
+                "background.js", "service_worker_ff.js"]
   },
   "options_ui": {
     "page": "options.html",
@@ -45,14 +48,17 @@
       "run_at": "document_start"
     }
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "permissions": [
     "storage", 
     "webRequest", 
-    "webRequestBlocking",
-    "*://*/*", 
-    "file:///*/*",
-    "contextMenus"
+    "contextMenus",
+    "scripting",
+    "declarativeNetRequest"
   ],
-  "content_security_policy": 
-    "script-src 'self' 'unsafe-eval' moz-extension://lib; object-src 'self' moz-extension://lib; style-src 'self' 'unsafe-inline' moz-extension://lib https://solid.openlinksw.com; media-src 'self' 'unsafe-inline' moz-extension://lib ;"
+  "content_security_policy": { 
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self' moz-extension://lib; style-src 'self' 'unsafe-inline' moz-extension://lib https://solid.openlinksw.com; media-src 'self' 'unsafe-inline' moz-extension://lib ;"
+   }
 }

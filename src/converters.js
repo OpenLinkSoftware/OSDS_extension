@@ -558,7 +558,7 @@ class Convert_RSS {
       ttl = `wfw:commentRss ${this.removeTags(v.v)} `;
     else if (prop === 'georss_point' && v.v) {
       val = v.v.split(' ');
-      if (val.length > 1)
+      if (val?.length > 1)
         ttl = `geo:lat ${val[0]} ; geo:long ${val[1]} `;
     }
     else if (prop === 'geo_point') {
@@ -956,7 +956,7 @@ class Convert_CSV {
             if (!col[i])
               col[i] = 'COL_'+i;
             var lst = col[i].split(':');
-            if (lst.length > 1) {
+            if (lst?.length > 1) {
               col[i] = lst.length > 2 ? lst[2] : lst[0];
               found++;
               switch(lst[1]) {
@@ -1341,7 +1341,7 @@ class Convert_JSONL {
       for(const v of obj) {
         if (Array.isArray(v)) {
           const s = this.handle_obj(prop+'_',v);
-          if (s && s.length > 1) {
+          if (s?.length > 1) {
             prop_id++;
             lst.push(` [ ex:${prop}_${prop_id}  ${s} ]`);
           }

@@ -807,7 +807,7 @@ class MicrodataJSON_Converter {
 
       function fix_url(v) 
       {
-        if (v && v.length > 1 && v.startsWith('//') && v.indexOf(':') === -1)
+        if (v?.length > 1 && v.startsWith('//') && v.indexOf(':') === -1)
           return self.baseURL.protocol + v;
         else
           return v;

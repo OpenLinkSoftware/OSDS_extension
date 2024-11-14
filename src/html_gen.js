@@ -30,6 +30,10 @@ class HTML_Gen {
     this.docURI = _docURI;
     this.bnode_types = bnode_types || {};
     this.test_esc = /[!'()*&?#$:@=;+.\/]/;
+    this.reg_audio = /\.(mp3|m4a|flac|wav|wma|aac|aiff|ogg)$/;
+    this.reg_video = /\.(mp4|mov|wmv|avi|flv|mkv)$/;
+    this.reg_img = /\.(jpg|jpeg|png|gif|svg|webp|tiff)$/;
+    this.reg_img_data = /^data:image\/(png|gif|jpg|jpeg|webp|tiff)/;
     this.subst_list = {
       "http://www.w3.org/1999/02/22-rdf-syntax-ns#label": "Label",
             "http://www.w3.org/2000/01/rdf-schema#label": "Label",
@@ -171,8 +175,12 @@ class HTML_Gen {
           str += this.format_id(item.s, id_list);
 
           var props = "";
-          props += this.format_props(item.props, id_list, true);
-          props += this.format_props(item.props, id_list, false);
+          var rc = this.format_props(item.props, id_list, true);
+          props += rc.str;
+          if (rc.type==='http://schema.org/ImageObject')
+            console.log(rc.type)
+          rc = this.format_props(item.props, id_list, false, rc.type);
+          props += rc.str;
 
           if (props.length > 0)
             str += `<tr class='major'> 
@@ -200,12 +208,13 @@ class HTML_Gen {
   }
 
 
-  format_props(props, id_list, only_rdf_type)
+  format_props(props, id_list, only_rdf_type, prop_type)
   {
       if (props=== undefined) 
         return "";
         
       var str = "";
+      var type = "";
 
       for (const [key, val] of Object.entries(props)) 
       {
@@ -230,13 +239,15 @@ class HTML_Gen {
                       </tr>`;
             }
             else {
-              var sval = this.iri2html(key, obj.iri, null, null, true);
+              var sval = this.iri2html(key, obj.iri, false, null, true, prop_type);
               var td_class = obj.typeid!==undefined || key===this.ns.RDF_TYPE ?" class='typeid'":"";
               str += `<tr class='data_row'>
                         <td ${td_class}> ${key_str} </td>
                         <td ${td_class} > ${sval} </td>
                       </tr>`;
             }
+            if (key===this.ns.RDF_TYPE)
+              type = obj.iri;
           } 
           else {
             var v = obj.value;
@@ -252,7 +263,7 @@ class HTML_Gen {
               sval = '"'+this.check_link(key, v)+'"@'+obj.lang;
             } 
             else {
-              sval = this.check_link(key, v);
+              sval = this.check_link(key, v, false, null, false, prop_type);
             }
             str += `<tr class='data_row'>
                       <td> ${key_str} </td>
@@ -261,7 +272,7 @@ class HTML_Gen {
           }
         } 
       }
-      return str;
+      return {str, type};
   }
 
   create_iri_for_type(obj, id)
@@ -328,7 +339,7 @@ class HTML_Gen {
        }
   }
 
-  iri2html(key, uri, is_key, myid, is_iri)
+  iri2html(key, uri, is_key, myid, is_iri, type)
   {
       var v = this.check_subst(uri, myid);
 
@@ -338,36 +349,60 @@ class HTML_Gen {
       else { 
         var pref = this.ns.has_known_ns(uri);
         var sid = myid ? ` ${myid} ` : '';
-        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(key, uri, is_key, sid, is_iri);
+        return (pref!=null) ? this.pref_link(uri, pref, sid) : this.check_link(key, uri, is_key, sid, is_iri, type);
       }
   }
     
-  check_link(prop, val, is_key, sid, is_iri) 
+  check_link(prop, val, is_key, sid, is_iri, type) 
   {
       var s_val = String(val);
 
       if ( s_val.match(/^http(s)?:\/\//) ) 
       {
-        s_val = (new URL(s_val)).href;
+        const s_href = (new URL(s_val)).href;
+        const s_path = (new URL(s_val)).pathname;
 
-        if ( s_val.match(/\.(jpg|png|gif|svg|webp)$/) ) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
-        } 
-        if ( s_val.match(/\.(jpg|png|gif|svg|webp)[?#].*/) ) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
+        if (this.reg_img.test(s_path) 
+           || (prop && (prop ==='http://schema.org/image' || prop ==='https://schema.org/image')))
+        {
+          return this.gen_img_link(sid, s_href, is_key);
         }
-        if (prop && (prop ==='http://schema.org/image' || prop ==='https://schema.org/image')) {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
-        } 
-        return `<a ${sid} href="${s_val}"> ${this.decodeURI(s_val)} </a>`;
+        else if (this.reg_video.test(s_path) 
+           || (prop && (prop ==='http://schema.org/video' || prop ==='https://schema.org/video')))
+        {
+          return this.gen_video_link(sid, s_href, is_key);
+        }
+        else if (this.reg_audio.test(s_path) 
+           || (prop && (prop ==='http://schema.org/audio' || prop ==='https://schema.org/audio')))
+        {
+          return this.gen_audio_link(sid, s_href, is_key);
+        }
+        else if ((prop && (prop ==='http://schema.org/embedUrl' || prop ==='https://schema.org/embedUrl')) 
+                 && (s_href.startsWith('https://youtu.be/') ||
+                     s_href.startsWith('https://www.youtube.com/watch') ||
+                     s_href.startsWith('https://www.youtube.com/embed/')
+                    ))
+        {
+          return this.gen_embed_link(sid, s_href, is_key);
+        }
+        else if (type && type==='http://schema.org/ImageObject' && prop==='http://schema.org/url')
+        {
+          return this.gen_img_link(sid, s_href, is_key);
+        }
+        else if (type && type==='http://schema.org/VideoObject' && prop==='http://schema.org/contentUrl')
+        {
+          return this.gen_video_link(sid, s_href, is_key);
+        }
+        else if (type && type==='http://schema.org/AudioObject' && prop==='http://schema.org/contentUrl')
+        {
+          return this.gen_audio_link(sid, s_href, is_key);
+        }
+        else
+          return `<a ${sid} href="${s_href}"> ${this.decodeURI(s_href)} </a>`;
       } 
-      else if ( s_val.match(/^data:image\/(png|gif|jpg|webp)/) ) 
-      {
-          var width = (is_key!==undefined && is_key)?200:300;
-          return `<a ${sid} href="${s_val}" title="${s_val}"><img src="${s_val}" style="max-width: ${width}px;" /></a>`;
+      else if (this.reg_img_data.test(s_val)) 
+      { 
+          return this.gen_img_link(sid, s_val, is_key);
       }
       else if ( s_val.match(/^mailto:/) ) 
       {
@@ -380,6 +415,34 @@ class HTML_Gen {
       return this.pre(s_val);
   }
 
+  gen_img_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    return `<a ${sid} href="${href}" title="${href}"><img src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
+
+  gen_video_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    return `<a ${sid} href="${href}" title="${href}"><video controls crossorigin src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
+
+  gen_audio_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    return `<a ${sid} href="${href}" title="${href}"><audio controls preload="none" crossorigin src="${href}" style="max-width: ${width}px;" /></a>`;
+  }
+
+  gen_embed_link(sid, href, is_key)
+  {
+    const width = (is_key!==undefined && is_key)?200:300;
+    if (href.startsWith('https://www.youtube.com/watch?v='))
+      href = href.replace('https://www.youtube.com/watch?v=','https://www.youtube.com/embed/')
+    else if (href.startsWith('https://youtu.be'))
+      href = href.replace('https://youtu.be/','https://www.youtube.com/embed/')
+
+    return `<iframe width="360" height="200" src="${href}" title="YouTube video player" frameborder="0"; autoplay; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`
+  }
 
   pref_link(val, pref, sid) 
   {
