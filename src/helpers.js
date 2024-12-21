@@ -24,16 +24,24 @@ const Actions = {
         await settings.setValue('g.SuperLinks', '');
         await settings.setValue('g.SPARQL_Uploads', '');
     },
-    useSuperLinks: async function() {
+    isSuperLinks: async function() {
         const settings = new Settings();
         const v = await settings.getValue('g.SuperLinks');
         return v ? true : false;
     },
-    useSPARQL_Uploads: async function() {
+    isSPARQL_Uploads: async function() {
         const settings = new Settings();
         const v = await settings.getValue('g.SPARQL_Uploads');
         return v ? true : false;
-    }
+    },
+    setSuperLinks: async function() {
+        const settings = new Settings();
+        await settings.setValue('g.SuperLinks', '1');
+    },
+    setSPARQL_Uploads: async function() {
+        const settings = new Settings();
+        await settings.setValue('g.SPARQL_Uploads','1');
+    },
 }
 
 const GVars = {
@@ -91,7 +99,8 @@ class SPARQL_Upload {
       sparql_graph: this.sparql_graph,
       sparql_check: this.sparql_check,
       tab: this.tab,
-      state: this.state
+      state: this.state,
+      idp_url: this.idp_url
     }
     const settings = new Settings();
     await settings.setValue('g.SPARQL_Upload', JSON.stringify(v));
@@ -109,9 +118,10 @@ class SPARQL_Upload {
            this.tab = v.tab;
            this.qdata = v.qdata;
            this.sparql_ep = v.sparql_ep;
-           this.baseURI = this.baseURI;
-           this.sparql_graph = this.sparql_graph;
-           this.sparql_check = this.sparql_check;
+           this.baseURI = v.baseURI;
+           this.sparql_graph = v.sparql_graph;
+           this.sparql_check = v.sparql_check;
+           this.idp_url = v.idp_url;
        } catch(_) {
        }
      }
@@ -134,19 +144,19 @@ class SPARQL_Upload {
     this.messages = 
        { 
          throbber_show: (txt) => {
-            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_show', message: txt });
+            Browser.api.tabs.sendMessage(this.tab.id, { cmd: 'super_links_msg_show', message: txt });
          },
          throbber_hide: () => {
-            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_msg_hide' });
+            Browser.api.tabs.sendMessage(this.tab.id, { cmd: 'super_links_msg_hide' });
          },
          snackbar_show: (msg1, msg2) => {
-            Browser.api.tabs.sendMessage(tab.id, { cmd: 'super_links_snackbar', msg1, msg2 });
+            Browser.api.tabs.sendMessage(this.tab.id, { cmd: 'super_links_snackbar', msg1, msg2 });
          },
          msg_show: (msg) => {
-            Browser.api.tabs.sendMessage(tab.id, { cmd: 'osds_msg_show', message: msg });
+            Browser.api.tabs.sendMessage(this.tab.id, { cmd: 'osds_msg_show', message: msg });
          },
          msg_hide: () => {
-            Browser.api.tabs.sendMessage(tab.id, { cmd: 'osds_msg_hide' });
+            Browser.api.tabs.sendMessage(this.tab.id, { cmd: 'osds_msg_hide' });
          }
        }
   }
