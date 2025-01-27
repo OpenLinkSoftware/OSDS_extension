@@ -389,16 +389,17 @@ class OidcWeb {
       if (mediaType.startsWith('text/html')) {
           let parser = new DOMParser();
           let doc = parser.parseFromString(bodyText, 'text/html');
-          let storage_link = doc.querySelector(`*[itemid="${webId}"] > link[itemprop="http://www.w3.org/ns/pim/space#storage"]`);
-          let inbox_link = doc.querySelector(`*[itemid="${webId}"] > link[itemprop="http://www.w3.org/ns/pim/space#inbox"]`);
-          let name_meta = doc.querySelector(`*[itemid="${webId}"] > meta[itemprop="http://schema.org/name"]`);
-          let storage_url = storage_link ? storage_link.href : inbox_link ? inbox_link.href : null;
+          let storage_link = doc.querySelector(`*[itemid="${webId}"] > link[itemprop="http://www.w3.org/ns/pim/space#storage"]`)?.href;
+          let inbox_link = doc.querySelector(`*[itemid="${webId}"] > link[itemprop="http://www.w3.org/ns/pim/space#inbox"]`)?.href;
+          let name_meta = doc.querySelector(`*[itemid="${webId}"] > meta[itemprop="http://schema.org/name"]`)?.content;
+          let html_storage = doc.querySelector('link[rel="http://www.w3.org/ns/pim/space#storage"]')?.href;
+          let storage_url = html_storage ?? storage_link ?? inbox_link;
           if (storage_url) {
               return {
                   webId,
                   storage: storage_url,
                   is_solid_id: false,
-                  name: name_meta ? name_meta.content : null
+                  name: name_meta ?? ''
               }
           }
       }
