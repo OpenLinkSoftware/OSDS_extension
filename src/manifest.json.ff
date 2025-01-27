@@ -3,7 +3,7 @@
   "short_name": "osds",
   "author":"OpenLink Software",
   "homepage_url": "http://osds.openlinksw.com/",
-  "version": "3.4.11",
+  "version": "3.4.12",
   "manifest_version": 3,
   "minimum_chrome_version": "88",
   "description": "Reveals structured metadata (Microdata, RDFa, JSON-LD, Turtle, etc.) embedded within HTML documents.",
