@@ -106,7 +106,6 @@
 
             if (location.href.startsWith('https://chat.openai.com') || location.href.startsWith('https://chatgpt.com')) {
                nano = Nano.sniff_nanotation_chat(nano, 'openai');
-               nano = Nano.sniff_nanotation_chat(nano, 'openai1');
             }
             else if (location.href.startsWith('https://platform.openai.com/playground')) {
                nano = Nano.sniff_nanotation_chat(nano, 'openai_play');

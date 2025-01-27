@@ -375,12 +375,8 @@ Nano.sniff_nanotation_ms_copilot = (nano) =>
 
 Nano.sniff_nanotation_chat = (nano, chat_id) =>
     {
-      const chats = { 
-             openai: { menu:'main pre select#code_type option:checked', 
-                       sel: {parentNode:4}, 
-                       code:'code'
-                     }, 
-             openai1: { menu:'article pre select#code_type option:checked', 
+      const chats = {
+             openai: { menu:'main pre select#code_type option:checked, article pre select#code_type option:checked', 
                        sel: {parentNode:4}, 
                        code:'code'
                      }, 
