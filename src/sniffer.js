@@ -120,6 +120,9 @@
               nano = Nano.sniff_nanotation_chat(nano, 'claude');
               nano = Nano.sniff_nanotation_chat(nano, 'claude1');
             }
+            else if (location.href.startsWith('https://claude.site/artifacts/')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'claude1');
+            }
             else if (location.href.startsWith('https://www.perplexity.ai')) {
               nano = Nano.sniff_nanotation_chat(nano, 'perplexity');
             }
@@ -137,6 +140,9 @@
             }
             else if (location.href.startsWith('https://www.meta.ai')) {
               nano = Nano.sniff_nanotation_chat(nano, 'meta');
+            }
+            else if (location.href.startsWith('https://x.com/i/grok')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'grok');
             }
             else if (location.href.startsWith('https://openperplex.com')) {
               nano = Nano.sniff_nanotation_chat(nano, 'openperplex');
