@@ -103,7 +103,7 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
 
-  const dropDown_openai = `<div class="flex items-center gap-2" style="height:24px;margin-right:150px"> ${dd_base_openai} </div>`;
+  const dropDown_openai = `<div class="flex items-center gap-2" style="height:24px;margin-right:300px"> ${dd_base_openai} </div>`;
 
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base} </div>`;
@@ -133,6 +133,9 @@
            ${dd_base_openai_play} </div>`;
 
   const dropDown_grok = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px;" class="text-text-500">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_deepseek = `<div style="display:flex; flex-direction:row; justify-content:center; align-items:baseline; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
 
   function scan_code_openai()
@@ -413,6 +416,21 @@
     }
   }
 
+  function scan_code_deepseek()
+  {
+    const lst = document.querySelectorAll('pre');
+    for(const v of lst) 
+    {
+      const block = v.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const el = block.querySelector('div > div > div:last-child > div:first-child');
+      if (el)
+        el.insertAdjacentHTML('afterend', dropDown_deepseek);
+    }
+  }
 
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
@@ -507,7 +525,7 @@
         setInterval(scan_code_meta, 3*1000);
       }
       else if (g_chat_id === 'ch_openperplex') {
-        scan_code_mistral();
+        scan_code_openperplex();
         g_top = document.querySelector('body');
         setInterval(scan_code_openperplex, 3*1000);
       }
@@ -515,6 +533,11 @@
         scan_code_grok();
         g_top = document.querySelector('body');
         setInterval(scan_code_grok, 3*1000);
+      }
+      else if (g_chat_id === 'ch_deepseek') {
+        scan_code_deepseek();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_deepseek, 3*1000);
       }
 
 
@@ -589,6 +612,8 @@
       return 'ch_openperplex';
     else if (location.href.startsWith('https://x.com/i/grok'))
       return 'ch_grok';
+    else if (location.href.startsWith('https://chat.deepseek.com/'))
+      return 'ch_deepseek';
     else
      return null;
   }
@@ -631,6 +656,7 @@
        || g_chat_id === 'ch_you' 
        || g_chat_id === 'ch_meta'
        || g_chat_id === 'ch_grok' 
+       || g_chat_id === 'ch_deepseek' 
        || g_chat_id == 'ch_openperplex')
       handle_chat_code();
 

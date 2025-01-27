@@ -233,6 +233,13 @@ class Settings {
     "url": "https://you.com",
     "location.startsWith": "https://you.com",
     "prompt.selector": "textarea#search-input-textarea"
+  },
+
+  "deepseek": {
+    "name":"DeepSeek",
+    "url": "https://chat.deepseek.com",
+    "location.startsWith": "https://chat.deepseek.com",
+    "prompt.selector": "textarea#chat-input"
   }
   
 }

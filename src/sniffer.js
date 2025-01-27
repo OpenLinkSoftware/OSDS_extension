@@ -144,6 +144,9 @@
             else if (location.href.startsWith('https://x.com/i/grok')) {
               nano = Nano.sniff_nanotation_chat(nano, 'grok');
             }
+            else if (location.href.startsWith('https://chat.deepseek.com/')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'deepseek');
+            }
             else if (location.href.startsWith('https://openperplex.com')) {
               nano = Nano.sniff_nanotation_chat(nano, 'openperplex');
             }
