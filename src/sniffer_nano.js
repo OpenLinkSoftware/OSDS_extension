@@ -423,10 +423,26 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
                        sel: { parentNode:5 },
                        code:'pre code'
                      }, 
-             grok: { menu:'select#code_type option:checked', 
+             grok: { menu:'main select#code_type option:checked', 
                        sel: { parentNode:5 },
                        code:'pre code'
                      }, 
+
+             groq: { menu:'main pre select#code_type option:checked',  
+                       sel: {closest:'pre'}, 
+                       code:'code'
+                     }, 
+
+             qwen: { menu:'select#code_type option:checked',  
+                       sel: { parentNode:3 },
+                       code:'div[id^="code-textarea-"] div[role="textbox"]'
+                     }, 
+             cerebras: { menu:'select#code_type option:checked',  
+                       sel: { parentNode:3 },
+                       code:'div[data-testid$="-code-block"] div[role="textbox"]',
+                       drop_first: true
+                     }, 
+
              deepseek: { menu:'select#code_type option:checked', 
                        sel: { parentNode:5 },
                        code:'pre'
@@ -460,12 +476,17 @@ Nano.sniff_nanotation_chat = (nano, chat_id) =>
         if (el_pre) {
           let text = null;
           if (fmt.code) {
-            text = el_pre.querySelector(fmt.code)?.textContent;
+            text = el_pre.querySelector(fmt.code)?.innerText;
+            if (fmt.drop_first) {
+              const idx = text.indexOf('\n');
+              if (idx!=-1)
+                text = text.substring(idx+1);
+            }
           }
           else if (fmt.code_all) {
              let lst = []
              for(const v of el_pre.querySelectorAll(fmt.code_all))
-               lst.push(v.textContent);
+               lst.push(v.innerText);
              text = lst.join('');
           }
           if (text) {

@@ -103,6 +103,19 @@
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
 
+  const dd_base_groq = `<span style="background-color: lightgreen;">Data format:</span>
+           <SELECT style="all:revert;" id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+
   const dropDown_openai = `<div class="flex items-center gap-2" style="height:24px;margin-right:300px"> ${dd_base_openai} </div>`;
 
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
@@ -118,12 +131,12 @@
   const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
-  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
-  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;"> ${dd_base_pplabs} </div>`;
 
   const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
   const dropDown_huggingface = `<div style="margin-left:300px; display:flex; flex-flow:row; height:18px; align-items:center;"> ${dd_base_hugging} </div>`;
-  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;align-items:center;"> ${dd_base_pplabs} </div>`;
+  const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;align-items:center; color:black"> ${dd_base_pplabs} </div>`;
   const dropDown_meta = `<div style="height:20px;margin-left:200px;position:absolute;"> ${dd_base_hugging} </div>`;
 
   const dropDown_openai_play = `<div style="display:flex; flex-direction:row; margin-left:200px; height:24px;align-items:center">
@@ -135,8 +148,21 @@
   const dropDown_grok = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
 
+  const dropDown_groq_chat = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:300px;position:absolute;"> 
+           ${dd_base_groq} </div>`;
+
+
   const dropDown_deepseek = `<div style="display:flex; flex-direction:row; justify-content:center; align-items:baseline; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
+
+  const dropDown_qwen = `<div class="text-xs text-black dark:text-white rounded-lg" style="display:flex; flex-flow:row; height:24px; align-items:baseline;justify-content:center;background:lightgray; "> 
+           ${dd_base_rev} </div>`;
+
+  const dropDown_cerebras = `<div class="text-md text-black dark:text-white rounded-lg" style="display:flex; flex-flow:row; height:24px; align-items:baseline;justify-content:center;background:lightgray; "> 
+           ${dd_base_rev} </div>`;
+
+
+
 
   function scan_code_openai()
   {
@@ -231,14 +257,14 @@
         continue;
 
       const block = v.querySelector('div.code-block')
-      const hdr = block.querySelector('div.header')
-      if (hdr) {
-        hdr.append(DOM.htmlToElements(dropDown_gemini)[0]);
+      const hdr_type = block.querySelector('div > div > span')
+      if (hdr_type) {
+        hdr_type.insertAdjacentHTML('afterend', dropDown_gemini);
       } 
       else {
-        const internal = block.querySelector('div.code-block-internal-container')
+        const internal = block.querySelector('div')
         if (internal)
-          internal.insertBefore(DOM.htmlToElements(dropDown_gemini1)[0], internal.children[0]);
+          internal.insertAdjacentHTML('afterbegin', dropDown_gemini1);
       }
     }
   }
@@ -397,7 +423,7 @@
 
   function scan_code_grok()
   {
-    const lst = document.querySelectorAll('pre > code');
+    const lst = document.querySelectorAll('main pre > code');
     for(const v of lst) 
     {
       const block = v.parentNode.parentNode;
@@ -413,6 +439,20 @@
         btn_block.style['flex-flow']='row';
         btn_block.style['justify-content']='space-between';
       }
+    }
+  }
+
+  function scan_code_groq_chat()
+  {
+    const lst = document.querySelectorAll('main pre > code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      
+      block.insertAdjacentHTML('afterbegin', dropDown_groq_chat);
     }
   }
 
@@ -432,6 +472,36 @@
     }
   }
 
+  function scan_code_qwen()
+  {
+    const lst = document.querySelectorAll('div[id^="code-textarea-"]');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      block.insertAdjacentHTML('afterbegin', dropDown_qwen);
+    }
+  }
+
+  function scan_code_cerebras()
+  {
+    const lst = document.querySelectorAll('div[data-testid$="-code-block"]');
+    for(const v of lst) 
+    {
+      const block = v.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      block.insertAdjacentHTML('afterbegin', dropDown_cerebras);
+    }
+  }
+
+  
+  
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
         if (g_chat_id === 'ch_openai') 
@@ -534,6 +604,21 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_grok, 3*1000);
       }
+      else if (g_chat_id === 'ch_groq_chat') {
+        scan_code_groq_chat();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_groq_chat, 3*1000);
+      }
+      else if (g_chat_id === 'ch_qwen') {
+        scan_code_qwen();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_qwen, 3*1000);
+      }
+      else if (g_chat_id === 'ch_cerebras') {
+        scan_code_cerebras();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_cerebras, 3*1000);
+      }
       else if (g_chat_id === 'ch_deepseek') {
         scan_code_deepseek();
         g_top = document.querySelector('body');
@@ -612,8 +697,14 @@
       return 'ch_openperplex';
     else if (location.href.startsWith('https://x.com/i/grok'))
       return 'ch_grok';
+    else if (location.href.startsWith('https://chat.groq.com'))
+      return 'ch_groq_chat';
     else if (location.href.startsWith('https://chat.deepseek.com/'))
       return 'ch_deepseek';
+    else if (location.href.startsWith('https://chat.qwenlm.ai/'))
+      return 'ch_qwen';
+    else if (location.href.startsWith('https://inference.cerebras.ai/'))
+      return 'ch_cerebras';
     else
      return null;
   }
@@ -647,7 +738,8 @@
   {
     g_chat_id = getChatID();
 
-    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_openai_play' || g_chat_id === 'ch_copilot' 
+    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_openai_play' 
+       || g_chat_id === 'ch_copilot' 
        || g_chat_id === 'ch_claude' || g_chat_id === 'ch_claude_artifacts' 
        || g_chat_id === 'ch_gemini'
        || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
@@ -656,7 +748,10 @@
        || g_chat_id === 'ch_you' 
        || g_chat_id === 'ch_meta'
        || g_chat_id === 'ch_grok' 
+       || g_chat_id === 'ch_groq_chat' 
        || g_chat_id === 'ch_deepseek' 
+       || g_chat_id === 'ch_qwen' 
+       || g_chat_id === 'ch_cerebras' 
        || g_chat_id == 'ch_openperplex')
       handle_chat_code();
 

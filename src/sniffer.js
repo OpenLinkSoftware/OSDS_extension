@@ -144,8 +144,17 @@
             else if (location.href.startsWith('https://x.com/i/grok')) {
               nano = Nano.sniff_nanotation_chat(nano, 'grok');
             }
+            else if (location.href.startsWith('https://chat.groq.com')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'groq');
+            }
             else if (location.href.startsWith('https://chat.deepseek.com/')) {
               nano = Nano.sniff_nanotation_chat(nano, 'deepseek');
+            }
+            else if (location.href.startsWith('https://chat.qwenlm.ai/')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'qwen');
+            }
+            else if (location.href.startsWith('https://inference.cerebras.ai/')) {
+              nano = Nano.sniff_nanotation_chat(nano, 'cerebras');
             }
             else if (location.href.startsWith('https://openperplex.com')) {
               nano = Nano.sniff_nanotation_chat(nano, 'openperplex');
