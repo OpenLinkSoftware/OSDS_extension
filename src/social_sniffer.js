@@ -231,21 +231,23 @@ class Social {
     items = DOM.qSelAll('div.feed-shared-update-v2');
     for (var el of items) 
     {
-      let i_content_el = el.querySelector('div.feed-shared-update-v2__description-wrapper,'
+      let i_content_el = el.querySelector(
+                                       'div.update-components-update-v2__commentary,'
+                                      +'div.feed-shared-update-v2__description-wrapper,'
                                       +'div.feed-shared-update-v2__content,'
                                       +'div.comments-post-meta,'
                                       +'div.feed-shared-update-v2__update-content-wrapper');
       if (!i_content_el)
         continue;
         
-      let i_content = i_content_el ? i_content_el.textContent : '';
+      let i_content = i_content_el?.innerText;
       const i_id = el.getAttribute('data-urn');
       const i_id_href = (i_id ? `https://linkedin.com/feed/update/${i_id}` : '');
       const i_auth_link = el.querySelector('a.update-components-actor__meta-link')
-      const i_auth_href = i_auth_link ? i_auth_link.href : ''
-      const i_author = this.fix_textContent(el.querySelector('span.update-components-actor__name'));
+      const i_auth_href = i_auth_link?.href
+      const i_author = this.fix_textContent(el.querySelector('span.update-components-actor__name, span.update-components-actor__title'));
 
-      page_content.push(`### ${i_id_href}\n### Author - ${i_author}  ${i_auth_href} \n\n${i_content}`);
+      page_content.push(`### ${i_id_href}\n### Author - ${i_author}  ${i_auth_href??''} \n\n${i_content??''}`);
 
       // add video links
       let i_v = el.querySelector('a.external-video-viewer__play-link')
@@ -283,7 +285,7 @@ class Social {
       const i_img_container = el.querySelector('div.update-components-image__container')
       if (i_img_container) {
         const i_img = i_img_container.querySelector('img')
-        const i_img_href = i_img ? i_img.src : ''
+        const i_img_href = i_img?.src
 
         if (i_img_href)
           page_content.push(`![Image](${i_img_href})`)
@@ -293,7 +295,7 @@ class Social {
       if (i_anc) {
         const i_label = i_anc.getAttribute("aria-label")
         const i_img = i_anc.querySelector('img')
-        const i_href = i_img ? i_img.src : ''
+        const i_href = i_img?.src
 
         if (i_href && i_label)
           page_content.push(`![${i_label}](${i_href})`)
@@ -312,9 +314,9 @@ class Social {
     }
 
     // == Comments
-    const comments = DOM.qSelAll('article.comments-comment-item')
+    const comments = DOM.qSelAll('article.comments-comment-item, article.comments-comment-entity')
     for (var el of comments) {
-      let i_cont_1 = el.querySelector('div.comments-comment-item-content-body')
+      let i_cont_1 = el.querySelector('div.comments-comment-item-content-body,span.comments-comment-item__main-content')
       let i_cont_2 = el.querySelector('div.comments-reply-item-content-body')
       let i_content = '';
 
@@ -323,12 +325,23 @@ class Social {
       else if (i_cont_2)
         i_content = i_cont_2.innerText
 
-      const i_auth_link = el.querySelector('a.comments-post-meta__actor-link')
-      const i_auth_href = i_auth_link ? i_auth_link.href : ''
-      const i_auth = el.querySelector('div.comments-post-meta__profile-info-wrapper span.comments-post-meta__name-text')
-      const i_author = this.fix_textContent(i_auth);
+      let i_auth_link = el.querySelector('a.comments-post-meta__actor-link')
+      if (i_auth_link) {
+        const i_auth_href = i_auth_link.href
+        const i_auth = el.querySelector('div.comments-post-meta__profile-info-wrapper span.comments-post-meta__name-text')
+        const i_author = this.fix_textContent(i_auth);
 
-      page_content.push(`### ${i_auth_href}\n### Author - ${i_author}  ${i_auth_href}\n\n${i_content}\n`);
+        page_content.push(`#### Comment\n   ${i_author}\n   ${i_auth_href}\n${i_content}\n`);
+      }
+
+      i_auth_link = el.querySelector('a.comments-comment-meta__description-container')
+      if (i_auth_link) {
+        const i_auth_href = i_auth_link.href
+        const i_auth = i_auth_link.querySelector('span.comments-comment-meta__description-title')
+        const i_author = this.fix_textContent(i_auth);
+
+        page_content.push(`#### Comment\n   ${i_author}\n   ${i_auth_href}\n${i_content}\n`);
+      }
 
       let img_lst = el.querySelectorAll('div.comments-hero-entity__image-container img')
       for(var i of img_lst)
@@ -434,11 +447,7 @@ class Social {
       if (!i_id)
         continue;
 
-      let i_id_href = i_id ? i_id.href : '';
-      let i_timestamp = '';
-
-      if (i_id) 
-        i_timestamp = i_id.querySelector('time').title;
+      let i_timestamp = i_id.querySelector('time').title;
 
       let i_cont = el.querySelector('div.status__wrapper')
       let i_content = ''
@@ -448,7 +457,7 @@ class Social {
 
       let i_img = el.querySelector('img');
 
-      page_content.push(`### ${i_id_href}\n### Author - ${i_author}  ${i_account}`);
+      page_content.push(`### ${i_id.href}\n### Author - ${i_author}  ${i_account}`);
 
       if (i_timestamp)
         page_content.push(`### Timestamp - ${i_timestamp}`)

@@ -58,6 +58,7 @@ class Convert_Turtle{
   {
     var self = this;
     var data = [];
+    var data_baseURI = [];
 
     if (ttlData && ttlData.length > 0) {
       var handler = new Handle_Turtle(0, true, false, null, skip_docpref);
@@ -66,8 +67,10 @@ class Convert_Turtle{
       if (ret.errors.length>0)
         self.skipped_error = self.skipped_error.concat(ret.errors);
 
-      if (ret.data && ret.data.length > 0)
+      if (ret.data && ret.data.length > 0) {
         data = data.concat(ret.data);
+        data_baseURI = data_baseURI.concat(ret.baseURI)
+      }
     }
 
     if (nanoData!==null && nanoData.length > 0) {
@@ -77,21 +80,23 @@ class Convert_Turtle{
       if (ret.errors.length>0)
         self.skipped_error = self.skipped_error.concat(ret.errors);
 
-      if (ret.data && ret.data.length > 0)
+      if (ret.data && ret.data.length > 0) {
         data = data.concat(ret.data);
+        data_baseURI = data_baseURI.concat(ret.baseURI)
+      }
     }
 
-    return data;
+    return {data, baseURI: data_baseURI};
   }
 
   async to_jsonld(ttlData, nanoData, baseURL) 
   {
-    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL, true);
+    const {data, baseURI} = await this._fix_nano_ttl(ttlData, nanoData, baseURL, true);
     var output = [];
 
-    for(var i=0; i < fixed_ttl.length; i++)
+    for(var i=0; i < data.length; i++)
     {
-      var str = await this._to_jsonld_exec(fixed_ttl[i], baseURL);
+      var str = await this._to_jsonld_exec(data[i], baseURL[i]);
       output.push(str);
     }
     return output;
@@ -100,12 +105,12 @@ class Convert_Turtle{
 
   async to_rdf(ttlData, nanoData, baseURL, callback) 
   {
-    var fixed_ttl = await this._fix_nano_ttl(ttlData, nanoData, baseURL);
+    const {data, baseURI} = await this._fix_nano_ttl(ttlData, nanoData, baseURL, true);
     var output = [];
 
-    for(var i=0; i < fixed_ttl.length; i++)
+    for(var i=0; i < data.length; i++)
     {
-      output.push(this._to_rdf_exec(fixed_ttl[i], baseURL));
+      output.push(this._to_rdf_exec(data[i], baseURI[i]));
     }
 
     return output;
@@ -119,8 +124,22 @@ class Convert_Turtle{
       var ttl_data = textData;
 
       $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
+      let xml = $rdf.serialize(undefined, store, baseURL, 'application/rdf+xml');
+      try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, "application/xml");
 
-      return $rdf.serialize(undefined, store, baseURL, 'application/rdf+xml');
+        // Set the xml:base attribute on the root element
+        const rootElement = xmlDoc.documentElement;
+        rootElement.setAttribute("xml:base", baseURL);
+
+        // Serialize the modified XML document back to a string
+        const serializer = new XMLSerializer();
+        xml = serializer.serializeToString(xmlDoc);
+      } catch(_) { }
+
+      return xml;
+
     } catch (ex) {
       this.skipped_error.push(""+ex.toString());
       return '';
@@ -129,9 +148,9 @@ class Convert_Turtle{
 
 
 
-  async _to_jsonld_exec(ttl_data, baseURL) 
+  async _to_jsonld_exec(ttl_data, docURL) 
   {
-    this.baseURI = baseURL;
+    this.baseURI = docURL;
     var self = this;
     var setting = new Settings();
     var compact_relative = await setting.getValue("ext.osds.jsonld_compact_rel");
@@ -157,13 +176,13 @@ class Convert_Turtle{
             }
             else {
               var context = prefixes;
-              var base = baseURL;
+              let base = parser._base ? parser._base : docURL;
 
               if (context[""])
                 delete context[""];
 
               if (compact_relative === '1')
-                context["@base"] = baseURL;
+                context["@base"] = base;
 
               store.end(async function (error, ttl_text) {
 
@@ -212,17 +231,38 @@ class Convert_RDF_XML {
     this.skipped_error = [];
   }
 
+  _extract_base(xml) {
+    try {
+      const parser = new DOMParser();
+
+      // Parse the XML string into a DOM Document
+      const xmlDoc = parser.parseFromString(xml, "application/xml");
+
+      // Set the xml:base attribute on the root element
+      const rootElement = xmlDoc.documentElement;
+      return rootElement.getAttribute("xml:base");          
+    } catch(_) {}
+    return null;
+  }
+
+
   to_ttl(textData, baseURL) {
     var output = [];
 
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var rdf_data = textData[i];
+        const rdf_data = textData[i];
+        const base = this._extract_base(rdf_data);
+
+        if (base)
+          baseURL = base;
+
         var store=$rdf.graph();
 
         $rdf.parse(rdf_data, store, baseURL, "application/rdf+xml");
-        var ttl_data = $rdf.serialize(undefined, store, baseURL, "text/turtle");
+        let ttl_data = `@base <${baseURL}> .\n`
+        ttl_data += $rdf.serialize(undefined, store, baseURL, "text/turtle");
         output.push(ttl_data);
 
       } catch (ex) {
@@ -239,7 +279,12 @@ class Convert_RDF_XML {
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var rdf_data = textData[i];
+        const rdf_data = textData[i];
+        const base = this._extract_base(rdf_data);
+
+        if (base)
+          baseURL = base;
+
         var store=$rdf.graph();
 
         $rdf.parse(rdf_data, store, baseURL, "application/rdf+xml");
@@ -267,6 +312,81 @@ class Convert_JSONLD {
     this.skipped_error = [];
   }
 
+  fix_json(v)
+  {
+    var ret = [];
+    var inStr = false;
+    for(var i=0; i < v.length; i++) {
+      var ch = v[i];
+      if (inStr) {
+        switch(ch) {
+          case '"': inStr = false; break;
+          case '\n': ch = '\\n'; break;
+          case '\t': ch = '    '; break;
+          case '\r': ch = '\\r'; break;
+          case '\f': ch = '\\f'; break;
+          case '\b': ch = '\\b'; break;
+        }
+        if (ch === '"') 
+          inStr = false;
+        
+      } else {
+        if (ch === '"')
+          inStr = true;
+      }
+      ret.push(ch);
+    }
+    return ret.join('');
+  }
+
+  _extract_base(str) {
+    try {
+      var json_str = str.trim();
+      var jsonld_data = null;
+
+      try {
+        jsonld_data = JSON.parse(json_str);
+      } catch (ex) {
+        json_str = this.fix_json(json_str);
+        jsonld_data = JSON.parse(json_str);
+      }
+
+      let _base = null;
+
+      if (jsonld_data != null) {
+        if (jsonld_data["@context"] && jsonld_data["@context"]["@base"])
+          _base = jsonld_data["@context"]["@base"];
+        else if (jsonld_data["@base"])
+          _base = jsonld_data["@base"];
+      }
+      return _base;
+
+    } catch(_) {}
+    return null;
+  }
+
+  async _to_ttl(textData, baseURL, bnode_types) 
+  {
+    try {
+      var handler = new Handle_JSONLD(true);
+      const base = this._extract_base(textData);
+      if (base)
+        baseURL = base;
+
+      var ret = await handler.parse([textData], baseURL, bnode_types);
+
+      if (ret.errors.length > 0) 
+        this.skipped_error = this.skipped_error.concat(ret.errors);
+
+      if (ret.data.length > 0)
+        return {data:ret.data, baseURI:baseURL};
+
+    } catch (ex) {
+      this.skipped_error.push(ex.toString());
+    }
+    return null;
+  }
+
   async to_ttl(textData, baseURL) 
   {
     var output = [];
@@ -274,43 +394,40 @@ class Convert_JSONLD {
 
     for(var i=0; i < textData.length; i++)
     {
-      try {
-        var handler = new Handle_JSONLD(true);
-        var ret = await handler.parse([textData[i]], baseURL, bnode_types);
-
-        if (ret.errors.length > 0) 
-          this.skipped_error = this.skipped_error.concat(ret.errors);
-
-        if (ret.data.length > 0) {
-          if (Array.isArray(ret.data))
-            output = output.concat(ret.data);
-          else
-            output.push(ret.data);
-        }
-
-      } catch (ex) {
-        this.skipped_error.push(ex.toString());
+      const ret = await this._to_ttl(textData[i], baseURL, bnode_types);
+      if (ret && ret.data) {
+        if (Array.isArray(ret.data))
+          output = output.concat(ret.data);
+        else
+          output.push(ret.data);
       }
     }
     return output;
   }
 
-  
   async to_rdf(textData, baseURL)
   {
     var output = [];
-    this.baseURI = baseURL;
+    var bnode_types = {};
 
-    var ttl_data = await this.to_ttl(textData, baseURL);
-
-    for(var i=0; i < ttl_data.length; i++)
+    for(var i=0; i < textData.length; i++)
     {
-      output.push(this._to_rdf_exec(ttl_data[i], baseURL));
+      const ret = await this._to_ttl(textData[i], baseURL, bnode_types);
+      let data = null;
+      if (ret && ret.data) {
+        if (Array.isArray(ret.data))
+          data = ret.data.length > 0 ? ret.data[0] : null;
+        else
+          data = ret.data;
+      }
+      if (data) {
+        const rdf = this._to_rdf_exec(data, ret.baseURI);
+        output.push(rdf);
+      }
     }
 
     return output;
   }
-
 
   _to_rdf_exec(textData, baseURL) 
   {
@@ -320,7 +437,22 @@ class Convert_JSONLD {
 
       $rdf.parse(ttl_data, store, baseURL, 'text/turtle');
 
-      return $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+      let xml = $rdf.serialize(undefined, store, baseURL, "application/rdf+xml");
+      try {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, "application/xml");
+
+        // Set the xml:base attribute on the root element
+        const rootElement = xmlDoc.documentElement;
+        rootElement.setAttribute("xml:base", baseURL);
+
+        // Serialize the modified XML document back to a string
+        const serializer = new XMLSerializer();
+        xml = serializer.serializeToString(xmlDoc);
+      } catch(_) { }
+
+      return xml;
+
     } catch (ex) {
       this.skipped_error.push(""+ex.toString());
       return '';

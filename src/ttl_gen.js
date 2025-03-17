@@ -102,6 +102,7 @@ class TTL_Gen {
 
       if (this.add_base) {
         pref += `base <${this.docURI}> \n`;
+        this.prefixes["base"] = this.docURI;
       }
 
       pref += "prefix : <#> \n";

@@ -24,7 +24,7 @@ class ChatService {
     this.tab = {};
     this.chatTabSrv = null;
     this.waited_ask = null;
-    this.timeout = 3000
+    this.timeout = 5000
     this.prompt_id = null;
     this.prompt_url = null;
     this.prompt_in_new_window = false;

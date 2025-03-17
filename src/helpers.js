@@ -283,7 +283,11 @@ class SPARQL_Upload {
                  ? 'INSERT INTO GRAPH <' + this.sparql_graph + '> {\n'
                  : 'INSERT DATA { \n';
 
-    pref += "base <"+this.baseURI+"> \n";
+    if (prefixes.base)
+      pref += "base <"+prefixes.base+"> \n";
+    else
+      pref += "base <"+this.baseURI+"> \n";
+
     pref += "prefix : <#> \n";
 
     prefixes = prefixes || {};
@@ -292,10 +296,12 @@ class SPARQL_Upload {
     pref_sz = pref.length;
 
     for(var key in prefixes) {
-      var item = "prefix "+key+": <"+prefixes[key]+"> \n";
-      pref += item;
-      pref_len++;
-      pref_sz += item.length;
+      if (key!=='base') {
+        let item = "prefix "+key+": <"+prefixes[key]+"> \n";
+        pref += item;
+        pref_len++;
+        pref_sz += item.length;
+      }
     }
   
     var max_count = 1000 - pref_len;
