@@ -276,18 +276,22 @@ class HTML_Gen {
         return `${this.docURI}#${data}${sid}`;
       }
       else {
-        const u = new URL(value);
-        if (u.hash) {
-          const hash = u.hash.endsWith('/') ? u.hash.substring(0, u.hash.length - 1) : u.hash;
-          return `${this.docURI}${hash}${sid}`;
-        } else {
-          const lst = u.pathname.split('/');
-          let data = lst.length > 0 ? lst[lst.length - 1] : "";
-          if (!data) {
-            data = "b";
-          }
+        try {
+          const u = new URL(value);
+          if (u.hash) {
+            const hash = u.hash.endsWith('/') ? u.hash.substring(0, u.hash.length - 1) : u.hash;
+            return `${this.docURI}${hash}${sid}`;
+          } else {
+            const lst = u.pathname.split('/');
+            let data = lst.length > 0 ? lst[lst.length - 1] : "";
+            if (!data) {
+              data = "b";
+            }
 
-          return `${this.docURI}#${data}${sid}`;
+            return `${this.docURI}#${data}${sid}`;
+          }
+        } catch(e) {
+            return `${this.docURI}#${sid}`;
         }
       }
     }
@@ -301,7 +305,9 @@ class HTML_Gen {
     // for scroll between entities on page
     let uri = String(value);
     if (uri.match(/^http(s)?:\/\//)) {
-      uri = (new URL(uri)).href;
+      try {
+        uri = (new URL(uri)).href;
+      } catch (e) {}
     }
 
     let anc = "";
@@ -337,8 +343,13 @@ class HTML_Gen {
     const s_val = String(val);
 
     if (s_val.match(/^http(s)?:\/\//)) {
-      const s_href = (new URL(s_val)).href;
-      const s_path = (new URL(s_val)).pathname;
+      let s_href = s_val;
+      let s_path = "";
+      try {
+        const u = new URL(s_val);
+        s_href = u.href;
+        s_path = u.pathname;
+      } catch(e) { }
 
       if (this.reg_img.test(s_path)
           || (prop && (prop === 'http://schema.org/image' || prop === 'https://schema.org/image'))) {
@@ -413,7 +424,9 @@ class HTML_Gen {
     let s_val = String(val);
 
     if (s_val.match(/^http(s)?:\/\//)) {
-      s_val = (new URL(s_val)).href;
+      try {
+        s_val = (new URL(s_val)).href;
+      } catch(e) { }
     }
 
     let data = s_val.substring(pref.link.length);
