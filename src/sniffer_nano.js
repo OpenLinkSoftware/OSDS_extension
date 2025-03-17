@@ -475,6 +475,12 @@ Nano.llm_chats = {
                        url: ['https://github.com/marketplace/models/']
                      }, 
 
+             librechat: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://librechat-librechat.hf.space/']
+                     }, 
+
            }
 
 Nano.sniff_llm_chats = (nano, href) =>
