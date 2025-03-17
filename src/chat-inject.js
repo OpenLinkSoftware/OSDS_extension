@@ -167,6 +167,9 @@
   const dropDown_github = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:200px;">
            ${dd_base_rev} </div>`;
 
+  const dropDown_librechat = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
 
   function scan_code_openai()
   {
@@ -532,6 +535,20 @@
     }
   }
 
+  function scan_code_librechat()
+  {
+    const lst = document.querySelectorAll('pre code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode;
+      const dd_el = block.parentNode.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      const title = block.querySelector('div span:first-child');
+      title.insertAdjacentHTML('afterend', dropDown_librechat);
+    }
+  }
+
   
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
@@ -661,6 +678,11 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_github, 3*1000);
       }
+      else if (g_chat_id === 'ch_librechat') {
+        scan_code_librechat();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_librechat, 3*1000);
+      }
 
 
       if (g_top && use_mutation_observer) {
@@ -746,6 +768,8 @@
       return 'ch_allenai';
     else if (location.href.startsWith('https://github.com/marketplace/models/'))
       return 'ch_github';
+    else if (location.href.startsWith('https://librechat-librechat.hf.space/'))
+      return 'ch_librechat';
 
     else
      return null;
@@ -796,6 +820,7 @@
        || g_chat_id === 'ch_cerebras' 
        || g_chat_id === 'ch_allenai'
        || g_chat_id === 'ch_github'
+       || g_chat_id === 'ch_librechat'
        || g_chat_id == 'ch_openperplex')
       handle_chat_code();
 
