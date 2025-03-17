@@ -763,6 +763,7 @@ async function save_data(action, fname, fmt, callback)
 
   if (action==="sparqlupload") 
   {
+    var data = [];
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
     var sparql_graph = $('#save-sparql-graph').val().trim();
     var exec_cmd = { cmd:'actionSPARQL_Upload', 
