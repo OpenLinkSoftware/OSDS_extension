@@ -373,155 +373,188 @@ Nano.sniff_nanotation_ms_copilot = (nano) =>
       return nano;
     }
 
-Nano.sniff_nanotation_chat = (nano, chat_id) =>
-    {
-      const chats = {
+Nano.llm_chats = {
              openai: { menu:'main pre select#code_type option:checked, article pre select#code_type option:checked', 
-                       sel: {parentNode:4}, 
-                       code:'code'
+                       sel: [{parentNode:4}], 
+                       code:'code',
+                       url: ['https://chat.openai.com', 'https://chatgpt.com']
                      }, 
 
              openai_play: { menu:'div[data-panel] select#code_type option:checked', 
-                       sel: { parentNode:3 }, 
-                       code_all:'pre code code ~ *'
+                       sel: [{ parentNode:3 }], 
+                       code_all:'pre code code ~ *',
+                       url: ['https://platform.openai.com/playground']
                      }, 
 
              gemini: { menu:'message-content code-block select#code_type option:checked', 
-                       sel: {closest:'div.code-block'}, 
-                       code:'code'
+                       sel: [{closest:'div.code-block'}], 
+                       code:'code',
+                       url: ['https://gemini.google.com/']
                      }, 
              claude: { menu:'pre > div select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
-                       code:'code'
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://gemini.google.com/']
                      }, 
              claude1: { menu:'div > select#code_type option:checked', 
-                       sel: { parentNode:4 }, 
-                       code:'code'
+                       sel: [{ parentNode:4 }], 
+                       code:'code',
+                       url: ['https://gemini.google.com/', 'https://claude.site/artifacts/']
                      }, 
              perplexity: { menu:'main pre select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
-                       code:'code'
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://www.perplexity.ai']
                      }, 
              perplexity_labs: { menu:'main pre select#code_type option:checked',  
-                       sel: {closest:'pre'}, 
-                       code:'code'
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://labs.perplexity.ai']
                      }, 
 
              mistral: { menu:'pre select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
-                       code:'code'
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://chat.mistral.ai/chat']
                      }, 
              huggingface: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:3 },
-                       code:'pre code'
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://huggingface.co/chat/']
                      }, 
              you: { menu:'div#ydc-content-area select#code_type option:checked', 
-                       sel: { parentNode:4 },
-                       code:'pre code'
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://you.com']
                      }, 
              meta: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:5 },
-                       code:'pre code'
+                       sel: [{ parentNode:5 }],
+                       code:'pre code',
+                       url: ['https://www.meta.ai']
                      }, 
              grok: { menu:'main select#code_type option:checked', 
-                       sel: { parentNode:5 },
-                       code:'pre code'
+                       sel: [{ parentNode:5 }],
+                       code:'pre code',
+                       url: ['https://x.com/i/grok']
                      }, 
-
              groq: { menu:'main pre select#code_type option:checked',  
-                       sel: {closest:'pre'}, 
-                       code:'code'
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://chat.groq.com']
                      }, 
-
              qwen: { menu:'select#code_type option:checked',  
-                       sel: { parentNode:3 },
-                       code:'div[id^="code-textarea-"] div[role="textbox"]'
+                       sel: [{ parentNode:3 }],
+                       code:'div[id^="code-textarea-"] div[role="textbox"]',
+                       url: ['https://chat.qwenlm.ai/']
                      }, 
              cerebras: { menu:'select#code_type option:checked',  
-                       sel: { parentNode:3 },
+                       sel: [{ parentNode:3 }],
                        code:'div[data-testid$="-code-block"] div[role="textbox"]',
-                       drop_first: true
+                       drop_first: true,
+                       url: ['https://inference.cerebras.ai/']
                      }, 
-
              deepseek: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:5 },
-                       code:'pre'
+                       sel: [{ parentNode:5 }],
+                       code:'pre',
+                       url: ['https://chat.deepseek.com/']
                      }, 
              openperplex: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:3 },
-                       code:'pre code'
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://openperplex.com']
+                     }, 
+             allenai: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:2 }, { nextSibling:1 }],
+                       code:'pre code',
+                       url: ['https://playground.allenai.org/']
+                     }, 
+
+             github: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://github.com/marketplace/models/']
                      }, 
 
            }
 
-      const fmt = chats[chat_id];
-      if (!fmt)
-        return nano;
+Nano.sniff_llm_chats = (nano, href) =>
+    {
+      if (href.startsWith('https://copilot.microsoft.com')) {
+         return Nano.sniff_nanotation_ms_copilot(nano);
+      }
 
-      var el_pre, el_code;
-      
-      var lst = DOM.qSelAll(fmt.menu);
-      for (var el of lst) {
-        const el_type = el.id;
+      for (const [key, fmt] of Object.entries(Nano.llm_chats)) {
+        for(const item of fmt.url) {
+          if (href.startsWith(item)) {
+            var lst = DOM.qSelAll(fmt.menu);
+            for (const el of lst) {
+              const el_type = el.id;
+              let el_pre = el;
 
-        if (fmt.sel.closest) {
-          el_pre = el.closest(fmt.sel.closest);
-        }
-        else if (fmt.sel.parentNode) {
-          el_pre = el;
-          for(var i=0; i<fmt.sel.parentNode; i++)
-            el_pre = el_pre.parentNode;
-        }
+              for(const sel of fmt.sel) {
+                if (sel.closest) {
+                  el_pre = el_pre.closest(sel.closest);
+                }
+                else if (sel.parentNode) {
+                  for(var i=0; i<sel.parentNode; i++)
+                    el_pre = el_pre.parentNode;
+                }
+                else if (sel.nextSibling) {
+                    el_pre = el_pre.nextSibling;
+                }
+              }
 
-        if (el_pre) {
-          let text = null;
-          if (fmt.code) {
-            text = el_pre.querySelector(fmt.code)?.innerText;
-            if (fmt.drop_first) {
-              const idx = text.indexOf('\n');
-              if (idx!=-1)
-                text = text.substring(idx+1);
-            }
-          }
-          else if (fmt.code_all) {
-             let lst = []
-             for(const v of el_pre.querySelectorAll(fmt.code_all))
-               lst.push(v.innerText);
-             text = lst.join('');
-          }
-          if (text) {
-            switch(el_type) {
-              case 'turtle':
-                nano.ttl.push(text);
-                break;
-              case 'jsonld':
-                nano.jsonld.push(text);
-                break;
-              case 'json':
-                nano.json.push(text);
-                break;
-              case 'csv':
-                nano.csv.push(text);
-                break;
-              case 'rdfxml':
-                nano.rdf.push(text);
-                break;
-              case 'markdown':
-                nano.md.push(text);
-                break;
-              case 'rss':
-                nano.rss.push(text);
-                break;
-              case 'atom':
-                nano.atom.push(text);
-                break;
+              if (el_pre!=el) {
+                let text = null;
+                if (fmt.code) {
+                  text = el_pre.querySelector(fmt.code)?.innerText;
+                  if (fmt.drop_first) {
+                    const idx = text.indexOf('\n');
+                    if (idx!=-1)
+                      text = text.substring(idx+1);
+                  }
+                }
+                else if (fmt.code_all) {
+                  let lst = []
+                  for(const v of el_pre.querySelectorAll(fmt.code_all))
+                    lst.push(v.innerText);
+                  text = lst.join('');
+                }
+
+                if (text) {
+                  switch(el_type) {
+                    case 'turtle':
+                      nano.ttl.push(text);
+                      break;
+                    case 'jsonld':
+                      nano.jsonld.push(text);
+                      break;
+                    case 'json':
+                      nano.json.push(text);
+                      break;
+                    case 'csv':
+                      nano.csv.push(text);
+                      break;
+                    case 'rdfxml':
+                      nano.rdf.push(text);
+                      break;
+                    case 'markdown':
+                      nano.md.push(text);
+                      break;
+                    case 'rss':
+                      nano.rss.push(text);
+                      break;
+                    case 'atom':
+                      nano.atom.push(text);
+                      break;
+                  }
+                }
+              }
             }
           }
         }
       }
-
       return nano;
     }
-
  
 

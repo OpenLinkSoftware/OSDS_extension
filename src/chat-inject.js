@@ -161,7 +161,11 @@
   const dropDown_cerebras = `<div class="text-md text-black dark:text-white rounded-lg" style="display:flex; flex-flow:row; height:24px; align-items:baseline;justify-content:center;background:lightgray; "> 
            ${dd_base_rev} </div>`;
 
+  const dropDown_allenai = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline;">
+           ${dd_base_rev} </div>`;
 
+  const dropDown_github = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:200px;">
+           ${dd_base_rev} </div>`;
 
 
   function scan_code_openai()
@@ -500,7 +504,34 @@
     }
   }
 
+  function scan_code_allenai()
+  {
+    const lst = document.querySelectorAll('main pre code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode;
+      const dd_el = block.parentNode.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      block.insertAdjacentHTML('beforebegin', dropDown_allenai);
+    }
+  }
   
+  function scan_code_github()
+  {
+    const lst = document.querySelectorAll('main pre code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode.parentNode;
+      const dd_el = block.parentNode.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      const title = block.querySelector('figcaption');
+      title.insertAdjacentHTML('beforeend', dropDown_github);
+    }
+  }
+
   
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
@@ -532,8 +563,6 @@
       
       if (g_chat_id === 'ch_openai') {
         scan_code_openai();
-//        g_top = document.querySelector('div#__next');
-//        use_mutation_observer = true;
         setInterval(scan_code_openai, 5*1000);
       }
       else if (g_chat_id === 'ch_openai_play') {
@@ -569,8 +598,6 @@
       }
       else if (g_chat_id === 'ch_perplexity') {
         scan_code_perplexity();
-//        g_top = document.querySelector('div#__next');
-//        use_mutation_observer = true;
         setInterval(scan_code_perplexity, 5*1000);
       }
       else if (g_chat_id === 'ch_mistral') {
@@ -623,6 +650,16 @@
         scan_code_deepseek();
         g_top = document.querySelector('body');
         setInterval(scan_code_deepseek, 3*1000);
+      }
+      else if (g_chat_id === 'ch_allenai') {
+        scan_code_allenai();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_allenai, 3*1000);
+      }
+      else if (g_chat_id === 'ch_github') {
+        scan_code_github();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_github, 3*1000);
       }
 
 
@@ -705,6 +742,11 @@
       return 'ch_qwen';
     else if (location.href.startsWith('https://inference.cerebras.ai/'))
       return 'ch_cerebras';
+    else if (location.href.startsWith('https://playground.allenai.org/'))
+      return 'ch_allenai';
+    else if (location.href.startsWith('https://github.com/marketplace/models/'))
+      return 'ch_github';
+
     else
      return null;
   }
@@ -752,6 +794,8 @@
        || g_chat_id === 'ch_deepseek' 
        || g_chat_id === 'ch_qwen' 
        || g_chat_id === 'ch_cerebras' 
+       || g_chat_id === 'ch_allenai'
+       || g_chat_id === 'ch_github'
        || g_chat_id == 'ch_openperplex')
       handle_chat_code();
 
