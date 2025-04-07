@@ -340,12 +340,12 @@ Nano.llm_chats = {
              claude: { menu:'pre > div select#code_type option:checked', 
                        sel: [{closest:'pre'}], 
                        code:'code',
-                       url: ['https://gemini.google.com/']
+                       url: ['https://claude.ai/']
                      }, 
              claude1: { menu:'div > select#code_type option:checked', 
                        sel: [{ parentNode:4 }], 
                        code:'code',
-                       url: ['https://gemini.google.com/', 'https://claude.site/artifacts/']
+                       url: ['https://claude.site/', 'https://claude.site/artifacts/']
                      }, 
              ms_copilot: { menu:'main select#code_type option:checked', 
                        sel: [{ parentNode:4 }],

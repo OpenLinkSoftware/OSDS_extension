@@ -121,14 +121,14 @@
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base_rev} </div>`;
 
-  const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-left:200px; height:24px;" class="text-text-500">
+  const dropDown_claude = `<div style="display:flex; flex-direction:row; align-items:center; margin-left:200px; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
-  const dropDown_claude_ar = `<div style="display:flex; flex-direction:row; justify-content:center; background: lightgray; height:24px;" class="text-text-500">
+  const dropDown_claude_ar = `<div style="display:flex; flex-direction:row; align-items:center; justify-content:center; background: lightgray; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
 
-  const dropDown_gemini = `<div style="display:flex; flex-direction:row; height:24px;">
+  const dropDown_gemini = `<div style="display:flex; flex-direction:row; align-items:center; height:24px;">
            ${dd_base} </div>`;
-  const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; margin-right:10px">
+  const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; align-items:center; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
   const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
@@ -713,7 +713,7 @@
       return 'ch_openai_play';
     else if (location.href.startsWith('https://copilot.microsoft.com'))
       return 'ch_copilot';
-    else if (location.href.startsWith('https://claude.ai/chat'))
+    else if (location.href.startsWith('https://claude.ai/'))
       return 'ch_claude';
     else if (location.href.startsWith('https://claude.site/artifacts'))
       return 'ch_claude_artifacts';
