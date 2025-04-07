@@ -319,60 +319,6 @@ Nano.sniff_nanotation_Document = (doc_Texts) =>
 
 
  
-Nano.sniff_nanotation_ms_copilot = (nano) =>
-    {
-      _top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot;
-
-      if (!_top)
-        return nano;
-
-      for(const c0 of _top.querySelectorAll('cib-chat-turn[mode="conversation"]'))
-      {
-        for(const c1 of c0.shadowRoot.querySelectorAll('cib-message-group[mode=conversation]')) 
-        {
-          for(const c2 of c1.shadowRoot.querySelectorAll('cib-message[type="text"]'))
-          {
-            for(const v of c2.shadowRoot.querySelectorAll('cib-shared cib-code-block'))
-            {
-              const text = v.getAttribute('clipboard-data');
-              //const dd_el = e_hdr.querySelector('#code_type');
-              const dd_el = v.shadowRoot.querySelector('select#code_type option:checked');
-              if (text && dd_el) {
-                let lst = null;
-                switch(dd_el.id) {
-                  case 'turtle': 
-                    nano.ttl.push(text);
-                    break;
-                  case 'jsonld':
-                    nano.jsonld.push(text);
-                    break;
-                  case 'json':
-                    nano.json.push(text);
-                    break;
-                  case 'csv':
-                    nano.csv.push(text);
-                    break;
-                  case 'rdfxml':
-                    nano.rdf.push(text);
-                    break;
-                  case 'markdown':
-                    nano.md.push(text);
-                    break;
-                  case 'rss':
-                    nano.rss.push(text);
-                    break;
-                  case 'atom':
-                    nano.atom.push(text);
-                    break;
-                }
-              }
-            }
-          }
-        }
-      }
-      return nano;
-    }
-
 Nano.llm_chats = {
              openai: { menu:'main pre select#code_type option:checked, article pre select#code_type option:checked', 
                        sel: [{parentNode:4}], 
@@ -400,6 +346,11 @@ Nano.llm_chats = {
                        sel: [{ parentNode:4 }], 
                        code:'code',
                        url: ['https://gemini.google.com/', 'https://claude.site/artifacts/']
+                     }, 
+             ms_copilot: { menu:'main select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://copilot.microsoft.com/']
                      }, 
              perplexity: { menu:'main pre select#code_type option:checked', 
                        sel: [{closest:'pre'}], 
@@ -485,10 +436,6 @@ Nano.llm_chats = {
 
 Nano.sniff_llm_chats = (nano, href) =>
     {
-      if (href.startsWith('https://copilot.microsoft.com')) {
-         return Nano.sniff_nanotation_ms_copilot(nano);
-      }
-
       for (const [key, fmt] of Object.entries(Nano.llm_chats)) {
         for(const item of fmt.url) {
           if (href.startsWith(item)) {

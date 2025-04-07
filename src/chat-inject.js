@@ -119,7 +119,7 @@
   const dropDown_openai = `<div class="flex items-center gap-2" style="height:24px;margin-right:300px"> ${dd_base_openai} </div>`;
 
   const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
-  const dropDown_ms = `<div> ${dd_base} </div>`;
+  const dropDown_ms = `<div> ${dd_base_rev} </div>`;
 
   const dropDown_claude = `<div style="display:flex; flex-direction:row; margin-left:200px; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
@@ -279,35 +279,17 @@
 
   function scan_code_ms_copilot()
   {
-    if (!g_top)
-      return;
-
-    for(const c0 of g_top.querySelectorAll('cib-chat-turn[mode="conversation"]'))
+    const lst = document.querySelectorAll('main pre > code');
+    for(const v of lst) 
     {
-      for(const c1 of c0.shadowRoot.querySelectorAll('cib-message-group[mode=conversation]')) 
-      {
-        for(const c2 of c1.shadowRoot.querySelectorAll('cib-message[type="text"]'))
-        {
-          for(const v of c2.shadowRoot.querySelectorAll('cib-shared cib-code-block'))
-          {
-            const e_hdr = v.shadowRoot.querySelector('div.code-header')
-            const e_hdr1 = v.shadowRoot.querySelector('div.code')
-            if (e_hdr) {
-              const btn_copy = e_hdr.querySelector('div.code-actions')
-              const dd_el = e_hdr.querySelector('#code_type');
-              if (btn_copy && !dd_el)
-                e_hdr.insertBefore(DOM.htmlToElements(dropDown_ms)[0], btn_copy);
-            }
-            else if (e_hdr1) {
-              const dd_el = v.shadowRoot.querySelector('#code_type');
-              if (!dd_el) {
-                const dd_html = ms_wrap + dropDown_ms + '</div>';
-                v.shadowRoot.insertBefore(DOM.htmlToElements(dd_html)[0], e_hdr1);
-              }
-            }
-          }
-        }
-      }
+      const block = v.parentNode.parentNode.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+
+      const btn_copy = block.querySelector('div > button');
+      if (btn_copy)
+        btn_copy.parentNode.insertBefore(DOM.htmlToElements(dropDown_ms)[0], btn_copy);
     }
   }
 
@@ -588,10 +570,7 @@
       }
       else if (g_chat_id === 'ch_copilot') {
         scan_code_ms_copilot();
-        try {
-          g_top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot
-          setInterval(scan_code_ms_copilot, 5*1000);
-        } catch(e){} 
+        setInterval(scan_code_ms_copilot, 5*1000);
       }
       else if (g_chat_id === 'ch_claude') {
         scan_code_claude();
