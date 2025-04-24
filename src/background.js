@@ -180,6 +180,7 @@ async function actionSuperLinks(info, tab) {
   await Actions.clear();
 
   var slinks = new SuperLinks(tab.url, tab.id);
+  await Actions.setSuperLinks();
   await slinks.save_state();
 
   var rc = await slinks.check_login();
@@ -197,6 +198,7 @@ async function actionSPARQL_Upload(info, tab, request) {
   await Actions.clear();
 
   var sparql = new SPARQL_Upload(tab, request);
+  await Actions.setSPARQL_Uploads();
   await sparql.save_state();
 
   var rc = await sparql.check_login();
@@ -240,7 +242,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
         Browser.api.tabs.remove(curTab[0].id);
       }
 
-      if (await Actions.useSuperLinks()) {
+      if (await Actions.isSuperLinks()) {
         var slinks = new SuperLinks();
         await slinks.load_state();
         if (slinks && slinks.state) {
@@ -252,7 +254,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
           await Actions.clear();
         }
       }
-      else if (await Actions.useSPARQL_Uploads()) {
+      else if (await Actions.isSPARQL_Uploads()) {
         var sparql = new SPARQL_Upload();
         await sparql.load_state();
         if (sparql && sparql.state) {
@@ -267,7 +269,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
     }
     else if (request.cmd === "osds_popup_retry")
     {
-      if (await Actions.useSPARQL_Uploads()) {
+      if (await Actions.isSPARQL_Uploads()) {
         var sparql = new SPARQL_Upload();
         await sparql.load_state();
         if (sparql && sparql.state === "init") {
@@ -281,7 +283,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
     }
     else if (request.cmd === "osds_popup_cancel")
     {
-      if (await Actions.useSPARQL_Uploads()) {
+      if (await Actions.isSPARQL_Uploads()) {
         await Actions.clear();
       }
     }

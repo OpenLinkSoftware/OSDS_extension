@@ -134,6 +134,30 @@ var POSH = (function () {
       basePATH = baseURL.href;
 
 
+      function fixUrlEncode(uri) {
+        try {
+          const u = new URL(uri);
+          const params = new URLSearchParams();
+          for(const [key,val] of u.searchParams) {
+            params.append(key, encodeURIComponent(val));
+          }
+          u.search = '?'+params.toString();
+          return u.toString();
+        } catch(e) {
+          const [base, query] = uri.split("?")
+          if (!query)
+            return uri;
+
+          let search = [];
+          for(const param of query.split("&")) {
+           const [key, val] = param.split("=");
+           search.push(`${key}=${val?encodeURIComponent(val):""}`)
+          } 
+          return `${base}?${search.join("&")}`;
+        }
+      }
+
+
       function node2str(n)
       {
         if (n.length==0)
@@ -145,7 +169,7 @@ var POSH = (function () {
                  || n.startsWith("mailto:")
                 )
         {
-          return "<"+n+">";
+          return "<"+fixUrlEncode(n)+">";
         }
         else if (n.startsWith("#"))
         {
@@ -196,7 +220,7 @@ var POSH = (function () {
                  || o.startsWith("https://")
                  || o.startsWith("mailto:")
                 )
-            ttl += "<"+o+">";
+            ttl += "<"+fixUrlEncode(o)+">";
           else if (o.startsWith("#"))
             ttl += "<"+encodeURI(o)+">";
           else if (o.lastIndexOf(":")!=-1) 

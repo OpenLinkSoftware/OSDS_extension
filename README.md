@@ -24,6 +24,7 @@ web pages using any of the following formats:
 - **CSV**
 - **RSS**
 - **Atom**
+- **Markdown Tables**
 
 ## License
 Copyright 2015-2022 [OpenLink Software](mailto:opensource@openlinksw.com)
@@ -37,7 +38,10 @@ original GNU General Public License Version 2, dated June 1991.
 ## Deployment
 To deploy this extension on your local machine you can either *clone the git source tree* or
 *download a source archive* and then *install the extension* into your Chrome or Opera browser on
-the same system.
+the same system. In most cases, you can also download a prebuilt extension binary from the store 
+for your browser (Chromium-based browsers use the extension from the Chrome store; Safari uses 
+the extension from the Apple App Store; Firefox uses the extension from the Firefox store; and
+Microsoft Edge uses the extension from the Microsoft store.)
 
 ### Clone the git source tree
 Clone the sources from github using the following commands, which will automatically download the latest develop branch:
@@ -48,7 +52,7 @@ $ git clone https://github.com/OpenLinkSoftware/OSDS_extension
 
 ### Download a source archive
 Download and extract a `.tar.gz` or `.zip`, either from one of the
-[stable releases](https://github.com/OpenLinkSoftware/OSDS_extension/releases/latest),
+[stable releases](https://github.com/OpenLinkSoftware/OSDS_extension/tags),
 or directly from one of the following links:
 
 - [latest stable `.tar.gz`](https://github.com/OpenLinkSoftware/OSDS_extension/archive/master.tar.gz)
@@ -67,6 +71,15 @@ To install this extension manually, take the following steps:
 1. Navigate to the folder containing the extracted source code
 1. Press the **Select** button
 
+### Install the extension in Microsoft Edge
+To install this extension manually, take the following steps:
+
+1. Open the Edge browser
+1. Select from menu: **Edge** -> **Preferences** -> **Extensions**
+1. Check the [X] **Developer mode** box
+1. Choose the option **Load unpacked extension...**
+1. Navigate to the folder containing the extracted source code
+1. Press the **Select** button
 
 ### Install the extension in Opera
 To install this extension manually use the following steps:

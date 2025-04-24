@@ -747,18 +747,14 @@ class RDFa_Block extends DataBlock_Prepare {
 
   async to_html(bnode_types, start_id) 
   {
+    const setting = new Settings();
+    const uimode = await setting.getValue("ext.osds.uiterm.mode");
     var html = null;
     var error = [];
 
     try {
       if (this.n3data) {
-        var handler = new Handle_RDFa();
-        var ret = await handler.parse(this.n3data, this.baseURL, bnode_types);
-
-        if (ret.errors.length>0)
-          error = error.concat(ret.errors);
-
-        html = ret.data;
+        html = new HTML_Gen(this.baseURL, bnode_types, uimode).load(this.n3data);
       }
 
       return {start_id:0, html, error};

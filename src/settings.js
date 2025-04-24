@@ -233,6 +233,13 @@ class Settings {
     "url": "https://you.com",
     "location.startsWith": "https://you.com",
     "prompt.selector": "textarea#search-input-textarea"
+  },
+
+  "deepseek": {
+    "name":"DeepSeek",
+    "url": "https://chat.deepseek.com",
+    "location.startsWith": "https://chat.deepseek.com",
+    "prompt.selector": "textarea#chat-input"
   }
   
 }
@@ -378,7 +385,7 @@ class Settings {
           val = "0";
           break;
       case "ext.osds.handle_all":
-          val = "1";
+          val = "0";
           break;
       case "ext.osds.uiterm.mode":
           val = "ui-eav"

@@ -319,51 +319,188 @@ Nano.sniff_nanotation_Document = (doc_Texts) =>
 
 
  
-Nano.sniff_nanotation_ms_copilot = (nano) =>
+Nano.llm_chats = {
+             openai: { menu:'main pre select#code_type option:checked, article pre select#code_type option:checked', 
+                       sel: [{parentNode:4}], 
+                       code:'code',
+                       url: ['https://chat.openai.com', 'https://chatgpt.com']
+                     }, 
+
+             openai_play: { menu:'div[data-panel] select#code_type option:checked', 
+                       sel: [{ parentNode:3 }], 
+                       code_all:'pre code code ~ *',
+                       url: ['https://platform.openai.com/playground']
+                     }, 
+
+             gemini: { menu:'message-content code-block select#code_type option:checked', 
+                       sel: [{closest:'div.code-block'}], 
+                       code:'code',
+                       url: ['https://gemini.google.com/']
+                     }, 
+             claude: { menu:'pre > div select#code_type option:checked', 
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://claude.ai/']
+                     }, 
+             claude1: { menu:'div > select#code_type option:checked', 
+                       sel: [{ parentNode:4 }], 
+                       code:'code',
+                       url: ['https://claude.site/', 'https://claude.site/artifacts/']
+                     }, 
+             ms_copilot: { menu:'main select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://copilot.microsoft.com/']
+                     }, 
+             perplexity: { menu:'main pre select#code_type option:checked', 
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://www.perplexity.ai']
+                     }, 
+             perplexity_labs: { menu:'main pre select#code_type option:checked',  
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://labs.perplexity.ai']
+                     }, 
+
+             mistral: { menu:'pre select#code_type option:checked', 
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://chat.mistral.ai/chat']
+                     }, 
+             huggingface: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://huggingface.co/chat/']
+                     }, 
+             you: { menu:'div#ydc-content-area select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://you.com']
+                     }, 
+             meta: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:5 }],
+                       code:'pre code',
+                       url: ['https://www.meta.ai']
+                     }, 
+             grok: { menu:'main select#code_type option:checked', 
+                       sel: [{ parentNode:5 }],
+                       code:'pre code',
+                       url: ['https://x.com/i/grok']
+                     }, 
+             groq: { menu:'main pre select#code_type option:checked',  
+                       sel: [{closest:'pre'}], 
+                       code:'code',
+                       url: ['https://chat.groq.com']
+                     }, 
+             qwen: { menu:'select#code_type option:checked',  
+                       sel: [{ parentNode:3 }],
+                       code:'div[id^="code-textarea-"] div[role="textbox"]',
+                       url: ['https://chat.qwenlm.ai/']
+                     }, 
+             cerebras: { menu:'select#code_type option:checked',  
+                       sel: [{ parentNode:3 }],
+                       code:'div[data-testid$="-code-block"] div[role="textbox"]',
+                       drop_first: true,
+                       url: ['https://inference.cerebras.ai/']
+                     }, 
+             deepseek: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:5 }],
+                       code:'pre',
+                       url: ['https://chat.deepseek.com/']
+                     }, 
+             openperplex: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://openperplex.com']
+                     }, 
+             allenai: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:2 }, { nextSibling:1 }],
+                       code:'pre code',
+                       url: ['https://playground.allenai.org/']
+                     }, 
+
+             github: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://github.com/marketplace/models/']
+                     }, 
+
+             librechat: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://librechat-librechat.hf.space/']
+                     }, 
+
+           }
+
+Nano.sniff_llm_chats = (nano, href) =>
     {
-      _top = document.querySelector('cib-serp').shadowRoot.querySelector('cib-conversation').shadowRoot;
+      for (const [key, fmt] of Object.entries(Nano.llm_chats)) {
+        for(const item of fmt.url) {
+          if (href.startsWith(item)) {
+            var lst = DOM.qSelAll(fmt.menu);
+            for (const el of lst) {
+              const el_type = el.id;
+              let el_pre = el;
 
-      if (!_top)
-        return nano;
+              for(const sel of fmt.sel) {
+                if (sel.closest) {
+                  el_pre = el_pre.closest(sel.closest);
+                }
+                else if (sel.parentNode) {
+                  for(var i=0; i<sel.parentNode; i++)
+                    el_pre = el_pre.parentNode;
+                }
+                else if (sel.nextSibling) {
+                    el_pre = el_pre.nextSibling;
+                }
+              }
 
-      for(const c0 of _top.querySelectorAll('cib-chat-turn[mode="conversation"]'))
-      {
-        for(const c1 of c0.shadowRoot.querySelectorAll('cib-message-group[mode=conversation]')) 
-        {
-          for(const c2 of c1.shadowRoot.querySelectorAll('cib-message[type="text"]'))
-          {
-            for(const v of c2.shadowRoot.querySelectorAll('cib-shared cib-code-block'))
-            {
-              const text = v.getAttribute('clipboard-data');
-              //const dd_el = e_hdr.querySelector('#code_type');
-              const dd_el = v.shadowRoot.querySelector('select#code_type option:checked');
-              if (text && dd_el) {
-                let lst = null;
-                switch(dd_el.id) {
-                  case 'turtle': 
-                    nano.ttl.push(text);
-                    break;
-                  case 'jsonld':
-                    nano.jsonld.push(text);
-                    break;
-                  case 'json':
-                    nano.json.push(text);
-                    break;
-                  case 'csv':
-                    nano.csv.push(text);
-                    break;
-                  case 'rdfxml':
-                    nano.rdf.push(text);
-                    break;
-                  case 'markdown':
-                    nano.md.push(text);
-                    break;
-                  case 'rss':
-                    nano.rss.push(text);
-                    break;
-                  case 'atom':
-                    nano.atom.push(text);
-                    break;
+              if (el_pre!=el) {
+                let text = null;
+                if (fmt.code) {
+                  text = el_pre.querySelector(fmt.code)?.innerText;
+                  if (fmt.drop_first) {
+                    const idx = text.indexOf('\n');
+                    if (idx!=-1)
+                      text = text.substring(idx+1);
+                  }
+                }
+                else if (fmt.code_all) {
+                  let lst = []
+                  for(const v of el_pre.querySelectorAll(fmt.code_all))
+                    lst.push(v.innerText);
+                  text = lst.join('');
+                }
+
+                if (text) {
+                  switch(el_type) {
+                    case 'turtle':
+                      nano.ttl.push(text);
+                      break;
+                    case 'jsonld':
+                      nano.jsonld.push(text);
+                      break;
+                    case 'json':
+                      nano.json.push(text);
+                      break;
+                    case 'csv':
+                      nano.csv.push(text);
+                      break;
+                    case 'rdfxml':
+                      nano.rdf.push(text);
+                      break;
+                    case 'markdown':
+                      nano.md.push(text);
+                      break;
+                    case 'rss':
+                      nano.rss.push(text);
+                      break;
+                    case 'atom':
+                      nano.atom.push(text);
+                      break;
+                  }
                 }
               }
             }
@@ -372,131 +509,5 @@ Nano.sniff_nanotation_ms_copilot = (nano) =>
       }
       return nano;
     }
-
-Nano.sniff_nanotation_chat = (nano, chat_id) =>
-    {
-      const chats = { 
-             openai: { menu:'main pre select#code_type option:checked', 
-                       sel: {parentNode:4}, 
-                       code:'code'
-                     }, 
-             openai1: { menu:'article pre select#code_type option:checked', 
-                       sel: {parentNode:4}, 
-                       code:'code'
-                     }, 
-
-             openai_play: { menu:'div[data-panel] select#code_type option:checked', 
-                       sel: { parentNode:3 }, 
-                       code_all:'pre code code ~ *'
-                     }, 
-
-             gemini: { menu:'message-content code-block select#code_type option:checked', 
-                       sel: {closest:'div.code-block'}, 
-                       code:'code'
-                     }, 
-             claude: { menu:'pre > div select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
-                       code:'code'
-                     }, 
-             claude1: { menu:'div > select#code_type option:checked', 
-                       sel: { parentNode:4 }, 
-                       code:'code'
-                     }, 
-             perplexity: { menu:'main pre select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
-                       code:'code'
-                     }, 
-             perplexity_labs: { menu:'main pre select#code_type option:checked',  
-                       sel: {closest:'pre'}, 
-                       code:'code'
-                     }, 
-
-             mistral: { menu:'pre select#code_type option:checked', 
-                       sel: {closest:'pre'}, 
-                       code:'code'
-                     }, 
-             huggingface: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:3 },
-                       code:'pre code'
-                     }, 
-             you: { menu:'div#ydc-content-area select#code_type option:checked', 
-                       sel: { parentNode:4 },
-                       code:'pre code'
-                     }, 
-             meta: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:5 },
-                       code:'pre code'
-                     }, 
-             openperplex: { menu:'select#code_type option:checked', 
-                       sel: { parentNode:3 },
-                       code:'pre code'
-                     }, 
-
-           }
-
-      const fmt = chats[chat_id];
-      if (!fmt)
-        return nano;
-
-      var el_pre, el_code;
-      
-      var lst = DOM.qSelAll(fmt.menu);
-      for (var el of lst) {
-        const el_type = el.id;
-
-        if (fmt.sel.closest) {
-          el_pre = el.closest(fmt.sel.closest);
-        }
-        else if (fmt.sel.parentNode) {
-          el_pre = el;
-          for(var i=0; i<fmt.sel.parentNode; i++)
-            el_pre = el_pre.parentNode;
-        }
-
-        if (el_pre) {
-          let text = null;
-          if (fmt.code) {
-            text = el_pre.querySelector(fmt.code)?.textContent;
-          }
-          else if (fmt.code_all) {
-             let lst = []
-             for(const v of el_pre.querySelectorAll(fmt.code_all))
-               lst.push(v.textContent);
-             text = lst.join('');
-          }
-          if (text) {
-            switch(el_type) {
-              case 'turtle':
-                nano.ttl.push(text);
-                break;
-              case 'jsonld':
-                nano.jsonld.push(text);
-                break;
-              case 'json':
-                nano.json.push(text);
-                break;
-              case 'csv':
-                nano.csv.push(text);
-                break;
-              case 'rdfxml':
-                nano.rdf.push(text);
-                break;
-              case 'markdown':
-                nano.md.push(text);
-                break;
-              case 'rss':
-                nano.rss.push(text);
-                break;
-              case 'atom':
-                nano.atom.push(text);
-                break;
-            }
-          }
-        }
-      }
-
-      return nano;
-    }
-
  
 

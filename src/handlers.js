@@ -220,13 +220,16 @@ class Handle_Turtle {
     this.baseURI = docURL;
     var output = this._make_ttl ? [] : '';
     var srcData = [];
+    var out_baseURI = [];
 
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var data = await this._parse_1(textData[i], docURL);
-        if (this._make_ttl)
+        const {data, baseURI} = await this._parse_1(textData[i], docURL);
+        if (this._make_ttl) {
           output.push(data);
+          out_baseURI.push(baseURI);
+        }
         else
           output += data;
         srcData.push(textData[i]);
@@ -234,7 +237,7 @@ class Handle_Turtle {
         console.log(e);
       }
     }
-    return {data:output, errors: this.skipped_error, text:srcData};
+    return {data:output, baseURI:out_baseURI, errors: this.skipped_error, text:srcData};
 
   }
 
@@ -246,13 +249,16 @@ class Handle_Turtle {
     this.baseURI = docURL;
     var output = this._make_ttl ? [] : '';
     var srcData = [];
+    var out_baseURI = [];
 
     for(var i=0; i < textData.length; i++)
     {
       try {
-        var data = await this._parse_1(textData[i], docURL);
-        if (this._make_ttl)
+        const {data, baseURI} = await this._parse_1(textData[i], docURL);
+        if (this._make_ttl) {
           output.push(data);
+          out_baseURI.push(baseURI);
+        }
         else
           output += data;
         srcData.push(textData[i]);
@@ -260,7 +266,7 @@ class Handle_Turtle {
         console.log(e);
       }
     }
-    return {data:output, errors: [], text:srcData};
+    return {data:output, baseURI:out_baseURI, errors: [], text:srcData};
 
   }
 
@@ -268,16 +274,19 @@ class Handle_Turtle {
   {
     this.baseURI = docURL;
     var output = this._make_ttl ? [] : '';
+    var out_baseURI = [];
 
     for(var i=0; i < textData.length; i++)
     {
-      var data = await this._parse_1(textData[i], docURL);
-      if (this._make_ttl)
+      const {data, baseURI} = await this._parse_1(textData[i], docURL);
+      if (this._make_ttl) {
         output.push(data);
+        out_baseURI.push(baseURI);
+      }
       else
         output += data;
     }
-    return {data:output, errors: this.skipped_error};
+    return {data:output, baseURI:out_baseURI,  errors: this.skipped_error};
   }
 
   async _parse_1(textData, docURL) 
@@ -290,7 +299,7 @@ class Handle_Turtle {
     return new Promise(function (resolve, reject) {
       try {
         var store = new N3DataConverter();
-        var parser = new N3.Parser({baseIRI:self.baseURI, format:'text/n3'});
+        var parser = new N3.Parser({format:'text/n3'}); //{baseIRI:self.baseURI, format:'text/n3'});
         var ttl_data = textData;
 
         if (self.ns_pref!==null)
@@ -330,27 +339,28 @@ class Handle_Turtle {
 
               var triples = store.output;
               var output;
+              let base = parser._base ? parser._base : docURL;
 
               if (self._make_ttl) {
-                var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
+                var ttl_data = new TTL_Gen(base, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
                 output = ttl_data==null?'':ttl_data;
               }
               else
               {
-                var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id, this._base);
+                var html_str = new HTML_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, this._base);
                 output = html_str==null?'':html_str;
               }
 
               if (triples!==null && triples.length!==undefined)
                 self.start_id+= triples.length;
 
-              resolve(output);
+              resolve({data:output, baseURI:base});
             }
           });
       } catch (ex) {
         if (self.skip_error)  {
           self.skipped_error.push(""+ex.toString());
-          resolve('');
+          resolve({data:'', baseURI:docURL});
         }
         else 
           reject(ex.toString());
@@ -387,7 +397,7 @@ class Handle_Quads {
 
     for(var i=0; i < textData.length; i++)
     {
-      var data = await this._parse_1(textData[i], docURL);
+      const {data, baseURI} = await this._parse_1(textData[i], docURL);
       if (this._make_ttl)
         output = output.concat(data);
       else
@@ -445,18 +455,19 @@ class Handle_Quads {
             else {
 
               var output = (self._make_ttl) ? [] : '';
+              let base = parser._base ? parser._base : docURL;
 
               for(var id in stores) {
                 var store = stores[id];
                 var triples = store.output;
 
                 if (self._make_ttl) {
-                  var ttl_data = new TTL_Gen(docURL, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
+                  var ttl_data = new TTL_Gen(base, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
                   if (ttl_data)
                     output.push(ttl_data);
                 }
                 else {
-                  var html_str = new HTML_Gen(docURL, self.bnode_types, uimode).load(triples, self.start_id, this._base);
+                  var html_str = new HTML_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, this._base);
                   if (html_str)
                     output += html_str;
                 }
@@ -465,13 +476,13 @@ class Handle_Quads {
                   self.start_id+= triples.length;
               }
 
-              resolve(output);
+              resolve({data:output, baseURI:base});
             }
           });
       } catch (ex) {
         if (self.skip_error)  {
           self.skipped_error.push(""+ex.toString());
-          resolve('');
+          resolve({data:'', baseURI:docURL});
         }
         else 
           reject(ex.toString());
@@ -584,24 +595,6 @@ class Handle_JSONLD {
     return {data:output, errors: this.skipped_error};
   }
 
-}
-
-
-
-
-class Handle_RDFa {
-  constructor()
-  {
-  }
-
-  async parse(data, docURL, bnode_types) 
-  {
-    var setting = new Settings();
-    var uimode = await setting.getValue("ext.osds.uiterm.mode");
-
-    var str = new HTML_Gen(docURL, bnode_types, uimode).load(data);
-    return {data:str, errors: []};
-  }
 }
 
 
