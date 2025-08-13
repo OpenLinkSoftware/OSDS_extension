@@ -496,7 +496,7 @@ class TTL_Block extends DataBlock {
         var handler = new Handle_Turtle(start_id, false, false, bnode_types);
         var ret = await handler.parse_nano_curly(this.text_nano_curly, this.baseURL);
 
-        this.text_nano = ret.text;
+        this.text_nano.push(ret.text);
         this.text_nano_curly = [];
 
         if (html)

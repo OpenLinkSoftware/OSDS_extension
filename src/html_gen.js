@@ -193,7 +193,7 @@ class HTML_Gen {
         continue;
       }
 
-      const key_str = this.iri2html(null, key, true);
+      const key_str = this.iri2html(null, key, true, null, true);
 
       for (let i = 0; i < val.length; i++) {
         const obj = val[i];
