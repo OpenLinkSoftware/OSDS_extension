@@ -584,7 +584,6 @@
       const dd_el = block.querySelector('#code_type');
       if (dd_el)
         continue;
-      // const title = block.firstChild.firstChild.firstChild.lastChild;
       const title = block.firstChild;
       title.insertAdjacentHTML('beforebegin', dropDown_aistudio);
     }

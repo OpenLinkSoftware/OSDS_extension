@@ -1353,7 +1353,14 @@ class Convert_JSON {
     } 
   }
   
-  
+  escapeNewlinesInJSON(jsonString) {
+    // This regex matches string values and captures their content
+    return jsonString.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
+      // Replace real newline chars inside the string with \n
+      return match.replace(/\n/g, "\\n");
+    });
+  }
+
   to_ttl(textData, baseURL) 
   {
     this.baseURL = baseURL;
@@ -1363,8 +1370,9 @@ class Convert_JSON {
     for(var x=0; x < textData.length; x++)
     {
       try {
-        var buf = [];
-        var json_data = JSON.parse(textData[x]);
+        let buf = [];
+        let fixed_text = this.escapeNewlinesInJSON(textData[x]);
+        var json_data = JSON.parse(fixed_text);
         if (json_data != null) 
         {
           try {
