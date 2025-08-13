@@ -188,8 +188,8 @@ class Settings {
 
   "perplexity_labs": {
     "name": "Perplexity Labs", 
-    "url": "https://labs.perplexity.ai/",
-    "location.startsWith": "https://labs.perplexity.ai",
+    "url": "https://playground.perplexity.ai/",
+    "location.startsWith": "https://playground.perplexity.ai",
     "prompt.selector": "main textarea"
   },
 
