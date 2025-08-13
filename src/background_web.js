@@ -136,7 +136,7 @@ var chk_setting = {
 
     if (chk_all && chk_all!=="1") 
     {
-      if (could_handle) {
+      if (handle) {
         GVars.updatePage(tabId, {content:"", url, type, ext});
       } else {
         GVars.deletePage(tabId);
@@ -297,7 +297,7 @@ var chk_setting = {
       }
       else if (headerContent.value.match(/(application\/jsonl)/)) 
       {
-        handle = true;
+        handle = handle_json;
         type = "jsonl";
         could_handle = true;
       }
@@ -386,7 +386,7 @@ var chk_setting = {
 
     if (chk_all && chk_all!=="1") 
     {
-      if (could_handle) {
+      if (handle) {
         GVars.updatePage(d.tabId, {content:headerContent.value, url:d.url, type, ext});
       } else {
         GVars.deletePage(d.tabId);
