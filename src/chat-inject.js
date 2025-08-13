@@ -169,6 +169,15 @@
   const dropDown_librechat = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
            ${dd_base_rev} </div>`;
 
+  const dropDown_kimi = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_diffy = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_aistudio = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
 
   function scan_code_openai()
   {
@@ -537,6 +546,51 @@
   }
 
   
+  function scan_code_kimi()
+  {
+    const lst = document.querySelectorAll('pre code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      const btns = block.querySelector('header > div > div');
+      btns.insertAdjacentHTML('beforebegin', dropDown_kimi);
+    }
+  }
+
+  
+  function scan_code_diffy()
+  {
+    const lst = document.querySelectorAll('main pre code:not(.hidden)');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      block.insertAdjacentHTML('afterbegin', dropDown_diffy);
+    }
+  }
+
+  
+  function scan_code_aistudio()
+  {
+    const lst = document.querySelectorAll('pre > code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      // const title = block.firstChild.firstChild.firstChild.lastChild;
+      const title = block.firstChild;
+      title.insertAdjacentHTML('beforebegin', dropDown_aistudio);
+    }
+  }
+
+  
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
         if (g_chat_id === 'ch_openai') 
@@ -670,7 +724,21 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_librechat, 3*1000);
       }
-
+      else if (g_chat_id === 'ch_kimi') {
+        scan_code_kimi();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_kimi, 3*1000);
+      }
+      else if (g_chat_id === 'ch_diffy') {
+        scan_code_diffy();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_diffy, 3*1000);
+      }
+      else if (g_chat_id === 'ch_aistudio') {
+        scan_code_aistudio();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_aistudio, 3*1000);
+      }
 
       if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
@@ -763,6 +831,14 @@
       return 'ch_github_cp';
     else if (location.href.startsWith('https://librechat-librechat.hf.space/'))
       return 'ch_librechat';
+    else if (location.href.startsWith('https://www.kimi.com/'))
+      return 'ch_kimi';
+    else if (location.href.startsWith('https://diffy.chat/'))
+      return 'ch_diffy';
+    else if (location.href.startsWith('https://aistudio.google.com/app/prompts'))
+      return 'ch_aistudio';
+
+    
     else
      return null;
   }

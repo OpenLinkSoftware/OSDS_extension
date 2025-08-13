@@ -431,6 +431,21 @@ Nano.llm_chats = {
                        code:'pre code',
                        url: ['https://librechat-librechat.hf.space/']
                      }, 
+             kimi: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:5 }],
+                       code:'pre code',
+                       url: ['https://www.kimi.com/']
+                     }, 
+             diffy: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://diffy.chat/']
+                     }, 
+             aistudio: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://aistudio.google.com/app/prompts']
+                     }, 
 
            }
 
