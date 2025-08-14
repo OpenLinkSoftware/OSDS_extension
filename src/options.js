@@ -193,13 +193,15 @@ function typeInTextarea(newText, el) {
 
 function changeHandleAll()
 {
-   if (1==1)
-     return;
-
-   var v = DOM.iSel('chk_try_handle_all').checked ? false : true;
-     DOM.iSel('chk_try_handle_xml').disabled =  v;
-     DOM.iSel('chk_try_handle_csv').disabled = v;
-     DOM.iSel('chk_try_handle_json').disabled = v;
+  var v = DOM.iSel('chk_try_handle_all').checked ? true : false;
+  DOM.iSel('chk_try_handle_xml').disabled =  !v;
+  DOM.iSel('chk_try_handle_csv').disabled = !v;
+  DOM.iSel('chk_try_handle_json').disabled = !v;
+  if (!v) {
+    DOM.iSel('chk_try_handle_xml').checked =  v;
+    DOM.iSel('chk_try_handle_csv').checked = v;
+    DOM.iSel('chk_try_handle_json').checked = v;
+  }
 }
 
 function closeOptions()
@@ -248,6 +250,11 @@ function setRWWDefaults()
 
           DOM.iSel('rww-store-url').value = "";
           DOM.iSel('rww-edit-url').value = gPref.def_rww_edit_url;
+
+          DOM.iSel('chk_try_handle_all').checked = false;
+          DOM.iSel('chk_try_handle_xml').checked =  false;
+          DOM.iSel('chk_try_handle_csv').checked = false;
+          DOM.iSel('chk_try_handle_json').checked = false;
 
           $(this).dialog( "close" );
         },
