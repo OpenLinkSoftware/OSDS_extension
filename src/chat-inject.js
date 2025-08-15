@@ -423,10 +423,19 @@
       if (dd_el)
         continue;
 
-      const btn_copy = block.querySelector('div > svg');
+      let btn_copy = block.querySelector('div > svg');
       if (btn_copy) {
         const btn_block = btn_copy.parentNode.closest('div'); 
         btn_block.insertAdjacentHTML('beforebegin', dropDown_grok);
+      } else {
+        btn_copy = block.querySelector('div > button');
+        if (btn_copy) {
+          btn_copy.insertAdjacentHTML('beforebegin', dropDown_grok);
+          const parentBtn = btn_copy.parentNode
+          parentBtn.style['display'] = 'flex';
+          parentBtn.style['flex-direction'] = 'row';
+          parentBtn.style['justify-content'] = 'space-between';
+        }
       }
     }
   }
