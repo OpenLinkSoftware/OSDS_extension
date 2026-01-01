@@ -289,6 +289,7 @@ class Settings {
 
   async _getItem(id)
   {
+/**
     if (!Browser.is_safari) {
       var rec = await this._getItem0('data_moved');
       if (!rec['data_moved']) {
@@ -296,7 +297,7 @@ class Settings {
         await this._setItem('data_moved','1');
       }
     }
-
+**/
     var rec = await this._getItem0(id);
     return rec[id];
   }
