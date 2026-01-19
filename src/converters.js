@@ -31,7 +31,7 @@ class Convert_Turtle{
   async prepare_query(ttlData, baseURL)
   {
     var self = this;
-    var handler = new Handle_Turtle(0, true, true);
+    var handler = new Handle_Turtle(0, 'ttl', true);
     var ret = await handler.parse(ttlData, baseURL);
 
     if (ret.errors.length>0)
@@ -45,7 +45,7 @@ class Convert_Turtle{
   async fix_ttl(ttlData, baseURL)
   {
     var self = this;
-    var handler = new Handle_Turtle(0, true);
+    var handler = new Handle_Turtle(0, 'ttl');
     var ret = await handler.parse(ttlData, baseURL);
 
     if (ret.errors.length>0)
@@ -61,7 +61,7 @@ class Convert_Turtle{
     var data_baseURI = [];
 
     if (ttlData && ttlData.length > 0) {
-      var handler = new Handle_Turtle(0, true, false, null, skip_docpref);
+      var handler = new Handle_Turtle(0, 'ttl', false, null, skip_docpref);
       var ret = await handler.parse(ttlData, baseURL);
 
       if (ret.errors.length>0)
@@ -74,7 +74,7 @@ class Convert_Turtle{
     }
 
     if (nanoData!==null && nanoData.length > 0) {
-      var handler = new Handle_Turtle(0, true);
+      var handler = new Handle_Turtle(0, 'ttl');
       var ret = await handler.parse_nano(nanoData, baseURL);
 
       if (ret.errors.length>0)
@@ -368,7 +368,7 @@ class Convert_JSONLD {
   async _to_ttl(textData, baseURL, bnode_types) 
   {
     try {
-      var handler = new Handle_JSONLD(true);
+      var handler = new Handle_JSONLD('ttl');
       const base = this._extract_base(textData);
       if (base)
         baseURL = base;

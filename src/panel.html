@@ -18,531 +18,834 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 -->
-    <head>
-	<meta charset="UTF-8">
-        <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />
-        <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
-        <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
-        <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
-        <link type="text/css" href="lib/css/yasqe.css" rel="stylesheet" />
 
-        <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
-        <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <link type="text/css" href="lib/css/smoothness/jquery-ui.min.css" rel="stylesheet" />
+  <link type="text/css" href="lib/css/smoothness/theme.css" rel="stylesheet" />
+  <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
+  <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
+  <link type="text/css" href="lib/css/yasqe.css" rel="stylesheet" />
 
-        <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
-        <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
-        <script type="text/javascript" src="lib/jsonld.js"></script>
-        <script type="text/javascript" src="lib/n3-browser.js"></script>
-        <script type="text/javascript" src="lib/rdflib.js"></script>
-        <script type="text/javascript" src="lib/FileSaver.js"></script>
-        <script type="text/javascript" src="lib/namespace.js"></script>
-        <script type="text/javascript" src="lib/codemirror.js"></script>
-        <script type="text/javascript" src="lib/yasqe.js"></script>
-        <script type="text/javascript" src="lib/solid-client-authn.bundle.js"></script>
-        <script type="text/javascript" src="lib/papaparse.js"></script>
-        <script type="text/javascript" src="lib/rss-parser.js"></script>
-        <script type="text/javascript" src="lib/tidy.js"></script>
+  <!-- Extension internal UI styles (not injected into web pages) -->
+  <link rel="stylesheet" href="extension-ui.css" />
 
-        <script type="text/javascript" src="lib/markdown-it.js"></script>
-        <script type="text/javascript" src="lib/highlight/highlight.js"></script>
-        <script type="text/javascript" src="lib/purify.js"></script>
+  <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
+  <script type="text/javascript" src="lib/jquery-ui.min.js"></script>
 
+  <script type="text/javascript" src="lib/microdatajs/jquery.microdata.js"></script>
+  <script type="text/javascript" src="lib/microdatajs/jquery.microdata.json.js"></script>
+  <script type="text/javascript" src="lib/jsonld.js"></script>
+  <script type="text/javascript" src="lib/n3-browser.js"></script>
+  <script type="text/javascript" src="lib/rdflib.js"></script>
+  <script type="text/javascript" src="lib/FileSaver.js"></script>
+  <script type="text/javascript" src="lib/namespace.js"></script>
+  <script type="text/javascript" src="lib/codemirror.js"></script>
+  <script type="text/javascript" src="lib/yasqe.js"></script>
+  <script type="text/javascript" src="lib/solid-client-authn.bundle.js"></script>
+  <script type="text/javascript" src="lib/papaparse.js"></script>
+  <script type="text/javascript" src="lib/rss-parser.js"></script>
+  <script type="text/javascript" src="lib/tidy.js"></script>
 
-        <script type="text/javascript" src="browser.js"></script>
-        <script type="text/javascript" src="utils.js"></script>
-        <script type="text/javascript" src="OidcWebid.js"></script>
-        <script type="text/javascript" src="settings.js"></script>
-        <script type="text/javascript" src="handlers.js"></script>
-        <script type="text/javascript" src="converters.js"></script>
-        <script type="text/javascript" src="ttl_gen.js"></script>
-        <script type="text/javascript" src="html_gen.js"></script>
-        <script type="text/javascript" src="datablock.js"></script>
-        <script type="text/javascript" src="sniffer_nano.js"></script>
-        <script type="text/javascript" src="panel.js"></script>
-
-        <link rel="stylesheet" href="dataview.css" />
-        <link rel="stylesheet" href="tabs.css" />
-
-        <style type="text/css">
-          :root {
-              color-schema: light dark;
-          }
+  <script type="text/javascript" src="lib/markdown-it.js"></script>
+  <script type="text/javascript" src="lib/highlight/highlight.js"></script>
+  <script type="text/javascript" src="lib/purify.js"></script>
 
 
-          body.sniffer {
-            width: 760px;
-            height: 580px;
-          }
+  <script type="text/javascript" src="browser.js"></script>
+  <script type="text/javascript" src="utils.js"></script>
+  <script type="text/javascript" src="OidcWebid.js"></script>
+  <script type="text/javascript" src="settings.js"></script>
+  <script type="text/javascript" src="handlers.js"></script>
+  <script type="text/javascript" src="converters.js"></script>
+  <script type="text/javascript" src="ttl_gen.js"></script>
+  <script type="text/javascript" src="html_gen.js"></script>
+  <script type="text/javascript" src="datablock.js"></script>
+  <script type="text/javascript" src="sniffer_nano.js"></script>
+  <script type="text/javascript" src="panel.js"></script>
+  <script type="text/javascript" src="spreadsheet_gen.js"></script>
+  <script type="text/javascript" src="graph_gen.js"></script>
 
-          div#rest_query .CodeMirror-gutters {
-            display: none;
-          }
+  <link rel="stylesheet" href="dataview.css" />
+  <link rel="stylesheet" href="tabs.css" />
+  <link rel="stylesheet" href="enhanced-content.css" />
 
-          div.content {
-            width: calc(vw - 2px); 
-            height: calc(100vh - 40px);
-          }
- 	  div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
+  <style type="text/css">
+    :root {
+      color-schema: light dark;
+    }
 
-        </style>
+    body.sniffer {
+      width: 100%;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #F6F8FA;
+      color: #24292E;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
 
-    </head>
-    <body class="sniffer">
+    div#rest_query .CodeMirror-gutters {
+      display: none;
+    }
 
-<!-- POPUP & MESSAGES -->
-      <div class="super_links_msg"> 
-        <div style="width:16px;">
-          <img src="images/throbber.gif" class="super_links_img">
+    div.content {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background: #FFFFFF;
+    }
+
+    div.ritem {
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+      padding-top: 8px;
+      gap: 8px;
+    }
+
+    /* Modern button styling */
+    button {
+      padding: 8px 16px;
+      border: 1px solid #D1D5DA;
+      border-radius: 6px;
+      background: #FFFFFF;
+      color: #24292E;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: #F6F8FA;
+      border-color: #1976D2;
+    }
+
+    button:active {
+      background: #E1E4E8;
+    }
+
+    /* Primary action buttons */
+    button#rest_exec,
+    button#load_rss,
+    button#load_atom {
+      background: #1976D2;
+      color: white;
+      border-color: #1565C0;
+    }
+
+    button#rest_exec:hover,
+    button#load_rss:hover,
+    button#load_atom:hover {
+      background: #1565C0;
+    }
+
+    /* Input fields */
+    input[type="text"],
+    input,
+    select {
+      border: 1px solid #D1D5DA;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #1976D2;
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+    }
+
+    /* Dialog styling */
+    .ui-dialog {
+      border: 1px solid #D1D5DA !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .ui-dialog-titlebar {
+      background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
+      color: white !important;
+      border-bottom: 1px solid #1565C0 !important;
+      border-radius: 8px 8px 0 0 !important;
+      font-weight: 600 !important;
+    }
+
+    .ui-dialog-content {
+      background: #FFFFFF !important;
+      color: #24292E !important;
+    }
+
+    .ui-dialog .ui-dialog-titlebar-close {
+      top: 45%;
+    }
+
+    /* MODERN HEADER STYLES */
+    .osds-header {
+      background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+      color: white;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid #1565C0;
+    }
+
+    .osds-header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .osds-header-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .osds-logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: white;
+      padding: 4px;
+    }
+
+    .osds-logo-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-right: 12px;
+    }
+
+    .header-version {
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+      margin-top: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .osds-header-title h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .osds-header-title p {
+      margin: 2px 0 0 0;
+      font-size: 11px;
+      opacity: 0.9;
+      font-weight: 400;
+    }
+
+    .osds-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .header-btn:active {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* BOTTOM BLOCK STYLES */
+    .bottom_block {
+      background: #F6F8FA;
+      border-top: 1px solid #E1E4E8;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #586069;
+      margin-top: auto;
+    }
+
+    .bottom_block a {
+      color: #0366D6;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .bottom_block a:hover {
+      color: #1976D2;
+      text-decoration: underline;
+    }
+
+    .bottom_block_left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #ext_ver {
+      padding: 2px 8px;
+      background: #E1E4E8;
+      border-radius: 10px;
+      font-weight: 600;
+      color: #586069;
+      font-size: 10px;
+    }
+  </style>
+
+</head>
+
+<body class="sniffer">
+
+  <!-- MODERN HEADER -->
+  <div class="osds-header">
+    <div class="osds-header-content">
+      <div class="osds-header-logo">
+        <div class="osds-logo-container">
+          <img src="images/icon48.png" alt="OSDS" class="osds-logo-icon" />
+          <div id="header-version" class="header-version">ver: 0.0.0</div>
         </div>
-        <div>&nbsp;Uploading&nbsp;data</div>
+        <div class="osds-header-title">
+          <h1>OpenLink Data Sniffer</h1>
+          <p>Structured Metadata Explorer</p>
+        </div>
       </div>
-
-
-      <div class="popup" id="alert-dlg" title="Info">
-        <p id="alert-msg">
-        </p>
-        <a id="alert_href" href=""></a>
+      <div class="osds-header-actions">
+        <button id="header-refresh" class="header-btn" title="Refresh Data">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               width="32" height="32"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="1.5">
+            <path d="M20 12a8 8 0 1 1-2.5-5.7"/>
+            <path d="M20 4v6h-6"/>
+          </svg>
+        </button>
       </div>
+    </div>
+  </div>
+
+  <!-- POPUP & MESSAGES -->
+  <div class="super_links_msg">
+    <div style="width:16px;">
+      <img src="images/throbber.gif" class="super_links_img">
+    </div>
+    <div>&nbsp;Uploading&nbsp;data</div>
+  </div>
 
 
-      <div class="popup popup_flex_cols" id="save-confirm" title="Data Source" >
-        <p/>
-        <div class="popup_frm_row" >
-          <div class="popup_frm_label4">Action:</div>
-            <SELECT id="save-action" style="WIDTH: 300px" >
-              <OPTION id="view" selected>View Raw Data</OPTION>
-              <OPTION id="filesave">Download Raw Data</OPTION>
-              <OPTION id="fileupload">Upload to Data Space or Pod</OPTION>
-              <OPTION id="sparqlupload">Upload to SPARQL endpoint</OPTION>
-            </SELECT>
-        </div>
+  <div class="popup" id="alert-dlg" title="Info">
+    <p id="alert-msg">
+    </p>
+    <a id="alert_href" href=""></a>
+  </div>
 
-        <div id="save-file" class="popup_frm_row">
-          <div class="popup_frm_label4">Save&nbsp;As:</div>
-          <input id="save-filename" style="WIDTH: 300px">
-        </div>
 
-        <div id="save-fmt-item" class="popup_frm_row">
-          <div class="popup_frm_label4">Format:</div>
-            <SELECT id="save-fmt" style="WIDTH: 100px" >
-              <OPTION id="ttl" selected>Turtle</OPTION>
-              <OPTION id="jsonld">JSON-LD</OPTION>
-              <OPTION id="rdf">RDF/XML</OPTION>
-              <OPTION id="json">JSON</OPTION>
-            </SELECT>
-        </div>
+  <div class="popup popup_flex_cols" id="save-confirm" title="Data Source">
+    <p />
+    <div class="popup_frm_row">
+      <div class="popup_frm_label4">Action:</div>
+      <SELECT id="save-action" style="WIDTH: 300px">
+        <OPTION id="view" selected>View Raw Data</OPTION>
+        <OPTION id="filesave">Download Raw Data</OPTION>
+        <OPTION id="fileupload">Upload to Data Space or Pod</OPTION>
+        <OPTION id="sparqlupload">Upload to SPARQL endpoint</OPTION>
+      </SELECT>
+    </div>
 
-        <div id="login-fmt-item" class="popup_frm_row">
-          <button id="oidc-login-btn">Login </button>
-          <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> 
-        </div>
+    <div id="save-file" class="popup_frm_row">
+      <div class="popup_frm_label4">Save&nbsp;As:</div>
+      <input id="save-filename" style="WIDTH: 300px">
+    </div>
 
-        <div id="save-sparql-item" style="display:flex; flex-direction:column">
-          <div class="popup_frm_row">
-            <label class="popup_frm_label6" for="save-sparql-endpoint">Endpoint&nbsp;URL:</label>
-            <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql">
-          </div>
-          <div class="popup_frm_row">
-            <div class="popup_frm_label6">Graph&nbsp;Name:</div>
-            <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test">
-          </div>
-          <p/>
-          <div class="popup_frm_row">
-            <input id="save-sparql-check-res" type="checkbox" checked >
-            <div>Execute&nbsp;Sample&nbsp;SPARQL&nbsp;Query&nbsp;after&nbsp;upload</div>
-          </div>
-          <p/>
-          <div>
-            <div id="micro-save">  <input id="micro-chk" type="checkbox">Microdata</div>
-            <div id="jsonld-save"> <input id="jsonld-chk" type="checkbox">JSON-LD</div>
-            <div id="turtle-save"> <input id="turtle-chk" type="checkbox">Turtle</div>
-            <div id="rdfa-save">   <input id="rdfa-chk" type="checkbox">RDFa</div>
-            <div id="rdf-save">    <input id="rdf-chk" type="checkbox">RDF/XML</div>
-            <div id="posh-save">   <input id="posh-chk" type="checkbox">POSH</div>
-            <div id="json-save">   <input id="json-chk" type="checkbox">JSON</div>
-            <div id="jsonl-save">  <input id="jsonl-chk" type="checkbox">JSONL</div>
-            <div id="csv-save">    <input id="csv-chk" type="checkbox">CSV</div>
-            <div id="rss-save">    <input id="rss-chk" type="checkbox">RSS</div>
-            <div id="atom-save">    <input id="atom-chk" type="checkbox">Atom</div>
-          </div>
-        </div>
+    <div id="save-fmt-item" class="popup_frm_row">
+      <div class="popup_frm_label4">Format:</div>
+      <SELECT id="save-fmt" style="WIDTH: 100px">
+        <OPTION id="ttl" selected>Turtle</OPTION>
+        <OPTION id="jsonld">JSON-LD</OPTION>
+        <OPTION id="rdf">RDF/XML</OPTION>
+        <OPTION id="json">JSON</OPTION>
+      </SELECT>
+    </div>
 
-        <div id="oidc-upload" class="popup_frm_row">
-          <div class="popup_frm_label6">Save&nbsp;To&nbsp;URL:</div>
-          <input id="oidc-url" style="WIDTH: 380px">
-        </div>
+    <div id="login-fmt-item" class="popup_frm_row">
+      <button id="oidc-login-btn">Login </button>
+      <a id="oidc-webid" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png"
+          style="width:28px"> </a>
+    </div>
+
+    <div id="save-sparql-item" style="display:flex; flex-direction:column">
+      <div class="popup_frm_row">
+        <label class="popup_frm_label6" for="save-sparql-endpoint">Endpoint&nbsp;URL:</label>
+        <input id="save-sparql-endpoint" style="WIDTH: 360px" value="https://linkeddata.uriburner.com/sparql">
       </div>
-
-      <div class="popup" id="login-dlg" title="Login via OIDC provider">
-        <p/>
-        <table id="oidc-login1" style="font-size: 14px;">
-         <tr >
-          <td> <button id="oidc-login-btn1">Login</button> </td>
-          <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png" style="width:28px"> </a> </td>
-         </tr>
-
-        </table>
+      <div class="popup_frm_row">
+        <div class="popup_frm_label6">Graph&nbsp;Name:</div>
+        <input id="save-sparql-graph" style="WIDTH: 360px" value="urn:records:test">
       </div>
-
-<!---------END POPUP --------------------->
-
-      <div class="top"></div>
-
-      <div class="btn_block">
-         <input type="image" id="login_btn" class="image_btn" src="images/slogin24.png" title="Solid Login">
-         <input type="image" id="chat_btn" class="image_btn" src="images/robot.svg" title="LLM Chat">
-         <input type="image" id="slink_btn" class="image_btn" src="images/slink24.png" title="Super Links">
-         <input type="image" id="sparql_btn" class="image_btn" src="images/osds-icon-query-24.png" title="LOD Cloud Lookup Query using SPARQL Query Language">
-         <input type="image" id="rww_btn" class="image_btn" src="images/osds-icon-annotate-24.png" title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
-         <input type="image" id="import_btn" class="image_btn" src="images/osds-icon-describe-24.png" title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar">
-         <input type="image" id="rest_btn" class="image_btn" src="images/osds-icon-rest-24.png" title="Web Service Console for RESTful interaction with HTTP Servers">
-         <input type="image" id="download_btn" class="image_btn" src="images/osds-icon-download-24.png" title="View or Download structured data">
-         <input type="image" id="prefs_btn" class="image_btn" src="images/osds-icon-settings-24.png" title="Extension Settings">
+      <p />
+      <div class="popup_frm_row">
+        <input id="save-sparql-check-res" type="checkbox" checked>
+        <div>Execute&nbsp;Sample&nbsp;SPARQL&nbsp;Query&nbsp;after&nbsp;upload</div>
       </div>
+      <p />
+      <div>
+        <div id="micro-save"> <input id="micro-chk" type="checkbox">Microdata</div>
+        <div id="jsonld-save"> <input id="jsonld-chk" type="checkbox">JSON-LD</div>
+        <div id="turtle-save"> <input id="turtle-chk" type="checkbox">Turtle</div>
+        <div id="rdfa-save"> <input id="rdfa-chk" type="checkbox">RDFa</div>
+        <div id="rdf-save"> <input id="rdf-chk" type="checkbox">RDF/XML</div>
+        <div id="posh-save"> <input id="posh-chk" type="checkbox">POSH</div>
+        <div id="json-save"> <input id="json-chk" type="checkbox">JSON</div>
+        <div id="jsonl-save"> <input id="jsonl-chk" type="checkbox">JSONL</div>
+        <div id="csv-save"> <input id="csv-chk" type="checkbox">CSV</div>
+        <div id="rss-save"> <input id="rss-chk" type="checkbox">RSS</div>
+        <div id="atom-save"> <input id="atom-chk" type="checkbox">Atom</div>
+      </div>
+    </div>
 
-      <div class="content">
-      <ul class="tabs" role="tablist">
-        <li id="tab-micro" class="hidden">
-          <input type="radio" name="tabs" id="itab-micro" />
-          <label for="itab-micro" role="tab" aria-selected="false" 
-                 title="Structured Data encoded using HTML5 Microdata Notation" >
-            Microdata
-          </label>
-          <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="ture">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
+    <div id="oidc-upload" class="popup_frm_row">
+      <div class="popup_frm_label6">Save&nbsp;To&nbsp;URL:</div>
+      <input id="oidc-url" style="WIDTH: 380px">
+    </div>
+  </div>
+
+  <div class="popup" id="login-dlg" title="Login via OIDC provider">
+    <p />
+    <table id="oidc-login1" style="font-size: 14px;">
+      <tr>
+        <td> <button id="oidc-login-btn1">Login</button> </td>
+        <td> <a id="oidc-webid1" href="" title="" style="display:none"> <img id="uid-icon" src="images/uid.png"
+              style="width:28px"> </a> </td>
+      </tr>
+
+    </table>
+  </div>
+
+  <!---------END POPUP --------------------->
+  <div class="btn_block" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="toolbar-buttons">
+      <input type="image" id="login_btn" class="image_btn" src="images/slogin24.png" title="Solid Login">
+      <input type="image" id="chat_btn" class="image_btn" src="images/robot.svg" title="LLM Chat">
+      <input type="image" id="slink_btn" class="image_btn" src="images/slink24.png" title="Super Links">
+      <input type="image" id="sparql_btn" class="image_btn" src="images/osds-icon-query-24.png"
+        title="LOD Cloud Lookup Query using SPARQL Query Language">
+      <input type="image" id="rww_btn" class="image_btn" src="images/osds-icon-annotate-24.png"
+        title="Create Annotations and store to a Document Location of your choice, using WebDAV, LDP, or SPARQL protocols">
+      <input type="image" id="import_btn" class="image_btn" src="images/osds-icon-describe-24.png"
+        title="Obtain a description of this Web Document i.e., the document identified by the hyperlink in the address bar">
+      <input type="image" id="rest_btn" class="image_btn" src="images/osds-icon-rest-24.png"
+        title="Web Service Console for RESTful interaction with HTTP Servers">
+      <input type="image" id="download_btn" class="image_btn" src="images/osds-icon-download-24.png"
+        title="View or Download structured data">
+<!--
+      <input type="image" id="refresh_btn" class="image_btn" src="images/osds-icon-upload-24.png" title="Refresh Data">
+-->
+      <input type="image" id="prefs_btn" class="image_btn" src="images/osds-icon-settings-24.png"
+        title="Extension Settings">
+    </div>
+    <div class="view-controls" style="margin-right: 10px;">
+      <select id="view-mode-selector"
+        style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px;">
+        <option value="property_sheet">Property Sheet</option>
+        <option value="spreadsheet">Spreadsheet</option>
+        <option value="graph">Graph</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="content">
+    <ul class="tabs" role="tablist">
+      <li id="tab-micro" class="hidden">
+        <input type="radio" name="tabs" id="itab-micro" />
+        <label for="itab-micro" role="tab" aria-selected="false"
+          title="Structured Data encoded using HTML5 Microdata Notation">
+          Microdata
+        </label>
+        <div id="micro_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-jsonld" class="hidden">
+        <input type="radio" name="tabs" id="itab-jsonld" />
+        <label for="itab-jsonld" role="tab" aria-selected="false" title="Metadata encoded using JSON-LD Notation">
+          JSON-LD
+        </label>
+        <div id="jsonld_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <table class="loader" style="display:none">
+            <tr>
+              <td>
+                <br>&nbsp;&nbsp;
+                <button id="load_jsonld" style="display:none">Load JSON-LD data</button> &nbsp;
+                <span id="throbber" style="display:none">
+                  <img src="images/throbber.gif" width="16" />Loading...
+                </span>
+              </td>
+              <td></td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-turtle" class="hidden">
+        <input type="radio" name="tabs" id="itab-turtle" />
+        <label for="itab-turtle" role="tab" aria-selected="false" title="Metadata encoded using RDF-Turtle Notation">
+          Turtle
+        </label>
+        <div id="turtle_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <table class="loader" style="display:none">
+            <tr>
+              <td>
+                <br>&nbsp;&nbsp;
+                <button id="load_turtle" style="display:none">Load Turtle data</button> &nbsp;
+                <span id="throbber" style="display:none">
+                  <img src="images/throbber.gif" width="16" />Loading...
+                </span>
+              </td>
+              <td></td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-rdfa" class="hidden">
+        <input type="radio" name="tabs" id="itab-rdfa" />
+        <label for="itab-rdfa" role="tab" aria-selected="false" title="Metadata encoded using RDFa Notation">
+          RDFa
+        </label>
+        <div id="rdfa_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-rdf" class="hidden">
+        <input type="radio" name="tabs" id="itab-rdf" />
+        <label for="itab-rdf" role="tab" aria-selected="false" title="Metadata encoded using RDF/XML Notation">
+          RDF/XML
+        </label>
+        <div id="rdf_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <table class="loader" style="display:none">
+            <tr>
+              <td>
+                <br>&nbsp;&nbsp;
+                <button id="load_rdf" style="display:none">Load RDF/XML data</button> &nbsp;
+                <span id="throbber" style="display:none">
+                  <img src="images/throbber.gif" width="16" />Loading...
+                </span>
+              </td>
+              <td></td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-json" class="hidden">
+        <input type="radio" name="tabs" id="itab-json" />
+        <label for="itab-json" role="tab" aria-selected="false" title="Metadata encoded using JSON Notation">
+          JSON
+        </label>
+        <div id="json_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-jsonl" class="hidden">
+        <input type="radio" name="tabs" id="itab-jsonl" />
+        <label for="itab-jsonl" role="tab" aria-selected="false" title="Metadata encoded using JSONL Notation">
+          JSONL
+        </label>
+        <div id="jsonl_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-csv" class="hidden">
+        <input type="radio" name="tabs" id="itab-csv" />
+        <label for="itab-csv" role="tab" aria-selected="false" title="Metadata encoded using CSV Notation">
+          CSV
+        </label>
+        <div id="csv_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-rss" class="hidden">
+        <input type="radio" name="tabs" id="itab-rss" />
+        <label for="itab-rss" role="tab" aria-selected="false" title="Metadata encoded using RSS Notation">
+          RSS
+        </label>
+        <div id="rss_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait" style="display:none">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <table class="loader" style="display:none">
+            <tr>
+              <td>
+                <br>&nbsp;&nbsp;
+                <button id="load_rss">Load RSS data</button> &nbsp;
+                <span id="throbber" style="display:none">
+                  <img src="images/throbber.gif" width="16" />Loading...
+                </span>
+              </td>
+              <td></td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-atom" class="hidden">
+        <input type="radio" name="tabs" id="itab-atom" />
+        <label for="itab-atom" role="tab" aria-selected="false" title="Metadata encoded using Atom Notation">
+          Atom
+        </label>
+        <div id="atom_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait" style="display:none">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <table class="loader" style="display:none">
+            <tr>
+              <td>
+                <br>&nbsp;&nbsp;
+                <button id="load_atom">Load Atom data</button> &nbsp;
+                <span id="throbber" style="display:none">
+                  <img src="images/throbber.gif" width="16" />Loading...
+                </span>
+              </td>
+              <td></td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
+
+      <li id="tab-markdown" class="hidden">
+        <input type="radio" name="tabs" id="itab-markdown" />
+        <label for="itab-markdown" role="tab" aria-selected="false" title="Metadata encoded using Markdown Notation">
+          Markdown
+        </label>
+        <div id="markdown_items" class="tab-content" role="tabpanel" aria-hidden="true">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div id="md_preview">
+            <iframe src="/lib/md_view.html" style="width:100vw; height:100vh" frameborder="0"
+              sandbox="allow-same-origin"></iframe>
           </div>
-        </li>
+        </div>
+      </li>
 
-        <li id="tab-jsonld" class="hidden">
-          <input type="radio" name="tabs" id="itab-jsonld" />
-          <label for="itab-jsonld" role="tab" aria-selected="false"
-                 title="Metadata encoded using JSON-LD Notation" >
-            JSON-LD
-          </label>
-          <div id="jsonld_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-            <table class="loader" style="display:none">
-              <tr>
-                <td>
-                  <br>&nbsp;&nbsp;
-                  <button id="load_jsonld" style="display:none">Load JSON-LD data</button> &nbsp; 
-                  <span id="throbber" style="display:none">
-                    <img src="images/throbber.gif" width="16"/>Loading...
-                  </span>
-                </td>
-                <td></td>
-              </tr>
-            </table>
-          </div>
-        </li>
+      <!-- Spreadsheet and Graph are now view modes within each tab, not separate tabs -->
 
-        <li id="tab-turtle" class="hidden">
-          <input type="radio" name="tabs" id="itab-turtle" />
-          <label for="itab-turtle" role="tab" aria-selected="false"
-                 title="Metadata encoded using RDF-Turtle Notation" >
-            Turtle
-          </label>
-          <div id="turtle_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-            <table class="loader" style="display:none">
-              <tr>
-                <td>
-                  <br>&nbsp;&nbsp;
-                  <button id="load_turtle" style="display:none">Load Turtle data</button> &nbsp; 
-                  <span id="throbber" style="display:none">
-                    <img src="images/throbber.gif" width="16"/>Loading...
-                  </span>
-                </td>
-                <td></td>
-              </tr>
-            </table>
-          </div>
-        </li>
+      <li id="tab-posh">
+        <input type="radio" name="tabs" id="itab-posh" />
+        <label for="itab-posh" role="tab" aria-selected="false"
+          title="Metadata encoded using Plain Old Semantic HTML Notation">
+          POSH
+        </label>
+        <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="false">
+          <table class="wait">
+            <tr>
+              <td><img src="images/throbber.gif" width="16" /></td>
+              <td>Processing data...</td>
+            </tr>
+          </table>
+          <div class="view-container view-property-sheet" data-view="property_sheet"></div>
+          <div class="view-container view-spreadsheet" data-view="spreadsheet" class="hidden"></div>
+          <div class="view-container view-graph" data-view="graph" class="hidden"></div>
+        </div>
+      </li>
 
-        <li id="tab-rdfa" class="hidden">
-          <input type="radio" name="tabs" id="itab-rdfa" />
-          <label for="itab-rdfa" role="tab" aria-selected="false"
-                 title="Metadata encoded using RDFa Notation" >
-            RDFa
-          </label>
-          <div id="rdfa_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-rdf" class="hidden">
-          <input type="radio" name="tabs" id="itab-rdf" />
-          <label for="itab-rdf" role="tab" aria-selected="false"
-                 title="Metadata encoded using RDF/XML Notation" >
-            RDF/XML
-          </label>
-          <div id="rdf_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-            <table class="loader" style="display:none">
-              <tr>
-                <td>
-                    <br>&nbsp;&nbsp;
-                    <button id="load_rdf" style="display:none">Load RDF/XML data</button> &nbsp; 
-                    <span id="throbber" style="display:none">
-                      <img src="images/throbber.gif" width="16"/>Loading...
-                    </span>
-                </td>
-                <td></td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-json" class="hidden">
-          <input type="radio" name="tabs" id="itab-json" />
-          <label for="itab-json" role="tab" aria-selected="false"
-                 title="Metadata encoded using JSON Notation" >
-            JSON
-          </label>
-          <div id="json_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-jsonl" class="hidden">
-          <input type="radio" name="tabs" id="itab-jsonl" />
-          <label for="itab-jsonl" role="tab" aria-selected="false"
-                 title="Metadata encoded using JSONL Notation" >
-            JSONL
-          </label>
-          <div id="jsonl_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-csv" class="hidden">
-          <input type="radio" name="tabs" id="itab-csv" />
-          <label for="itab-csv" role="tab" aria-selected="false"
-                 title="Metadata encoded using CSV Notation" >
-            CSV
-          </label>
-          <div id="csv_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-rss" class="hidden">
-          <input type="radio" name="tabs" id="itab-rss" />
-          <label for="itab-rss" role="tab" aria-selected="false"
-                 title="Metadata encoded using RSS Notation" >
-            RSS
-          </label>
-          <div id="rss_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait" style="display:none">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-            <table class="loader" style="display:none">
-              <tr>
-                <td>
-                    <br>&nbsp;&nbsp;
-                    <button id="load_rss" >Load RSS data</button> &nbsp; 
-                    <span id="throbber" style="display:none">
-                      <img src="images/throbber.gif" width="16"/>Loading...
-                    </span>
-                </td>
-                <td></td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-atom" class="hidden">
-          <input type="radio" name="tabs" id="itab-atom" />
-          <label for="itab-atom" role="tab" aria-selected="false"
-                 title="Metadata encoded using Atom Notation" >
-            Atom
-          </label>
-          <div id="atom_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait" style="display:none">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-            <table class="loader" style="display:none">
-              <tr>
-                <td>
-                    <br>&nbsp;&nbsp;
-                    <button id="load_atom" >Load Atom data</button> &nbsp; 
-                    <span id="throbber" style="display:none">
-                      <img src="images/throbber.gif" width="16"/>Loading...
-                    </span>
-                </td>
-                <td></td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-markdown" class="hidden">
-          <input type="radio" name="tabs" id="itab-markdown" />
-          <label for="itab-markdown" role="tab" aria-selected="false"
-                 title="Metadata encoded using Markdown Notation" >
-            Markdown
-          </label>
-          <div id="markdown_items" class="tab-content" role="tabpanel" aria-hidden="true">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-            <div id="md_preview">
-              <iframe src="/lib/md_view.html" style="width:100vw; height:100vh" frameborder="0" sandbox="allow-same-origin"></iframe>
-            </div>
-          </div>
-        </li>
-
-        <li id="tab-posh" >
-          <input type="radio" name="tabs" id="itab-posh" />
-          <label for="itab-posh" role="tab" aria-selected="false"
-                 title="Metadata encoded using Plain Old Semantic HTML Notation" >
-            POSH
-          </label>
-          <div id="posh_items" class="tab-content" role="tabpanel" aria-hidden="false">
-            <table class="wait">
-              <tr>
-                <td><img src="images/throbber.gif" width="16" /></td>
-                <td>Processing data...</td>
-              </tr>
-            </table>
-          </div>
-        </li>
-
-        <li id="tab-src">
-          <input type="radio" name="tabs" id="itab-src" />
-          <div id="src_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
-            <table style="width: 100%;height:40px;">
-              <tr>
-                <td>
-                  <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
-                </td>
-              </tr>
-            </table>
-            <div style="width: 100%; height: calc(100% - 40px);">
-                <textarea id="src_place" style="white-space:nowrap">
+      <li id="tab-src">
+        <input type="radio" name="tabs" id="itab-src" />
+        <div id="src_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+          <table style="width: 100%;height:40px;">
+            <tr>
+              <td>
+                <button id="src_exit" style="margin:5px; margin-left:10px;">Exit</button>
+              </td>
+            </tr>
+          </table>
+          <div style="width: 100%; height: calc(100% - 40px);">
+            <textarea id="src_place" style="white-space:nowrap">
                 </textarea>
-            </div>
           </div>
-        </li>
+        </div>
+      </li>
 
-        <li id="tab-cons" >
-          <input type="radio" name="tabs" id="itab-cons" />
-          <div id="cons_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
+      <li id="tab-cons">
+        <input type="radio" name="tabs" id="itab-cons" />
+        <div id="cons_items" class="tab-content" role="tabpanel" aria-hidden="true" style="font-size: 13px;">
 
-            <div style="display:flex; flex-direction:row; align-items:baseline;">
-              <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
-              <button id="rest_exit" >Exit</button>
+          <div style="display:flex; flex-direction:row; align-items:baseline;">
+            <button id="rest_exec" style="margin:10px; margin-left:15px;">Run</button>
+            <button id="rest_exit">Exit</button>
+          </div>
+          <div class="rest_path">
+            <span class="rest_frm_label5">URL</span>
+            <input id="rest_url" class="rest_frm_field" style="background-color: #dce9f9;" readonly>
+          </div>
+          <p />
+          <div class="rest_path">
+            <span class="rest_frm_label5">Scheme</span>
+            <input id="rest_scheme" class="rest_frm_field">
+          </div>
+          <div class="rest_path">
+            <span class="rest_frm_label5">Authority</span>
+            <input id="rest_auth" class="rest_frm_field">
+          </div>
+          <div class="rest_path">
+            <span class="rest_frm_label5">Path</span>
+            <input id="rest_path" class="rest_frm_field">
+          </div>
+          <p />
+          <div id="rest_query">
+            <div class="rest_query_title">
+              <span class="rest_frm_label9">Query&nbsp;Parameter</span>
+              <input id="query_id" class="rest_frm_field">
             </div>
-            <div class="rest_path">
-              <span class="rest_frm_label5">URL</span>
-              <input id="rest_url" class="rest_frm_field" style="background-color: #dce9f9;" readonly >
-            </div>
-            <p/>
-            <div class="rest_path">
-              <span class="rest_frm_label5">Scheme</span>
-              <input id="rest_scheme" class="rest_frm_field">
-            </div>
-            <div class="rest_path">
-              <span class="rest_frm_label5">Authority</span>
-              <input id="rest_auth" class="rest_frm_field">
-            </div>
-            <div class="rest_path">
-              <span class="rest_frm_label5">Path</span>
-              <input id="rest_path" class="rest_frm_field">
-            </div>
-            <p/>
-            <div id="rest_query">
-              <div class="rest_query_title" >
-                <span class="rest_frm_label9">Query&nbsp;Parameter</span>
-                <input id="query_id" class="rest_frm_field" >
-              </div>
-              <textarea id="query_place" style="width: 100%; height: 100px;">
+            <textarea id="query_place" style="width: 100%; height: 100px;">
               </textarea>
-            </div>
-
-            <table id="rest_params" class="footable">
-              <thead>
-                <tr>
-                  <th width="12px"></th>
-                  <th width="40%">Parameter</th>
-                  <th width="auto">Value</th>
-                </tr>
-              </thead>
-              <tbody id="restData">
-              </tbody>
-            </table>
-            <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
-            <p/>
-            <div class="rest_path">
-              <span class="rest_frm_label5">Fragment</span>
-              <input id="rest_hash" class="rest_frm_field">
-            </div>
           </div>
-        </li>
 
-      </ul>
-      </div>
-
-
-      <div class="bottom_block">
-        <div class="bottom_block_left">
-          <a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a>
-          <div id="ext_ver" style="width:50px">ver:0.0.0</div>
+          <table id="rest_params" class="footable">
+            <thead>
+              <tr>
+                <th width="12px"></th>
+                <th width="40%">Parameter</th>
+                <th width="auto">Value</th>
+              </tr>
+            </thead>
+            <tbody id="restData">
+            </tbody>
+          </table>
+          <button style="margin:8px; margin-top:8px;" id="rest_add" class="rest_add">Add</button>
+          <p />
+          <div class="rest_path">
+            <span class="rest_frm_label5">Fragment</span>
+            <input id="rest_hash" class="rest_frm_field">
+          </div>
         </div>
+      </li>
 
-        <div>
-          Copyright&nbsp;&copy;&nbsp;2015-<span id="c_year">2021</span> 
-          <a href="http://www.openlinksw.com"> OpenLink&nbsp;Software </a>
-        </div>
-      </div>
-    </body>
+    </ul>
+  </div>
+
+
+  <div class="bottom_block hidden">
+    <div class="bottom_block_left">
+      <a href="http://osds.openlinksw.com">OpenLink Structured Data Sniffer</a>
+      <div id="ext_ver" style="width:50px">ver:0.0.0</div>
+    </div>
+
+    <div>
+      Copyright&nbsp;&copy;&nbsp;2015-<span id="c_year">2021</span>
+      <a href="http://www.openlinksw.com"> OpenLink&nbsp;Software </a>
+    </div>
+  </div>
+</body>
+
 </html>

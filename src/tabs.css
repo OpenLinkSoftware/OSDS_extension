@@ -1,19 +1,20 @@
-
 .tabs {
   float: none;
   list-style: none;
   position: relative;
   text-align: left;
-  padding: 0 0 0.3em 0;
-  margin-top: -5px;
+  padding: 0 0 0 8px;
+  margin-top: 0;
+  background: #F8F9FA;
+  border-bottom: 2px solid #E1E4E8;
 }
 
 .tabs li {
   float: left;
   display: block;
-  margin-right: 3px;
+  margin-right: 2px;
+  margin-top: 5px;
 }
-
 
 .tabs input[type="radio"] {
   position: absolute;
@@ -23,44 +24,63 @@
 
 .tabs label {
   display: block;
-  padding: 4px 4px 6px 4px;
-  border-radius: 4px 4px 0 0;
+  padding: 10px 16px;
+  border-radius: 6px 6px 0 0;
   font-size: 13px;
-  font-weight: normal;
-  background: lightgray;
+  font-weight: 500;
+  background: transparent;
+  color: #586069;
   cursor: pointer;
   position: relative;
-  top: 4px;
-  -moz-transition: all 0.1s ease-in-out;
-  -o-transition: all 0.1s ease-in-out;
-  -webkit-transition: all 0.1s ease-in-out;
-  transition: all 0.1s ease-in-out;
+/*??  top: 2px;*/
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  border-bottom: none;
 }
 
 .tabs label:hover {
-  background: lightgray;
+  background: #FFFFFF;
+  color: #1976D2;
 }
 
 .tabs .tab-content {
   z-index: 2;
   display: none;
   overflow: auto;
-  width: calc(100% - 5px);
-  height: calc(100vh - 70px);
+  width: calc(100% - 10px);
+  height: calc(100vh - 200px); /* Adjusted for header */
   position: absolute;
-  top: 33px;
+/*??  top: 38px; */
   left: 0;
-  border: 1px solid #c9c3ba;
+  border: 1px solid #E1E4E8;
+  border-top: none;
   font-size: 13px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+/*??  padding: 12px;*/
+  padding: 2px;
+}
+
+.tabs .tab-content > table.docdata {
+  margin: 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tabs .tab-content > table.wait {
+  margin: 20px;
 }
 
 .tabs [id^="itab"]:checked + label {
   top: 0;
-  padding: 9px 4px 6px 4px;
-  background: #f1f0ee;
-  color: blue;
-  font-weight: bold;
-  border: 1px solid #c9c3ba;
+/*??  padding: 12px 16px 10px 16px;*/
+  background: #FFFFFF;
+  color: #1976D2;
+  font-weight: 600;
+  border: 1px solid #E1E4E8;
+  border-bottom: 2px solid #FFFFFF;
+  margin-bottom: -2px;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tabs [id^="itab"]:checked ~ [role^="tabpanel"] {

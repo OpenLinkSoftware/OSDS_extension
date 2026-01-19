@@ -28,25 +28,25 @@ var gData_showed = false;
 var doc_URL = null;
 var prevSelectedTab = null;
 var gData = {
-        baseURL: null,
-        tab_index: null,
-        tabs: [],
+  baseURL: null,
+  tab_index: null,
+  tabs: [],
 
-        micro: null,
-        jsonld: null,
-        rdfa: null,
-        turtle: null,
-        rdf: null,
-        rdfa: null,
-        json: null,
-        jsonl: null,
-        csv: null,
-        rss: null,
-        atom: null,
-        md: null,
+  micro: null,
+  jsonld: null,
+  rdfa: null,
+  turtle: null,
+  rdf: null,
+  json: null,
+  jsonl: null,
+  csv: null,
+  rss: null,
+  atom: null,
+  md: null,
+  posh: null,
 
-        links: {}
-      };
+  links: {},
+};
 
 var src_view = null;
 var g_RestCons = new Rest_Cons();
@@ -63,9 +63,7 @@ function showPopup(tabId)
     if (Browser.is_ff) {
       Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data' })
         .then(response => {
-          if (Browser.api.runtime.lastError)
-            return;
-          if (!response || !response.ping) {
+          if (Browser.api.runtime.lastError || !response || !response.ping) {
             hideDataTabs();
             selectTab('cons');
             g_RestCons.show();
@@ -77,18 +75,16 @@ function showPopup(tabId)
           g_RestCons.show();
         });
     } else {
-      Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data'},
-        function(response) { 
-          if (Browser.api.runtime.lastError)
-            return;
-          if (!response || !response.ping) {
+      Browser.api.tabs.sendMessage(tabId, { cmd: 'req_doc_data' },
+        async function (response) {
+          if (Browser.api.runtime.lastError || !response || !response.ping) {
             hideDataTabs();
             selectTab('cons');
             g_RestCons.show();
           }
         });
     }
-  } catch(e) {
+  } catch (e) {
     hideDataTabs();
     selectTab('cons');
     g_RestCons.show();
@@ -101,14 +97,14 @@ function showPopup(tabId)
   Download_exec_update_state();
 
   async function click_login() {
-     if (gOidc.getWebId()) {
-       await gOidc.logout();
-       Download_exec_update_state();
-     } else {
-       Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
-       gOidc.login();
-     }
-  } 
+    if (gOidc.getWebId()) {
+      await gOidc.logout();
+      Download_exec_update_state();
+    } else {
+      Browser.api.runtime.sendMessage({ cmd: 'reset_uploads' });
+      gOidc.login();
+    }
+  }
 
   DOM.iSel('oidc-login-btn').onclick = (e) => { click_login() }
   DOM.iSel('oidc-login-btn1').onclick = (e) => { click_login() }
@@ -119,25 +115,31 @@ function showPopup(tabId)
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
   DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
 
-  DOM.iSel("rest_btn").onclick = (e) => { 
+  DOM.iSel("rest_btn").onclick = (e) => {
     selectTab('cons');
     g_RestCons.load(doc_URL);
     g_RestCons.show();
     var node = DOM.iSel("rest_query");
-    gMutationObserver.observe(node, {attributes:true, childList:true, subtree:true});
+    gMutationObserver.observe(node, { attributes: true, childList: true, subtree: true });
   }
 
   DOM.iSel("download_btn").onclick = (e) => { Download_exec() }
+  // Dropdown event listener - switches view mode within current tab
+  DOM.iSel("view-mode-selector").onchange = (e) => {
+    const mode = e.target.value;
+    switchViewMode(mode);
+  };
+
   DOM.iSel("prefs_btn").onclick = (e) => { Prefs_exec() }
 
   DOM.iSel("load_rss").onclick = (e) => {
-        if (gData.links.rss)
-          gData.links.rss.loadData({}, 0);
+    if (gData.links.rss)
+      gData.links.rss.loadData({}, 0);
   }
 
   DOM.iSel("load_atom").onclick = (e) => {
-        if (gData.links.atom)
-          gData.links.atom.loadData({}, 0);
+    if (gData.links.atom)
+      gData.links.atom.loadData({}, 0);
   }
 
   try {
@@ -145,36 +147,55 @@ function showPopup(tabId)
       lineNumbers: true
     });
     src_view.setSize("100%", "100%");
-  } catch(e) { }
+  } catch (e) { }
 
-  try{
+  try {
     g_RestCons.yasqe.obj = YASQE.fromTextArea(document.getElementById('query_place'), {
       lineNumbers: false,
       lineWrapping: false,
       foldGutter: false,
       sparql: { showQueryButton: false },
-	      createShortLink : null,
-	      createShareLink : null,
-	      persistent: null,
+      createShortLink: null,
+      createShareLink: null,
+      persistent: null,
 
     });
     g_RestCons.yasqe.obj.setSize("98%", 260);
-  } catch(e) {
+  } catch (e) {
   }
-  
+
   if (doc_URL)
     g_RestCons.load(doc_URL);
 
-  DOM.iSel("chat_btn").onclick = async (e) =>{ 
+  DOM.iSel("chat_btn").onclick = async (e) => {
     const curTabs = await getCurTab();
     if (curTabs.length > 0) {
-      Browser.api.runtime.sendMessage({cmd: 'gpt_page_content', tabId:curTabs[0].id, url:curTabs[0].url});
+      Browser.api.runtime.sendMessage({ cmd: 'gpt_page_content', tabId: curTabs[0].id, url: curTabs[0].url });
       close();
     }
   }
 
+  // Add event handlers for header buttons
+  try {
+    DOM.iSel("header-refresh").onclick = async (e) => {
+      // Refresh the data by reloading the popup
+      try {
+        const response = await Browser.api.tabs.sendMessage(tabId, { cmd: 'ping' })
+        if (!response || !response.pong) {
+            await Browser.api.tabs.reload(); //reload tab for reinit OSDS
+            await sleep(3000);
+        }
+      } catch(e) {
+        await Browser.api.tabs.reload(); //reload tab for reinit OSDS
+        await sleep(3000);
+      }
+      location.reload();
+    };
+  } catch (error) {
+  }
+
   DOM.iSel("rest_exec").onclick = (e) => { g_RestCons.exec(gData.tab_index); }
-  DOM.iSel("rest_exit").onclick = (e) => { 
+  DOM.iSel("rest_exit").onclick = (e) => {
     gMutationObserver.disconnect();
     if (prevSelectedTab)
       selectTab(prevSelectedTab);
@@ -182,6 +203,18 @@ function showPopup(tabId)
   }
 
   DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
+  const lst = DOM.qSelAll('ul.tabs li label[role="tab"]');
+  for(const t of lst) {
+    t.onclick = (e) => {
+      const v = e.target.htmlFor;
+      if (v && v.startsWith('itab-')) {
+        const tabName = v.substring(5);
+        const dropdown = DOM.iSel("view-mode-selector");
+        if (dropdown)
+          switchViewMode(dropdown.value, tabName);
+      }
+    }
+  }
 
   gData_showed = false;
 }
@@ -197,7 +230,13 @@ async function loadPopup()
   hideDataTabs();
   selectTab('posh');
 
-  DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0'+ Browser.api.runtime.getManifest().version;
+  const ext_ver = Browser.api.runtime.getManifest().version;
+  DOM.iSel("ext_ver").innerText = '\u00a0ver:\u00a0' + ext_ver;
+  // Also update the header version display
+  try {
+    DOM.iSel("header-version").innerText = 'ver:\u00a0' + ext_ver;
+  } catch (e) {
+  }
 
   var curTabs = await getCurTab();
   var tabId = g_tabId = null;
@@ -206,36 +245,36 @@ async function loadPopup()
     tabId = g_tabId = curTabs[0].id;
     doc_URL = curTabs[0].url;
   }
-  
+
   var chk_all = "0";
 
   if (!Browser.is_safari) {
-      var setting = new Settings();
-      chk_all = await setting.getValue("ext.osds.handle_all");
+    var setting = new Settings();
+    chk_all = await setting.getValue("ext.osds.handle_all");
   }
 
-  if (chk_all && chk_all!=="1") {
-    Browser.api.runtime.sendMessage({'cmd': 'openIfHandled', tabId},
-       function(resp) {
-            if (Browser.api.runtime.lastError) {
-              showPopup(tabId);
-              return;
-            }
-            if (resp && resp.opened) {
-               close();
-            }
-            else {
-               showPopup(tabId);
-            }
-       });
-  } 
+  if (chk_all && chk_all !== "1") {
+    Browser.api.runtime.sendMessage({ 'cmd': 'openIfHandled', tabId },
+      function (resp) {
+        if (Browser.api.runtime.lastError) {
+          showPopup(tabId);
+          return;
+        }
+        if (resp && resp.opened) {
+          close();
+        }
+        else {
+          showPopup(tabId);
+        }
+      });
+  }
   else {
     showPopup(tabId);
   }
 }
 
 DOM.ready(() =>
-{ 
+{
   DOM.iSel("c_year").innerText = new Date().getFullYear();
 
   loadPopup()
@@ -243,12 +282,12 @@ DOM.ready(() =>
 
 
 // Trap any link clicks and open them in the current tab.
-$(document).on('click', 'a', function(e) {
+$(document).on('click', 'a', function (e) {
   function check_URI(uri) {
-    if (gData.baseURL[gData.baseURL.length-1]==="#")
+    if (gData.baseURL[gData.baseURL.length - 1] === "#")
       return uri.startsWith(gData.baseURL);
     else
-      return uri.startsWith(gData.baseURL+'#');
+      return uri.startsWith(gData.baseURL + '#');
   }
 
   var tab_data = DOM.qSel(`#${getSelectedTab()}_items`);
@@ -257,8 +296,8 @@ $(document).on('click', 'a', function(e) {
   var href = e.currentTarget.href;
   var hashPos = href.lastIndexOf('#');
 
-  if (hashPos!=-1 && hashPos!=href.length-1)
-    hashName = href.substring(hashPos+1);
+  if (hashPos != -1 && hashPos != href.length - 1)
+    hashName = href.substring(hashPos + 1);
 
   var url = new URL(document.baseURI);
   url.hash = '';
@@ -267,24 +306,47 @@ $(document).on('click', 'a', function(e) {
   var baseHost = (new URL(gData.baseURL)).host;
   var hrefHost = (new URL(href)).host;
 
-  if (href.startsWith(url+"#sc")) {
+  if (href.startsWith(url + "#sc")) {
     return true;
   }
   else if (check_URI(href) && hashName) {
-    var el = tab_data.querySelectorAll('a[name = "'+hashName+'"]');
-    if (el.length > 0)
-      el[0].scrollIntoView();
-    return false;
+    // Link with fragment identifier - try to find anchor by name or id
+    var el = tab_data.querySelectorAll('a[name="' + hashName + '"], #' + CSS.escape(hashName));
+    if (el.length > 0) {
+      el[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return false;
+    }
   }
   else if (href === doc_URL) {
     return false;
   }
+  else if (check_URI(href)) {
+    // Link ending with # or matching base URL - scroll to the entity in the metadata display
+    var targetURI = href.endsWith('#') ? href.slice(0, -1) : href;
+
+    // Try multiple selectors to find the target element:
+    // 1. Element with [ent] attribute matching the URI
+    // 2. Element with href matching the URI
+    // 3. Element with id derived from the URI
+    var el = tab_data.querySelectorAll(`a[href="${targetURI}"][ent], a[href="${href}"][ent]`);
+
+    if (el.length > 0) {
+      el[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return false;
+    }
+
+    // If not found, don't navigate away
+    return false;
+  }
   else {
-    var el = tab_data.querySelectorAll('a[href = "'+href+'"][ent]');
-    if (el.length > 0)
-      el[0].scrollIntoView();
-    else
+    // External link or different domain
+    var el = tab_data.querySelectorAll('a[href="' + href + '"][ent]');
+    if (el.length > 0) {
+      el[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    else {
       Browser.openTab(href, gData.tab_index);
+    }
     return false;
   }
 });
@@ -293,13 +355,98 @@ $(document).on('click', 'a', function(e) {
 function selectTab(tab)
 {
   prevSelectedTab = getSelectedTab();
+
+  // For property sheet tabs, select the tab normally (this will show the tab via CSS)
   var el = DOM.qSel(`#tab-${tab} input`);
-  el.checked = true;
-  DOM.Show(el.parentNode);
+  if (el) {
+    el.checked = true;
+    DOM.Show(el.parentNode);
+    
+    const dropdown = DOM.iSel("view-mode-selector");
+    if (dropdown) {
+      switchViewMode(dropdown.value, tab);
+    }
+  }
 }
 
-function getSelectedTab()
+function switchViewMode(mode, tabName)
 {
+  const currentTab = tabName || getSelectedTab();
+  //console.log('[OSDS DEBUG] switchViewMode called - mode:', mode, 'currentTab:', currentTab);
+  
+  if (!currentTab) {
+    console.log('[OSDS DEBUG] No current tab found!');
+    return;
+  }
+  
+  const propertySheet = DOM.qSel(`#${currentTab}_items .view-property-sheet`);
+  const spreadsheet = DOM.qSel(`#${currentTab}_items .view-spreadsheet`);
+  const graph = DOM.qSel(`#${currentTab}_items .view-graph`);
+  
+  DOM.Hide(propertySheet);
+  DOM.Hide(spreadsheet);
+  DOM.Hide(graph);
+  
+  // Show the selected view
+  if (mode === 'spreadsheet') {
+    if (spreadsheet && spreadsheet.innerHTML.trim() !== '') {
+      //console.log('[OSDS DEBUG] Showing spreadsheet view');
+      DOM.Show(spreadsheet);
+    } else {
+      //console.log('[OSDS DEBUG] No spreadsheet content, falling back to property sheet');
+      DOM.Show(propertySheet);
+      // Fallback to property sheet if no spreadsheet data
+      const dropdown = DOM.iSel("view-mode-selector");
+      if (dropdown) dropdown.value = 'property_sheet';
+    }
+  } else if (mode === 'graph') {
+    if (graph && graph.innerHTML.trim() !== '') {
+      //console.log('[OSDS DEBUG] Showing graph view');
+      DOM.Show(graph);
+      // Initialize graph if needed
+      initGraphInContainer(graph);
+    } else {
+      //console.log('[OSDS DEBUG] No graph content, falling back to property sheet');
+      // Fallback to property sheet if no graph data
+      DOM.Show(propertySheet);
+      const dropdown = DOM.iSel("view-mode-selector");
+      if (dropdown) dropdown.value = 'property_sheet';
+    }
+  } else {
+    // Default to property sheet
+    //console.log('[OSDS DEBUG] Showing property sheet view');
+    DOM.Show(propertySheet);
+  }
+}
+
+// Initialize graph visualization in a container
+function initGraphInContainer(container) {
+  if (!container) return;
+  
+  try {
+    const canvases = container.querySelectorAll('canvas');
+    canvases.forEach(canvas => {
+      if (canvas && window.osdsGraphs) {
+        const graphId = canvas.id;
+        const graphInstance = window.osdsGraphs[graphId];
+        if (graphInstance && !graphInstance._initialized) {
+          graphInstance.init(graphId);
+          graphInstance._initialized = true;
+          
+          // Attach button listener
+          const btn = container.querySelector('.graph-layout-btn');
+          if (btn) {
+            btn.onclick = () => graphInstance.startSimulation();
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error("[OSDS] Error initializing graph:", e);
+  }
+}
+
+function getSelectedTab() {
   var el = DOM.qSel('.tabs input:checked');
   if (el)
     return el.parentNode.id.substring(4);
@@ -308,19 +455,19 @@ function getSelectedTab()
 }
 
 
-function hideDataTabs()
-{
+function hideDataTabs() {
   var lst = DOM.qSelAll('.tabs li[id^="tab"]');
-  for(var v of lst) {
+  for (var v of lst) {
     DOM.Hide(v);
   }
 }
 
 
-function update_tab(tabname, title, val, err_tabs)
-{
-  function create_err_msg(fmt_name, errors)
-  {
+function update_tab(tabname, title, val, err_tabs, val_spreadsheet, val_graph) {
+  let spreadsheetHtml = val_spreadsheet ? val_spreadsheet.html : null;
+  let graphHtml = val_graph ? val_graph.html : null;
+
+  function create_err_msg(fmt_name, errors) {
     var err_html = "";
     var err_load = "";
     var msg = "";
@@ -328,28 +475,28 @@ function update_tab(tabname, title, val, err_tabs)
     if (errors) {
 
       if ($.isArray(errors)) {
-        for(var i=0; i<errors.length; i++) {
+        for (var i = 0; i < errors.length; i++) {
           if (errors[i].startsWith("#L#"))
-            err_load += "<tr><td>"+errors[i].substring(3)+"</tr></td>";
+            err_load += "<tr><td>" + errors[i].substring(3) + "</tr></td>";
           else
-            err_html += "<tr><td>"+errors[i]+"</tr></td>";
+            err_html += "<tr><td>" + errors[i] + "</tr></td>";
         }
       }
       else if (errors.length > 0) {
-          err_html += "<tr><td>"+errors+"</tr></td>";
+        err_html += "<tr><td>" + errors + "</tr></td>";
       }
 
       if (err_html.length > 0)
-        msg += "<table class='docdata table'><tr><td>"+fmt_name
-              +" discovered, but fails syntax checking by parser:</td></tr>"
-              +err_html+"</table>";
+        msg += "<table class='docdata table'><tr><td>" + fmt_name
+          + " discovered, but fails syntax checking by parser:</td></tr>"
+          + err_html + "</table>";
 
       if (err_load.length > 0)
         msg += "<table class='docdata table'>"
-              +err_load+"</table>";
+          + err_load + "</table>";
 
     }
-    return (msg.length>0)?msg:null;
+    return (msg.length > 0) ? msg : null;
   }
 
 
@@ -358,30 +505,51 @@ function update_tab(tabname, title, val, err_tabs)
   $(`#${tabname}_items table.wait`).hide();
   $(`#${tabname}_items #docdata_view`).remove();
 
-  if (tabname !== 'markdown')
-    $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
-
   if (val.html && val.html.trim().length > 0) {
-      html += val.html;
-      gData.tabs.push(`${tabname}`);
+    html += val.html;
+    gData.tabs.push(`${tabname}`);
   }
   if (val.error) {
-      var err_msg = create_err_msg(title, val.error);
-      if (err_msg) {
-        html += err_msg;
-        if (err_tabs)
-          err_tabs.push(`${tabname}`);
-      }
+    var err_msg = create_err_msg(title, val.error);
+    if (err_msg) {
+      html += err_msg;
+      if (err_tabs)
+        err_tabs.push(`${tabname}`);
+    }
   }
   if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
     if (tabname === 'markdown') {
-       var preview = $("#md_preview iframe").contents().find("body");
-       preview.get(0).innerHTML = html;
+      var preview = $("#md_preview iframe").contents().find("body");
+      preview.get(0).innerHTML = html;
     } else {
-       $(`#${tabname}_items #docdata_view`).append(html);
+      // Populate the property sheet view container
+      const propertySheetContainer = DOM.qSel(`#${tabname}_items .view-property-sheet`);
+      //console.log('[OSDS DEBUG] propertySheetContainer found:', !!propertySheetContainer);
+      if (propertySheetContainer) {
+        propertySheetContainer.innerHTML = `<div id='docdata_view' class='alignleft'>${html}</div>`;
+      } else {
+        // Fallback for tabs without view containers (like src, cons)
+        $(`#${tabname}_items`).append(`<div id='docdata_view' class='alignleft'>${html}</div>`);
+      }
+      
+      // Populate spreadsheet view container if data provided
+      const spreadsheetContainer = DOM.qSel(`#${tabname}_items .view-spreadsheet`);
+      //console.log('[OSDS DEBUG] spreadsheetContainer found:', !!spreadsheetContainer, 'spreadsheetHtml:', !!spreadsheetHtml);
+      if (spreadsheetContainer && spreadsheetHtml) {
+        spreadsheetContainer.innerHTML = spreadsheetHtml;
+        //console.log('[OSDS DEBUG] Spreadsheet container populated for', tabname, 'length:', spreadsheetHtml.length);
+      }
+      
+      // Populate graph view container if data provided
+      const graphContainer = DOM.qSel(`#${tabname}_items .view-graph`);
+      //console.log('[OSDS DEBUG] graphContainer found:', !!graphContainer, 'graphHtml:', !!graphHtml);
+      if (graphContainer && graphHtml) {
+        graphContainer.innerHTML = graphHtml;
+        //console.log('[OSDS DEBUG] Graph container populated for', tabname, 'length:', graphHtml.length);
+      }
     }
-      return true;
-  } 
+    return true;
+  }
   else {
     DOM.qHide(`#tab-${tabname}`);
     DOM.qHide(`#${tabname}-save`);
@@ -390,12 +558,15 @@ function update_tab(tabname, title, val, err_tabs)
 }
 
 
-async function update_tab_exec(tabname, title, block, err_tabs)
+async function update_tab_exec(tabname, title, block, err_tabs) 
 {
+  //??console.log('[OSDS DEBUG] update_tab_exec called for:', tabname);
   var bnode_types = {};
   var val = await block.to_html(bnode_types, 0);
-
-  return update_tab(tabname, title, val, err_tabs);
+  var val_sheet = await block.to_html(bnode_types, 0, 'html_sheet');
+  var val_graph = await block.to_html(bnode_types, 0, 'html_graph');
+  
+  return update_tab(tabname, title, val, err_tabs, val_sheet, val_graph);
 }
 
 
@@ -412,7 +583,7 @@ async function show_Data()
       DOM.qHide(`#${tabName}-save`);
     }
   }
-  
+
   var cons = false;
   var micro = false;
   var jsonld = false;
@@ -448,7 +619,7 @@ async function show_Data()
 
   if (gData.rdf)
     rdf = await update_tab_exec('rdf', 'RDF/XML', gData.rdf, err_tabs);
-  
+
   if (gData.json)
     json = await update_tab_exec('json', 'JSON', gData.json, err_tabs);
 
@@ -484,18 +655,18 @@ async function show_Data()
   else if (err_tabs.length > 0)
     selectTab(err_tabs[0]);
 
-  updateUI(micro,  'micro');
+  updateUI(micro, 'micro');
   updateUI(jsonld, 'jsonld');
   updateUI(turtle, 'turtle');
-  updateUI(rdfa,   'rdfa');
-  updateUI(rdf,    'rdf');
-  updateUI(posh,   'posh');
-  updateUI(json,   'json');
-  updateUI(jsonl,  'jsonl');
-  updateUI(csv,    'csv');
+  updateUI(rdfa, 'rdfa');
+  updateUI(rdf, 'rdf');
+  updateUI(posh, 'posh');
+  updateUI(json, 'json');
+  updateUI(jsonl, 'jsonl');
+  updateUI(csv, 'csv');
   updateUI(markdown, 'markdown');
-  updateUI(rss,    'rss');
-  updateUI(atom,   'atom');
+  updateUI(rss, 'rss');
+  updateUI(atom, 'atom');
 
   if (!jsonl && !json)
     DOM.qHide('#json-save');
@@ -508,7 +679,7 @@ async function show_Data()
 
 function links_cb_start(tab)
 {
-  $(`#${tab}_items #load_${tab}`).attr('disabled','disabled');
+  $(`#${tab}_items #load_${tab}`).attr('disabled', 'disabled');
   $(`#${tab}_items #throbber`).show();
 }
 
@@ -526,7 +697,7 @@ function links_cb_success(tab, tabName, rc)
 
     DOM.qShow(`#tab-${tab}`);
     DOM.qShow(`#${tab}-save`);
-  } 
+  }
 }
 
 
@@ -536,10 +707,10 @@ async function parse_Data(dData)
   doc_URL = dData.doc_URL;
 
   var url = new URL(doc_URL);
-  url.hash ='';
+  url.hash = '';
   gData.baseURL = url.toString();
 
-  var val = {d:dData, start_id:0, bnode_types:{}};
+  var val = { d: dData, start_id: 0, bnode_types: {} };
   var bnode_types = {};
 
   try {
@@ -548,7 +719,7 @@ async function parse_Data(dData)
     gData.links.jsonld = null;
     gData.links.rdf = null;
     gData.links.ttl = null;
-    
+
     gData.micro = new Microdata_Block(gData.baseURL, [JSON.stringify(dData.micro.data, undefined, 2)], dData.micro.data);
 
     gData.jsonld = new JSONLD_Block(gData.baseURL, dData.jsonld.text);
@@ -564,7 +735,7 @@ async function parse_Data(dData)
     gData.posh = new TTL_Block(gData.baseURL, [dData.posh.text]);
 
     gData.rdfa = new RDFa_Block(gData.baseURL, dData.rdfa.ttl, dData.rdfa.data);
-    
+
     gData.rdf = new RDF_Block(gData.baseURL, dData.rdf.text);
     gData.rdf.add_nano(dData.rdf_nano.text);
 
@@ -581,7 +752,7 @@ async function parse_Data(dData)
       $(`#atom_items table.wait`).show();
     }
 
-    if (dData.posh.links) 
+    if (dData.posh.links)
     {
       var setting = new Settings();
       var chk_discovery = await setting.getValue("ext.osds.auto_discovery");
@@ -591,10 +762,10 @@ async function parse_Data(dData)
       var rdf_links = {};
       var ttl_links = {};
 
-      for(var href in val.d.posh.links) {
+      for (var href in val.d.posh.links) {
         var type = val.d.posh.links[href];
         if (type === 'application/atom+xml')
-           atom_links[href] = type;
+          atom_links[href] = type;
         else if (type === 'application/rss+xml')
           rss_links[href] = type;
         else if (type === 'application/json+ld' || type === 'application/ld+json' || type === 'application/activity+json')
@@ -607,9 +778,9 @@ async function parse_Data(dData)
 
       if (dData.posh.dlinks.rss.length > 0) {
 
-        for(var v of dData.posh.dlinks.rss) {
+        for (var v of dData.posh.dlinks.rss) {
           if (!rss_links[v])
-            rss_links[v] = 'application/rss+xml'; 
+            rss_links[v] = 'application/rss+xml';
         }
       }
 
@@ -642,7 +813,7 @@ async function parse_Data(dData)
         $('#jsonld_items #load_jsonld').hide();
         $(`#jsonld_items table.loader`).show();
         gData.links.jsonld = new JSONLD_Links("jsonld", "JSON-LD", gData.baseURL, jsonld_links, gData.jsonld, links_cb_start, links_cb_error, links_cb_success);
-        gData.links.jsonld.loadData({}, 0); 
+        gData.links.jsonld.loadData({}, 0);
       }
 
       if (Object.keys(rdf_links).length > 0) {
@@ -650,7 +821,7 @@ async function parse_Data(dData)
         $('#rdf_items #load_rdf').hide();
         $(`#rdf_items table.loader`).show();
         gData.links.rdf = new RDF_Links("rdf", "RDF/XML", gData.baseURL, rdf_links, gData.rdf, links_cb_start, links_cb_error, links_cb_success);
-        gData.links.rdf.loadData({}, 0); 
+        gData.links.rdf.loadData({}, 0);
       }
 
       if (Object.keys(ttl_links).length > 0) {
@@ -658,7 +829,7 @@ async function parse_Data(dData)
         $('#turtle_items #load_turtle').hide();
         $(`#turtle_items table.loader`).show();
         gData.links.ttl = new TTL_Links("turtle", "Turtle", gData.baseURL, ttl_links, gData.turtle, links_cb_start, links_cb_error, links_cb_success);
-        gData.links.ttl.loadData({}, 0); 
+        gData.links.ttl.loadData({}, 0);
       }
     }
   } catch (e) {
@@ -690,7 +861,7 @@ async function handle_docData(data, is_data_exists, tab_index)
 
       try {
         gData.tab_index = tab_index;
-      } catch(e){}
+      } catch (e) { }
 
       g_RestCons.load(doc_URL);
 
@@ -699,8 +870,8 @@ async function handle_docData(data, is_data_exists, tab_index)
         try {
           await parse_Data(dData);
           await show_Data();
-        } catch(ex) {
-          console.log("OSDS: Error="+ex);
+        } catch (ex) {
+          console.log("OSDS: Error=" + ex);
           hideDataTabs();
         }
       }
@@ -720,26 +891,25 @@ async function handle_docData(data, is_data_exists, tab_index)
                       files: ['frame_text.js']
                     });
       let lst = [];
-      for(var v of frames)
+      for (var v of frames)
         lst.push(v.result);
       frames_data(lst);
     }
     else
-      Browser.api.tabs.executeScript(g_tabId, {file:"frame_text.js", allFrames:true, runAt: 'document_start'}, frames_data);
+      Browser.api.tabs.executeScript(g_tabId, { file: "frame_text.js", allFrames: true, runAt: 'document_start' }, frames_data);
 
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
-  } 
+  } catch (e) {
+    console.log("OSDS: onMsg=" + e);
+  }
 
 }
 
 
 //Chrome API
 //wait data from extension
-Browser.api.runtime.onMessage.addListener(async function(request, sender, sendResponse)
+Browser.api.runtime.onMessage.addListener(async function (request, sender, sendResponse)
 {
-  if (request.property == "doc_data")
-  {
+  if (request.property == "doc_data") {
     handle_docData(request.data, request.is_data_exists, sender.tab.index);
   }
 
@@ -753,9 +923,9 @@ async function SuperLinks_exec()
   var settings = new Settings();
   await settings._syncAll();
 
-  if (doc_URL!==null) {
-    Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
-    Browser.api.runtime.sendMessage({cmd: 'actionSuperLinks'});
+  if (doc_URL !== null) {
+    Browser.api.runtime.sendMessage({ cmd: 'reset_uploads' });
+    Browser.api.runtime.sendMessage({ cmd: 'actionSuperLinks' });
     close(); // close popup
   }
   return false;
@@ -766,10 +936,10 @@ async function SuperLinks_exec()
 
 async function Import_doc()
 {
-  if (doc_URL!==null) {
-     var settings = new Settings();
-     var _url = await settings.createImportUrl(doc_URL);
-     Browser.openTab(_url, gData.tab_index);
+  if (doc_URL !== null) {
+    var settings = new Settings();
+    var _url = await settings.createImportUrl(doc_URL);
+    Browser.openTab(_url, gData.tab_index);
   }
 
   return false;
@@ -780,21 +950,20 @@ async function Rww_exec()
 {
   var settings = new Settings();
 
-  async function openRww(data)
-  {
-     var _url = await settings.createRwwUrl(doc_URL, data);
-     Browser.openTab(_url, gData.tab_index);
+  async function openRww(data) {
+    var _url = await settings.createRwwUrl(doc_URL, data);
+    Browser.openTab(_url, gData.tab_index);
   }
 
 
-  if (doc_URL!==null) {
-     var edit_url = await settings.getValue('ext.osds.rww.edit.url');
+  if (doc_URL !== null) {
+    var edit_url = await settings.getValue('ext.osds.rww.edit.url');
 
-     if (edit_url.indexOf("{data}")!=-1) {
-        save_data("export-rww", "data.txt", "ttl", openRww);
-     } else {
-        openRww(null);
-     }
+    if (edit_url.indexOf("{data}") != -1) {
+      save_data("export-rww", "data.txt", "ttl", openRww);
+    } else {
+      openRww(null);
+    }
   }
 
   return false;
@@ -803,11 +972,11 @@ async function Rww_exec()
 
 async function Sparql_exec()
 {
-  if (doc_URL!==null) {
-     var u = new URL(doc_URL);
-     var settings = new Settings();
-     var _url = await settings.createSparqlUrl(u.toString());
-     Browser.openTab(_url, gData.tab_index);
+  if (doc_URL !== null) {
+    var u = new URL(doc_URL);
+    var settings = new Settings();
+    var _url = await settings.createSparqlUrl(u.toString());
+    Browser.openTab(_url, gData.tab_index);
   }
 
   return false;
@@ -826,14 +995,14 @@ function Login_exec()
 {
   Download_exec_update_state();
 
-  var dlg = $( "#login-dlg" ).dialog({
+  var dlg = $("#login-dlg").dialog({
     resizable: true,
-    width:500,
-    height:200,
+    width: 500,
+    height: 200,
     modal: true,
     buttons: {
-      "OK": function() {
-        $(this).dialog( "destroy" );
+      "OK": function () {
+        $(this).dialog("destroy");
       }
     }
   });
@@ -843,16 +1012,16 @@ function Login_exec()
 
 
 
-async function Download_exec_update_state(pod) 
+async function Download_exec_update_state(pod)
 {
   try {
     const webid = gOidc.getWebId();
     const webid_href = DOM.iSel('oidc-webid');
     const webid1_href = DOM.iSel('oidc-webid1');
 
-    webid1_href.href = webid_href.href = webid ? webid :'';
-    webid1_href.title = webid_href.title = webid ? webid :'';
-    webid1_href.style.display = webid_href.style.display = webid ? 'initial' :'none';
+    webid1_href.href = webid_href.href = webid ? webid : '';
+    webid1_href.title = webid_href.title = webid ? webid : '';
+    webid1_href.style.display = webid_href.style.display = webid ? 'initial' : 'none';
 
     const oidc_login_btn = DOM.iSel('oidc-login-btn');
     const oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
@@ -860,26 +1029,26 @@ async function Download_exec_update_state(pod)
 
     const login_tab = DOM.iSel('login_btn');
     if (webid) {
-      login_tab.title = "Logged as "+webid;
+      login_tab.title = "Logged as " + webid;
       login_tab.src = "images/uid.png";
     } else {
       login_tab.title = "Solid Login";
       login_tab.src = "images/slogin24.png";
     }
-  } catch(e) {}  
+  } catch (e) { }
 
 
   var cmd = $('#save-action option:selected').attr('id');
-  if (cmd==='filesave')
+  if (cmd === 'filesave')
     $('#save-file').show();
   else
     $('#save-file').hide();
 
-  if (cmd==='fileupload') {
+  if (cmd === 'fileupload') {
     $('#login-fmt-item').show();
     $('#oidc-upload').show();
-  } 
-  else if (cmd==='sparqlupload') {
+  }
+  else if (cmd === 'sparqlupload') {
     $('#login-fmt-item').show();
     $('#oidc-upload').hide();
   }
@@ -892,22 +1061,22 @@ async function Download_exec_update_state(pod)
   var fmt = $('#save-fmt option:selected').attr('id');
 
   if (fmt == "jsonld")
-    filename = cmd==="fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
+    filename = cmd === "fileupload" ? "jsonld_data.jsonld" : "jsonld_data.txt";
   else if (fmt == "json")
     filename = "json_data.txt";
-  else if (fmt == "rdf") 
+  else if (fmt == "rdf")
     filename = "rdf_data.rdf";
-  else 
-    filename = cmd==="fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
+  else
+    filename = cmd === "fileupload" ? "turtle_data.ttl" : "turtle_data.txt";
 
-  if (cmd ==="sparqlupload") {
-    $('#save-filename').hide();    
-    $('#save-fmt-item').hide();    
-    $('#save-sparql-item').show();    
+  if (cmd === "sparqlupload") {
+    $('#save-filename').hide();
+    $('#save-fmt-item').hide();
+    $('#save-sparql-item').show();
   } else {
-    $('#save-filename').show();    
-    $('#save-fmt-item').show();    
-    $('#save-sparql-item').hide();    
+    $('#save-filename').show();
+    $('#save-fmt-item').show();
+    $('#save-sparql-item').hide();
   }
 
   if (pod)
@@ -933,11 +1102,11 @@ async function Download_exec()
   const graph = await settings.getValue('upload_sparql_graph');
   DOM.iSel('save-sparql-graph').value = graph ? graph : _url.toString();
 
-  $('#save-action').change(function() {
+  $('#save-action').change(function () {
     Download_exec_update_state();
   });
 
-  $('#save-fmt').change(function() {
+  $('#save-fmt').change(function () {
     Download_exec_update_state();
   });
 
@@ -946,7 +1115,7 @@ async function Download_exec()
   var isFileSaverSupported = false;
   try {
     isFileSaverSupported = !!new Blob;
-  } catch (e) {}
+  } catch (e) { }
 
   if (!isFileSaverSupported) {
     $('#save-action').prop('disabled', true);
@@ -957,82 +1126,82 @@ async function Download_exec()
 
   $('#save-fmt #json').prop('disabled', true);
 
-  for(var v of gData.tabs) {
+  for (var v of gData.tabs) {
     DOM.qSel(`#${v}-chk`).checked = false;
   }
   DOM.qSel(`#${selectedTab}-chk`).checked = true;
 
 
-  if (selectedTab==="jsonld") {
+  if (selectedTab === "jsonld") {
     filename = "jsonld_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="turtle") {
+  else if (selectedTab === "turtle") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="micro") {
+  else if (selectedTab === "micro") {
     filename = "microdata_data.txt";
     fmt = "jsonld";
   }
-  else if (selectedTab==="rdfa") {
+  else if (selectedTab === "rdfa") {
     filename = "rdfa_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="rdf") {
+  else if (selectedTab === "rdf") {
     filename = "rdf_xml_data.txt";
     fmt = "rdf";
   }
-  else if (selectedTab==="posh") {
+  else if (selectedTab === "posh") {
     filename = "posh_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="json" || selectedTab==="jsonl") {
+  else if (selectedTab === "json" || selectedTab === "jsonl") {
     filename = "json_data.txt";
     fmt = "json";
     $('#save-fmt #json').prop('disabled', false);
   }
-  else if (selectedTab==="csv") {
+  else if (selectedTab === "csv") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="rss") {
+  else if (selectedTab === "rss") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="atom") {
+  else if (selectedTab === "atom") {
     filename = "turtle_data.txt";
     fmt = "ttl";
   }
-  else if (selectedTab==="markdown") {
+  else if (selectedTab === "markdown") {
     return;
   }
 
 
-  if (filename!==null) {
+  if (filename !== null) {
     $('#save-filename').val(filename);
 
     var cur_fmt = $('#save-fmt option:selected').attr('id');
-    $('#'+cur_fmt,'#save-fmt').removeProp('selected');
-    $('#'+fmt,'#save-fmt').prop('selected',true);
+    $('#' + cur_fmt, '#save-fmt').removeProp('selected');
+    $('#' + fmt, '#save-fmt').prop('selected', true);
 
     DOM.iSel('save-sparql-endpoint').value = await settings.getValue('upload_sparql_endpoint');
 
-    var dlg = $( "#save-confirm" ).dialog({
+    var dlg = $("#save-confirm").dialog({
       resizable: true,
-      width:520,
-      height:420,
+      width: 520,
+      height: 420,
       modal: true,
       buttons: {
-        "OK": function() {
+        "OK": function () {
           var action = $('#save-action option:selected').attr('id');
           var fmt = $('#save-fmt option:selected').attr('id');
-          var fname = action ==='fileupload' ? $('#oidc-url').val().trim(): $('#save-filename').val().trim();
+          var fname = action === 'fileupload' ? $('#oidc-url').val().trim() : $('#save-filename').val().trim();
           save_data(action, fname, fmt)
-           .then(() => {$("#save-confirm").dialog( "destroy" )});
+            .then(() => { $("#save-confirm").dialog("destroy") });
         },
-        Cancel: function() {
-          $(this).dialog( "destroy" );
+        Cancel: function () {
+          $(this).dialog("destroy");
         }
       }
     });
@@ -1046,29 +1215,30 @@ async function Download_exec()
 
 async function save_data(action, fname, fmt, callback)
 {
-  Browser.api.runtime.sendMessage({cmd: 'reset_uploads'});
+  Browser.api.runtime.sendMessage({ cmd: 'reset_uploads' });
 
-  if (action==="sparqlupload") 
+  if (action === "sparqlupload")
   {
     var sparqlendpoint = $('#save-sparql-endpoint').val().trim();
     var sparql_graph = $('#save-sparql-graph').val().trim();
     var data = [];
-    var exec_cmd = { cmd:'actionSPARQL_Upload', 
+    var exec_cmd = {
+                     cmd: 'actionSPARQL_Upload',
                      baseURI: gData.baseURL,
                      qdata:[], 
                      sparql_ep:sparqlendpoint,
                      sparql_graph, 
                      sparql_check:null
                    };
-    
+
     fmt = "ttl";
 
     if (!sparqlendpoint || sparqlendpoint.length < 1) {
       showInfo('SPARQL endpoint is empty');
       return;
     }
-    
-    for(var v of gData.tabs) {
+
+    for (var v of gData.tabs) {
       if (DOM.qSel(`#${v}-chk`).checked) {
         var dt = await prepare_data(true, v, fmt);
         if (dt)
@@ -1078,14 +1248,14 @@ async function save_data(action, fname, fmt, callback)
 
     const handler = new Convert_Turtle();
     try {
-      for(var v of data) {
+      for (var v of data) {
         if (v.error && !v.txt)
-          showInfo('Unable prepare data:' +v.error)
+          showInfo('Unable prepare data:' + v.error)
         var ttl_data = await handler.prepare_query(v.txt, exec_cmd.baseURI);
-        var query = ttl_data.map(item => ({prefixes: item.prefixes, triples: item.triples}));;
+        var query = ttl_data.map(item => ({ prefixes: item.prefixes, triples: item.triples }));;
         exec_cmd.qdata = exec_cmd.qdata.concat(query);
       }
-    } catch(ex) {
+    } catch (ex) {
       console.log(ex);
       showInfo(ex);
       return;
@@ -1099,8 +1269,8 @@ async function save_data(action, fname, fmt, callback)
     Browser.api.runtime.sendMessage(exec_cmd);
     close(); // close popup
 
-  } 
-  else 
+  }
+  else
   {
     var retdata = await prepare_data(false, getSelectedTab(), fmt);
     if (!retdata)
@@ -1109,34 +1279,34 @@ async function save_data(action, fname, fmt, callback)
     if (retdata && retdata.error.length > 0) {
       showInfo(retdata.error);
     }
-    
-    if (action==="export-rww") {
-        if (callback)
-          callback(retdata.txt);
+
+    if (action === "export-rww") {
+      if (callback)
+        callback(retdata.txt);
     }
-    else if (action==="filesave") 
+    else if (action === "filesave")
     {
-      var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+      var blob = new Blob([retdata.txt + retdata.error], { type: "text/plain;charset=utf-8" });
       saveAs(blob, fname);
-/***
-    var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
-    var blobUrl = window.URL.createObjectURL(blob);
-
-    var link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = fname; 
-
-
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-        window.URL.revokeObjectURL(blobUrl);
-        document.body.removeChild(link);
-      }, 2000);
-
-***/
+      /***
+          var blob = new Blob([retdata.txt + retdata.error], {type: "text/plain;charset=utf-8"});
+          var blobUrl = window.URL.createObjectURL(blob);
+      
+          var link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fname; 
+      
+      
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+              window.URL.revokeObjectURL(blobUrl);
+              document.body.removeChild(link);
+            }, 2000);
+      
+      ***/
     }
-    else if (action==="fileupload") 
+    else if (action === "fileupload")
     {
       const webId = await gOidc.checkSession();
       if (!webId) {
@@ -1146,57 +1316,57 @@ async function save_data(action, fname, fmt, callback)
 
       var contentType = "text/plain;charset=utf-8";
 
-      if (fmt==="jsonld")
+      if (fmt === "jsonld")
         contentType = "application/ld+json;charset=utf-8";
-      else if (fmt==="json")
+      else if (fmt === "json")
         contentType = "application/json;charset=utf-8";
-      else if (fmt==="rdf")
+      else if (fmt === "rdf")
         contentType = "application/rdf+xml;charset=utf-8";
       else
         contentType = "text/turtle;charset=utf-8";
-      
+
       DOM.qSel('.super_links_msg').style.display = 'flex';
       let v = await gOidc.putResource(fname, retdata.txt, contentType);
       DOM.qSel('.super_links_msg').style.display = 'none';
-      if (v.rc===1)
+      if (v.rc === 1)
         showInfo('Saved', fname);
       else
-        showInfo('Unable to save: ' +v.err);
+        showInfo('Unable to save: ' + v.err);
     }
     else {
       selectTab("src");
-      src_view.setValue(retdata.txt + retdata.error+" \n \n ");
+      src_view.setValue(retdata.txt + retdata.error + " \n \n ");
     }
 
   }
-    
+
 }
 
 
 async function prepare_data(for_query, curTab, fmt)
 {
-  try{
+  try {
     var block = null;
 
-    if (curTab==="jsonld")
+    if (curTab === "jsonld")
       block = gData.jsonld;
-    else if (curTab==="json")
+    else if (curTab === "json")
       block = gData.json;
-    else if (curTab==="jsonl")
+    else if (curTab === "jsonl")
       block = gData.jsonl;
-    else if (curTab==="turtle")
+    else if (curTab === "turtle")
       block = gData.turtle;
-    else if (curTab==="micro")
+    else if (curTab === "micro")
       block = gData.micro;
-    else if (curTab==="rdfa")
+    else if (curTab === "rdfa")
       block = gData.rdfa;
-    else if (curTab==="rdf")
+    else if (curTab === "rdf")
       block = gData.rdf;
-    else if (curTab==="posh")
+    else if (curTab === "posh")
       block = gData.posh;
-    else if (curTab==="csv")
+    else if (curTab === "csv")
       block = gData.csv;
-    else if (curTab==="rss" && (gData.links.rss && gData.links.rss.loaded() || gData.rss)) {
+    else if (curTab === "rss" && (gData.links.rss && gData.links.rss.loaded() || gData.rss)) {
       if (gData.rss) {
         block = gData.rss.copy();
         if (gData.links.rss && gData.links.rss.loaded())
@@ -1205,7 +1375,7 @@ async function prepare_data(for_query, curTab, fmt)
         block = gData.links.rss.block;
       }
     }
-    else if (curTab==="atom" && (gData.links.atom && gData.links.atom.loaded() || gData.atom)) {
+    else if (curTab === "atom" && (gData.links.atom && gData.links.atom.loaded() || gData.atom)) {
       if (gData.atom) {
         block = gData.atom.copy();
         if (gData.links.atom && gData.links.atom.loaded())
@@ -1228,8 +1398,8 @@ async function prepare_data(for_query, curTab, fmt)
       return await block.to_json();
 
 
-  } catch(ex) {
-    return {txt: "", error: ex.toString()};
+  } catch (ex) {
+    return { txt: "", error: ex.toString() };
   }
 
 }
@@ -1253,11 +1423,11 @@ function showInfo(msg, href)
 
   $('#alert-dlg').dialog({
     resizable: true,
-    height:250,
-    width:450,
+    height: 250,
+    width: 450,
     modal: true,
     buttons: {
-      "OK": function() {
+      "OK": function () {
         $(this).dialog('destroy');
       }
     }

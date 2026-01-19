@@ -185,7 +185,7 @@
     for(const v of lst) 
     {
       const hdr = v.children[0];
-      const dd_el = hdr.querySelector('#code_type');
+      const dd_el = hdr?.querySelector('#code_type');
       if (dd_el)
         continue;
 

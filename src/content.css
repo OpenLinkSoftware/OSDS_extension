@@ -1,80 +1,109 @@
+/* CRITICAL: This file is injected into web pages as a content script.
+   Only use scoped selectors with .osds_ or .super_links_ prefixes!
+   Generic selectors will break the layout of websites! */
+
 .osds_revert_css {
 	all: revert;
 }
 
 .osds_popup {
-        all: initial;
+	all: initial;
 	position: fixed !important; 
 	display: none;
-	border: 2px solid #000 !important;
-	border-radius: 4px !important; 
-	width: 510px;
-	top:100px !important;
+	border: 1px solid #D1D5DA !important;
+	border-radius: 8px !important; 
+	width: 540px;
+	top: 100px !important;
 	left: 20px !important;
-	background: #fff !important;
-	color: black !important;
- 	z-index: 2147483647 !important;
-        marging: 2px !important;
-        marging-bottom: 10px !important;
-	font-family: Arial, Helvetica, sans-serif !important;
+	background: #FFFFFF !important;
+	color: #24292E !important;
+	z-index: 2147483647 !important;
+	margin: 0 !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 	line-height: normal !important;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
+
 .osds_popup-title {
 	width: 100% !important;
-	height: 18px !important;
+	min-height: 22px !important;
 	display: flex;
-	background-color: #0000a0 !important;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
 	color: white !important;
-	border-bottom: 1px solid #000 !important;
+	border-bottom: 1px solid #1565C0 !important;
 	position: relative !important;
 	cursor: move !important;
-        font-size: 14px !important;
-        text-align: center;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	text-align: center;
+	padding: 10px 16px !important;
+	border-radius: 8px 8px 0 0 !important;
 }
 
 .osds_popup-content {
-	height: calc(100% - 10px - 10px - 18px) !important;
+	height: calc(100% - 42px) !important;
 	overflow: auto !important;
-	padding: 10px 10px 10px 10px !important;
-	background: khaki !important;
-        display:flex !important; 
-        flex-direction: column !important;
+	padding: 20px !important;
+	background: #FFFFFF !important;
+	display: flex !important; 
+	flex-direction: column !important;
 }
 
 .osds_popup_msg {
-	margin: 10px 0px !important;
+	margin: 12px 0 !important;
+	color: #24292E !important;
+	font-size: 14px !important;
+	line-height: 1.5 !important;
 }
 
 .osds_popup_btn {
-        min-width:60px !important; 
-        margin-left: 10px !important;
+	min-width: 70px !important; 
+	margin-left: 8px !important;
+	padding: 8px 16px !important;
+	border: 1px solid #D1D5DA !important;
+	border-radius: 6px !important;
+	background: #FFFFFF !important;
+	color: #24292E !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+}
+
+.osds_popup_btn:hover {
+	background: #F6F8FA !important;
+	border-color: #1976D2 !important;
 }
 
 .osds_popup_btns {
-        margin:auto !important;
+	margin: 16px auto 0 !important;
+	display: flex !important;
+	gap: 8px !important;
 }
 
-
-
 .super_links_msg {
-        all: initial;
+	all: initial;
 	display: none;
 	line-height: normal !important;
 	flex-direction: row !important; 
 	position: fixed !important;
-	border: 2px solid #000 !important;
-	border-radius: 2px !important;
+	border: 1px solid #1976D2 !important;
+	border-radius: 6px !important;
 	width: 200px !important;
-	height: 20px !important;
-	top:4px !important;
-	left: 4px !important;
-	background: khaki !important;
-	color: black !important;
- 	z-index: 2147483647 !important;
-	padding: 10px 10px 10px 20px !important;
-	font-family: Arial, Helvetica, sans-serif !important;
-	font-size: 14px !important;
+	min-height: 20px !important;
+	top: 8px !important;
+	left: 8px !important;
+	background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
+	color: #1565C0 !important;
+	z-index: 2147483647 !important;
+	padding: 12px 16px !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
 	box-sizing: content-box !important;
+	box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15) !important;
 }
 
 .super_links_img {
@@ -82,215 +111,120 @@
 	height: 16px !important;
 }
 
-
 .super_links_popup {
-        all: initial;
+	all: initial;
 	position: absolute;
 	display: none;
-	border: 2px solid #000 !important;
-	border-radius: 4px !important; 
-	width: 910px;
-	height: 305px;
-	background: #fff !important;
-	color: black !important;
- 	z-index: 2147483647 !important;
-        marging: 2px !important;
-        marging-bottom: 10px !important;
-	font-family: Arial, Helvetica, sans-serif !important;
+	border: 1px solid #D1D5DA !important;
+	border-radius: 8px !important; 
+	width: 920px;
+	height: 315px;
+	background: #FFFFFF !important;
+	color: #24292E !important;
+	z-index: 2147483647 !important;
+	margin: 0 !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 	line-height: normal !important;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
-.super_links_chatgpt {
-        all: initial;
-	position: absolute;
-	display: none;
-	border: 2px solid #000 !important;
-	border-radius: 4px !important; 
-	width: 900px;
-	height: 400px;
-	background: #fff !important;
-	color: black !important;
- 	z-index: 2147483647 !important;
-        marging: 2px !important;
-        marging-bottom: 10px !important;
-	font-family: Arial, Helvetica, sans-serif !important;
-	line-height: normal !important;
-}
-.super_links_popup-title, .super_links_chatgpt-title{
+
+.super_links_popup-title {
 	width: 100% !important;
-	height: 18px !important;
+	min-height: 22px !important;
 	display: flex;
+	align-items: center;
+	background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
 	color: white !important;
-	border-bottom: 1px solid #000 !important;
+	border-bottom: 1px solid #1565C0 !important;
 	position: relative !important;
 	cursor: move !important;
-        font-size: 14px !important;
-}
-.super_links_popup-title{
-	background-color: #0000a0 !important;
-}
-.super_links_chatgpt-title{
-        background: #6c7ae0 !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	padding: 10px 16px !important;
+	border-radius: 8px 8px 0 0 !important;
 }
 
+.super_links_popup-close {
+	position: absolute !important;
+	right: 12px !important;
+	cursor: pointer !important;
+	font-size: 20px !important;
+	color: white !important;
+	opacity: 0.8 !important;
+	transition: opacity 0.2s ease !important;
+}
+
+.super_links_popup-close:hover {
+	opacity: 1 !important;
+}
 
 .super_links_popup-content {
-	width: 100% !important;
-	height: calc(100% - 10px - 16px - 6px) !important;
+	height: calc(100% - 42px) !important;
 	overflow: auto !important;
+	padding: 20px !important;
+	background: #FFFFFF !important;
+	display: flex !important; 
+	flex-direction: column !important;
 }
-.super_links_chatgpt-content {
+
+/* Chat Assistant Styling - Scoped */
+.osds_chat_input {
+	border: 1px solid #D1D5DA !important;
+	border-radius: 6px !important;
+	padding: 10px 12px !important;
+	font-size: 14px !important;
 	width: 100% !important;
-	height: calc(100% - 20px) !important;
-	/*overflow: hidden !important;*/
-	overflow: auto !important;
-}
-.super_links_chatgpt-content-text {
-	width: 100% !important;
-	height: 100% !important;
-	overflow: hidden !important;
-	/*overflow: auto !important;*/
+	box-sizing: border-box !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+	transition: all 0.2s ease !important;
 }
 
-#super_links_snackbar {
-  visibility: hidden;
-  min-width: 250px !important;
-  margin-left: -125px !important;
-  background-color: red !important;
-  color: yellow !important;
-  text-align: center !important;
-  border-radius: 2px !important;
-  padding: 16px !important;
-  position: fixed !important;
-  z-index: 1 !important;
-  left: 50% !important;
-  bottom: 30px !important;
-  font-size: 17px !important;
+.osds_chat_input:focus {
+	outline: none !important;
+	border-color: #1976D2 !important;
+	box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1) !important;
 }
 
-#super_links_snackbar.show {
-  visibility: visible;
-  -webkit-animation: fadein 0.5s, fadeout 0.5s 5s !important;
-  animation: fadein 0.5s, fadeout 0.5s 5s !important;
+.osds_chat_button {
+	background: #1976D2 !important;
+	color: white !important;
+	border: 1px solid #1565C0 !important;
+	border-radius: 6px !important;
+	padding: 8px 20px !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
-
-a.super_link_mark,
-a:link.super_link_mark,
-a:active.superlink,
-a:visited.superlink,
-.super_link_mark
-{
-  color: green !important;
-  background: yellow !important;
+.osds_chat_button:hover {
+	background: #1565C0 !important;
 }
 
-
-.super_links_popup_close, .super_links_chatgpt_close {
-	background: #606061 !important;
-	color: #FFFFFF !important;
-	line-height: 20px !important;
-	position: absolute !important;
-	top:-3px !important;
-	right: -3px !important;
-	width: 20px !important;
-	text-align: center !important;
-	text-decoration: none !important;
-	font-weight: bold !important;
-	-webkit-border-radius: 4px !important;
-	-moz-border-radius: 4px !important;
-	border-radius: 4px !important;
-	-moz-box-shadow: 1px 1px 3px #000 !important;
-	-webkit-box-shadow: 1px 1px 3px #000 !important;
-	box-shadow: 1px 1px 3px #000 !important;
-}
-.super_links_popup_close:hover, super_links_chatgpt_close:hover { background: #00d9ff !important; }
-
-table.super_links_table a { color: blue !important; text-decoration:underline !important; }
-table.super_links_table a:link { color: blue !important; }
-table.super_links_table a:visited { color: purple !important; }
-table.super_links_table a:hover  { color: blue !important; }
-table.super_links_table a:active { color: blue !important; }
-
-
-table.super_links_table {
-  font-family: 'trebuchet MS' , 'Lucida sans' , Arial !important;
-  font-size: 13px !important;
-  min-width: 100% !important;
-  width: auto !important;
-  flex: 1 !important;
-  display: grid;
-  border-collapse: collapse !important;
-  /* These are just initial values which are overriden using JavaScript when a column is resized */
-  grid-template-columns: 
-    minmax(100px, 1.5fr)
-    minmax(100px, 2.5fr)
-    minmax(100px, 4fr)
-    minmax(100px, 2fr);
+.osds_chat_button:active {
+	background: #0D47A1 !important;
 }
 
-table.super_links_table thead,
-table.super_links_table tbody,
-table.super_links_table tr {
-  display: contents !important;
+.osds_chat_message {
+	padding: 12px 16px !important;
+	margin: 8px 0 !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
+	line-height: 1.5 !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 }
 
-table.super_links_table th,
-table.super_links_table td {
-  padding: 5px !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  border-top: 1px solid #dddddd !important;
-  border-left: 1px solid #dddddd !important;
+.osds_chat_message_user {
+	background: #E3F2FD !important;
+	color: #0D47A1 !important;
+	border: 1px solid #BBDEFB !important;
+	margin-left: 40px !important;
 }
 
-table.super_links_table th {
-  position: sticky !important;
-  top: 0 !important;
-  background: #6c7ae0 !important;
-  text-align: left !important;
-  font-weight: bold !important;
-  color: white !important;
+.osds_chat_message_assistant {
+	background: #F5F5F5 !important;
+	color: #24292E !important;
+	border: 1px solid #E0E0E0 !important;
+	margin-right: 40px !important;
 }
-
-
-.super_links_table-resize-handle {
-  position: absolute !important;
-  top: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  background: black !important;
-  opacity: 0 !important;
-  width: 3px !important;
-  cursor: col-resize !important;
-}
-
-.super_links_table-resize-handle:hover,
-/* The following selector is needed so the handle is visible during resize even if the mouse isn't over the handle anymore */
-.super_links_table-header--being-resized .super_links_table-resize-handle {
-  opacity: 0.5 !important;
-}
-
-.super_links_popup-resizer, .super_links_chatgpt-resizer {
-  width: 10px !important;
-  height: 10px !important;
-  position: absolute !important;
-  right: 1px !important;
-  bottom: 1px !important;
-  cursor: se-resize !important;
-}
-
-table.super_links_table th:hover .super_links_table-resize-handle {
-  opacity: 0.3 !important;
-}
-
-table.super_links_table td {
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-  color: #808080 !important;
-}
-
-table.super_links_table tr:nth-child(even) td {
-  background: #f8f6ff !important;
-}
-

@@ -445,7 +445,11 @@
       // install message listeners 
       try {
         Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-          if (request.cmd === "req_doc_data") {
+          if (request.cmd === "ping") {
+              sendResponse({pong:1});
+              return true;
+          }
+          else if (request.cmd === "req_doc_data") {
               request_doc_data();
               sendResponse({ping:1});
               return true;

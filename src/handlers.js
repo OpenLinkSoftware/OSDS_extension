@@ -158,10 +158,10 @@ class Fix_Nano {
 
 
 class Handle_Microdata {
-  constructor(make_ttl) {
-    this._make_ttl = false;
-    if (make_ttl)
-      this._make_ttl = make_ttl;
+  constructor(mode) {
+    this._mode = 'html';
+    if (mode)
+      this._mode = mode;
   }
 
   async parse(jsonData, docURL, bnode_types) 
@@ -174,14 +174,21 @@ class Handle_Microdata {
     try
     {
       var conv = new MicrodataJSON_Converter();
-      var out_data = conv.transform(jsonData, docURL);
+      const data = structuredClone(jsonData);
+      var out_data = conv.transform(data, docURL);
 
-      if (self._make_ttl)
+      if (self._mode==='ttl')
         ret_data = new TTL_Gen(docURL, false, bnode_types).load(out_data);
+      else if (self._mode==='html_sheet')
+        ret_data = new Spreadsheet_Gen(docURL, bnode_types, uimode).load(out_data);
+      else if (self._mode==='html_graph')
+        ret_data = new Graph_Gen(docURL, bnode_types, uimode).load(out_data);
+      else if (self._mode==='n3')
+        ret_data = out_data;
       else
         ret_data = new HTML_Gen(docURL, bnode_types, uimode).load(out_data);
 
-      return {data:ret_data, errors:[]};
+      return {data:[ret_data], errors:[]};
     }
     catch (ex) {
       return {data:null, errors:[ex.toString()]};
@@ -192,7 +199,7 @@ class Handle_Microdata {
 
 
 class Handle_Turtle {
-  constructor(start_id, make_ttl, for_query, bnode_types, skip_docpref) 
+  constructor(start_id, mode, for_query, bnode_types, skip_docpref) 
   {
     this.baseURI = null;
     this.start_id = 0;
@@ -204,9 +211,9 @@ class Handle_Turtle {
     this.skip_error = true;
     this.skipped_error = [];
     this._pattern = /([0-9]*).$/gm;
-    this._make_ttl = false;
-    if (make_ttl)
-      this._make_ttl = make_ttl;
+    this._mode = 'html';
+    if (mode)
+      this._mode = mode;
     this.for_query = for_query;
     this.bnode_types = bnode_types || {};
     this.skip_docpref = skip_docpref;
@@ -218,7 +225,7 @@ class Handle_Turtle {
     this.skip_error = true;
 
     this.baseURI = docURL;
-    var output = this._make_ttl ? [] : '';
+    var output = [];
     var srcData = [];
     var out_baseURI = [];
 
@@ -226,12 +233,10 @@ class Handle_Turtle {
     {
       try {
         const {data, baseURI} = await this._parse_1(textData[i], docURL);
-        if (this._make_ttl) {
-          output.push(data);
+        output.push(data);
+        if (this._mode==='ttl' || this._mode==='n3') {
           out_baseURI.push(baseURI);
         }
-        else
-          output += data;
         srcData.push(textData[i]);
       } catch(e) {
         console.log(e);
@@ -247,7 +252,7 @@ class Handle_Turtle {
     this.skip_error = false;
 
     this.baseURI = docURL;
-    var output = this._make_ttl ? [] : '';
+    var output = [];
     var srcData = [];
     var out_baseURI = [];
 
@@ -255,12 +260,10 @@ class Handle_Turtle {
     {
       try {
         const {data, baseURI} = await this._parse_1(textData[i], docURL);
-        if (this._make_ttl) {
-          output.push(data);
+        output.push(data);
+        if (this._mode==='ttl' || this._mode==='n3') {
           out_baseURI.push(baseURI);
         }
-        else
-          output += data;
         srcData.push(textData[i]);
       } catch(e) {
         console.log(e);
@@ -273,18 +276,16 @@ class Handle_Turtle {
   async parse(textData, docURL) 
   {
     this.baseURI = docURL;
-    var output = this._make_ttl ? [] : '';
+    var output = [];
     var out_baseURI = [];
 
     for(var i=0; i < textData.length; i++)
     {
       const {data, baseURI} = await this._parse_1(textData[i], docURL);
-      if (this._make_ttl) {
-        output.push(data);
+      output.push(data);
+      if (this.mode==='ttl' || this.mode==='n3') {
         out_baseURI.push(baseURI);
       }
-      else
-        output += data;
     }
     return {data:output, baseURI:out_baseURI,  errors: this.skipped_error};
   }
@@ -341,14 +342,25 @@ class Handle_Turtle {
               var output;
               let base = parser._base ? parser._base : docURL;
 
-              if (self._make_ttl) {
+              if (self._mode==='ttl') {
                 var ttl_data = new TTL_Gen(base, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
-                output = ttl_data==null?'':ttl_data;
+                output = ttl_data ?? '';
+              }
+              else if (self._mode==='n3') {
+                output = triples;
+              }
+              else if (self._mode==='html_sheet') {
+                var html_str = new Spreadsheet_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, self._base);
+                output = html_str ?? '';
+              }
+              else if (self._mode==='html_graph') {
+                var html_str = new Graph_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, self._base);
+                output = html_str ?? '';
               }
               else
               {
-                var html_str = new HTML_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, this._base);
-                output = html_str==null?'':html_str;
+                var html_str = new HTML_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, self._base);
+                output = html_str ?? '';
               }
 
               if (triples!==null && triples.length!==undefined)
@@ -373,7 +385,7 @@ class Handle_Turtle {
 
 
 class Handle_Quads {
-  constructor(start_id, make_ttl, for_query, bnode_types, skip_docpref) 
+  constructor(start_id, mode, for_query, bnode_types, skip_docpref) 
   {
     this.baseURI = null;
     this.start_id = 0;
@@ -382,9 +394,9 @@ class Handle_Quads {
     this.skip_error = true;
     this.skipped_error = [];
     this._pattern = /([0-9]*).$/gm;
-    this._make_ttl = false;
-    if (make_ttl)
-      this._make_ttl = make_ttl;
+    this._mode = 'html';
+    if (mode)
+      this._mode = mode;
     this.for_query = for_query;
     this.bnode_types = bnode_types || {};
     this.skip_docpref = skip_docpref;
@@ -393,15 +405,12 @@ class Handle_Quads {
   async parse(textData, docURL) 
   {
     this.baseURI = docURL;
-    var output = this._make_ttl ? [] : '';
+    var output = [];
 
     for(var i=0; i < textData.length; i++)
     {
       const {data, baseURI} = await this._parse_1(textData[i], docURL);
-      if (this._make_ttl)
-        output = output.concat(data);
-      else
-        output += data;
+      output = output.concat(data);
     }
     return {data:output, errors: this.skipped_error};
   }
@@ -454,22 +463,35 @@ class Handle_Quads {
             }
             else {
 
-              var output = (self._make_ttl) ? [] : '';
+              var output = [];
               let base = parser._base ? parser._base : docURL;
 
               for(var id in stores) {
                 var store = stores[id];
                 var triples = store.output;
 
-                if (self._make_ttl) {
+                if (self._mode==='ttl') {
                   var ttl_data = new TTL_Gen(base, self.for_query, self.bnode_types, self.skip_docpref).load(triples);
                   if (ttl_data)
                     output.push(ttl_data);
                 }
-                else {
-                  var html_str = new HTML_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, this._base);
+                else if (self._mode==='n3'){
+                    output.push(triples);
+                }
+                else if (self._mode==='html_sheet') {
+                  var html_str = new Spreadsheet_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, self._base);
                   if (html_str)
-                    output += html_str;
+                    output.push(html_str);
+                }
+                else if (self._mode==='html_graph') {
+                  var html_str = new Graph_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, self._base);
+                  if (html_str)
+                    output.push(html_str);
+                }
+                else {
+                  var html_str = new HTML_Gen(base, self.bnode_types, uimode).load(triples, self.start_id, self._base);
+                  if (html_str)
+                    output.push(html_str);
                 }
 
                 if (triples!==null && triples.length!==undefined)
@@ -495,14 +517,14 @@ class Handle_Quads {
 
 
 class Handle_JSONLD {
-  constructor(make_ttl) 
+  constructor(mode) 
   {
     this.start_id = 0;
     this.skip_error = true;
     this.skipped_error = [];
-    this._make_ttl = false;
-    if (make_ttl)
-      this._make_ttl = make_ttl;
+    this._mode = 'html';
+    if (mode)
+      this._mode = mode;
   }
 
 
@@ -536,7 +558,7 @@ class Handle_JSONLD {
 
   async parse(textData, docURL, bnode_types)
   {
-    var output = this._make_ttl ? [] : '';
+    var output = [];
 
     for(var i=0; i < textData.length; i++)
     {
@@ -567,19 +589,13 @@ class Handle_JSONLD {
           var expanded = await jsonld.expand(jsonld_data, {base:_base});
           var nquads = await jsonld.toRDF(expanded, {base:_base, format: 'application/nquads', includeRelativeUrls: true});
 
-          var handler = new Handle_Quads(this.start_id, this._make_ttl, false, bnode_types);
+          var handler = new Handle_Quads(this.start_id, this._mode, false, bnode_types);
           handler.skip_error = false;
           var ret = await handler.parse([nquads], _base);
           if (ret.errors.length > 0) {
             this.skipped_error = this.skipped_error.concat(ret.errors);
           } else {
-            if (this._make_ttl) {
-              output = output.concat(ret.data);
-            } else {
-              output += ret.data;
-              output += "\n\n";
-            }
-
+            output = output.concat(ret.data);
             this.start_id = handler.start_id;
           }
         }
@@ -769,19 +785,23 @@ class MicrodataJSON_Converter {
        {
          if ($.isArray(val)) {
            for(var i=0; i<val.length; i++) {
-             var v_val = fix_url(val[i]);
-             if (v_val.indexOf(':') === -1)
-               val[i] = { "iri" : ":"+v_val, typeid:1};
-             else
-               val[i] = { "iri" : v_val, typeid:1};
+             if (val[i]?.iri === undefined) {
+               var v_val = fix_url(val[i]);
+               if (v_val.indexOf(':') === -1)
+                 val[i] = { "iri" : ":"+v_val, typeid:1};
+               else
+                 val[i] = { "iri" : v_val, typeid:1};
+             }
            }
          }
          else {
-           var v_val = fix_url(val);
-           if (v_val.indexOf(':') === -1)
-               val = [{ "iri" : ":"+v_val, typeid:1}];
-           else
-               val = [{ "iri" : v_val, typeid:1}];
+           if (val?.iri === undefined) {
+             var v_val = fix_url(val);
+             if (v_val.indexOf(':') === -1)
+                 val = [{ "iri" : ":"+v_val, typeid:1}];
+             else
+                 val = [{ "iri" : v_val, typeid:1}];
+           }
          }
          props[self.RDF_TYPE] = val;
        }
@@ -926,16 +946,17 @@ class Handle_RDF_XML {
     this.skipped_error = [];
   }
 
-  async parse(textData, baseURL, bnode_types) 
+  async parse(textData, baseURL, bnode_types, mode) 
   {
     var baseURL = new URL(baseURL);
     baseURL.search = '';
     baseURL.hash = ''
+    mode = mode ?? 'html';
 
     baseURL = baseURL.href;
 
     var self = this;
-    var output = '';
+    var output = [];
 
     for(var i=0; i < textData.length; i++)
     {
@@ -947,15 +968,13 @@ class Handle_RDF_XML {
 
         var ttl = $rdf.serialize(undefined, store, baseURL, "text/turtle");
 
-        var handler = new Handle_Turtle(0, false, false, bnode_types);
+        var handler = new Handle_Turtle(0, mode, false, bnode_types);
         handler.skip_error = false;
         var ret = await handler.parse([ttl], baseURL);
         if (ret.errors.length > 0) {
           self.skipped_error = self.skipped_error.concat(ret.errors);
         } else {
-          output += ret.data;
-          output += "\n\n";
-
+          output.push(ret.data);
           self.start_id = handler.start_id;
         }
 
