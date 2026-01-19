@@ -375,14 +375,12 @@ div#header {
 }
 
 .bottom_block {
-  position: absolute;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
   bottom: 6px;
-  height: 24px;
   width: 95vw;
   padding: 0 8px;
   color: #6A737D;
@@ -621,7 +619,6 @@ table.spreadsheet tbody tr:hover {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin: 20px 0;
 }
 
 .graph-container canvas {
@@ -657,7 +654,6 @@ table.spreadsheet tbody tr:hover {
 
 .view-container.view-spreadsheet {
   /* Spreadsheet view */
-  overflow-x: auto;
 }
 
 .view-container.view-graph {

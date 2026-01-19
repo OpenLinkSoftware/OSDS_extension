@@ -71,6 +71,7 @@ DOM.ready(() =>
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
   DOM.iSel("sparql_btn").onclick = (e) => { Sparql_exec(); }
+  DOM.iSel("prefs_btn").onclick = (e) => { Prefs_exec() }
 
   DOM.iSel("rest_btn").onclick = (e) => { 
     selectTab('cons');
@@ -80,6 +81,11 @@ DOM.ready(() =>
   }
 
   DOM.iSel("download_btn").onclick = (e) => { Download_exec() }
+  // Dropdown event listener - switches view mode within current tab
+  DOM.iSel("view-mode-selector").onchange = (e) => {
+    const mode = e.target.value;
+    switchViewMode(mode);
+  };
 
   try {
     src_view = CodeMirror.fromTextArea(document.getElementById('src_place'), {
@@ -93,10 +99,10 @@ DOM.ready(() =>
         lineNumbers: false,
         lineWrapping: false,
         foldGutter: false,
-   	      sparql: { showQueryButton: false },
-	     createShortLink : null,
-	     createShareLink : null,
-	      persistent: null,
+   	    sparql: { showQueryButton: false },
+        createShortLink: null,
+        createShareLink: null,
+        persistent: null,
     });
     g_RestCons.yasqe.obj.setSize("98%", 300);
   } catch(e) { }
@@ -111,6 +117,18 @@ DOM.ready(() =>
   }
 
   DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
+  const lst = DOM.qSelAll('ul.tabs li label[role="tab"]');
+  for(const t of lst) {
+    t.onclick = (e) => {
+      const v = e.target.htmlFor;
+      if (v && v.startsWith('itab-')) {
+        const tabName = v.substring(5);
+        const dropdown = DOM.iSel("view-mode-selector");
+        if (dropdown)
+          switchViewMode(dropdown.value, tabName);
+      }
+    }
+  }
 
   load_data_from_url(document.location);
 
@@ -161,12 +179,12 @@ DOM.ready(() =>
 
 
 // Trap any link clicks and open them in the current tab.
-$(document).on('click', 'a', function(e) {
+$(document).on('click', 'a', function (e) {
   function check_URI(uri) {
-    if (gData.baseURL[gData.baseURL.length-1]==="#")
+    if (gData.baseURL[gData.baseURL.length - 1] === "#")
       return uri.startsWith(gData.baseURL);
     else
-      return uri.startsWith(gData.baseURL+'#');
+      return uri.startsWith(gData.baseURL + '#');
   }
 
   var tab_data = DOM.qSel(`#${getSelectedTab()}_items`);
@@ -175,31 +193,57 @@ $(document).on('click', 'a', function(e) {
   var href = e.currentTarget.href;
   var hashPos = href.lastIndexOf('#');
 
-  if (hashPos!=-1 && hashPos!=href.length-1)
-    hashName = href.substring(hashPos+1);
+  if (hashPos != -1 && hashPos != href.length - 1)
+    hashName = href.substring(hashPos + 1);
 
-  var url = new URL(gData.baseURL);
+  var url = new URL(document.baseURI);
   url.hash = '';
   url = url.toString();
 
-  if (href.lastIndexOf(url+"#sc", 0) === 0) {
+  var baseHost = (new URL(gData.baseURL)).host;
+  var hrefHost = (new URL(href)).host;
+
+  if (href.startsWith(url + "#sc")) {
     return true;
   }
   else if (check_URI(href) && hashName) {
-    var el = tab_data.querySelectorAll('a[name = "'+hashName+'"]');
-    if (el.length > 0)
-      el[0].scrollIntoView();
-    return false;
+    // Link with fragment identifier - try to find anchor by name or id
+    var el = tab_data.querySelectorAll('a[name="' + hashName + '"], #' + CSS.escape(hashName));
+    if (el.length > 0) {
+      el[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return false;
+    }
   }
   else if (href === doc_URL) {
     return false;
   }
+  else if (check_URI(href)) {
+    // Link ending with # or matching base URL - scroll to the entity in the metadata display
+    var targetURI = href.endsWith('#') ? href.slice(0, -1) : href;
+
+    // Try multiple selectors to find the target element:
+    // 1. Element with [ent] attribute matching the URI
+    // 2. Element with href matching the URI
+    // 3. Element with id derived from the URI
+    var el = tab_data.querySelectorAll(`a[href="${targetURI}"][ent], a[href="${href}"][ent]`);
+
+    if (el.length > 0) {
+      el[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return false;
+    }
+
+    // If not found, don't navigate away
+    return false;
+  }
   else {
-    var el = tab_data.querySelectorAll('a[href = "'+href+'"][ent]');
-    if (el.length > 0)
-      el[0].scrollIntoView();
-    else
+    // External link or different domain
+    var el = tab_data.querySelectorAll('a[href="' + href + '"][ent]');
+    if (el.length > 0) {
+      el[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    else {
       Browser.openTab(href, gData.tab_index);
+    }
     return false;
   }
 });
@@ -379,8 +423,11 @@ async function start_parse_data(data_text, data_type, data_url, ext)
 
   if (gData.block) 
     {
-      var rc = await gData.block.to_html({}, 0)
-      show_Data(rc.error, rc.html);
+      var val = await gData.block.to_html({}, 0)
+      var val_sheet = await gData.block.to_html({}, 0, 'html_sheet');
+      var val_graph = await gData.block.to_html({}, 0, 'html_graph');
+
+      show_Data(val.error, val.html, val_sheet.html, val_graph.html);
     }
   else
     {
@@ -394,13 +441,91 @@ async function start_parse_data(data_text, data_type, data_url, ext)
 function selectTab(tab)
 {
   prevSelectedTab = getSelectedTab();
+
+  // For property sheet tabs, select the tab normally (this will show the tab via CSS)
   var el = DOM.qSel(`#tab-${tab} input`);
-  el.checked = true;
-  $(el).parent().show();
+  if (el) {
+    el.checked = true;
+    DOM.Show(el.parentNode);
+    
+    const dropdown = DOM.iSel("view-mode-selector");
+    if (dropdown) {
+      switchViewMode(dropdown.value, tab);
+    }
+  }
 }
 
-function getSelectedTab()
+function switchViewMode(mode, tabName)
 {
+  const currentTab = tabName || getSelectedTab();
+  
+  if (!currentTab) {
+    return;
+  }
+  
+  const propertySheet = DOM.qSel(`#${currentTab}_items .view-property-sheet`);
+  const spreadsheet = DOM.qSel(`#${currentTab}_items .view-spreadsheet`);
+  const graph = DOM.qSel(`#${currentTab}_items .view-graph`);
+  
+  DOM.Hide(propertySheet);
+  DOM.Hide(spreadsheet);
+  DOM.Hide(graph);
+  
+  // Show the selected view
+  if (mode === 'spreadsheet') {
+    if (spreadsheet && spreadsheet.innerHTML.trim() !== '') {
+      DOM.Show(spreadsheet);
+    } else {
+      DOM.Show(propertySheet);
+      // Fallback to property sheet if no spreadsheet data
+      const dropdown = DOM.iSel("view-mode-selector");
+      if (dropdown) dropdown.value = 'property_sheet';
+    }
+  } else if (mode === 'graph') {
+    if (graph && graph.innerHTML.trim() !== '') {
+      DOM.Show(graph);
+      // Initialize graph if needed
+      initGraphInContainer(graph);
+    } else {
+      // Fallback to property sheet if no graph data
+      DOM.Show(propertySheet);
+      const dropdown = DOM.iSel("view-mode-selector");
+      if (dropdown) dropdown.value = 'property_sheet';
+    }
+  } else {
+    // Default to property sheet
+    DOM.Show(propertySheet);
+  }
+}
+
+// Initialize graph visualization in a container
+function initGraphInContainer(container) {
+  if (!container) return;
+  
+  try {
+    const canvases = container.querySelectorAll('canvas');
+    canvases.forEach(canvas => {
+      if (canvas && window.osdsGraphs) {
+        const graphId = canvas.id;
+        const graphInstance = window.osdsGraphs[graphId];
+        if (graphInstance && !graphInstance._initialized) {
+          graphInstance.init(graphId);
+          graphInstance._initialized = true;
+          
+          // Attach button listener
+          const btn = container.querySelector('.graph-layout-btn');
+          if (btn) {
+            btn.onclick = () => graphInstance.startSimulation();
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error("[OSDS] Error initializing graph:", e);
+  }
+}
+
+function getSelectedTab() {
   var el = DOM.qSel('.tabs input:checked');
   if (el)
     return el.parentNode.id.substring(4);
@@ -408,20 +533,17 @@ function getSelectedTab()
     return null;
 }
 
-function hideDataTabs()
-{
+
+function hideDataTabs() {
   var lst = DOM.qSelAll('.tabs li[id^="tab"]');
-  for(var v of lst) {
-    $(v).hide();
+  for (var v of lst) {
+    DOM.Hide(v);
   }
 }
 
 
-function show_Data(data_error, html_data)
+function show_Data(data_error, html_data, sheet_html, graph_html)
 {
-  var html = "";
-
-  wait_data = $('table.wait').hide();
 
   function create_err_msg(fmt_name, errors)
   {
@@ -456,9 +578,65 @@ function show_Data(data_error, html_data)
     return (msg.length>0)?msg:null;
   }
 
-  
-  function show_item(tabname, title)
+
+  function show_item(tabname, title, val_html, val_sheet, val_graph)
   {
+    var html = "";
+
+    $(`#${tabname}_items table.wait`).hide();
+    $(`#${tabname}_items #docdata_view`).remove();
+
+    if (val_html && val_html.trim().length > 0) {
+      html += val_html;
+//??      gData.tabs.push(`${tabname}`);
+    }
+    if (data_error && data_error.length > 0) {
+      var err_msg = create_err_msg(title, data_error);
+      if (err_msg) {
+        html += err_msg;
+      }
+    }
+    if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
+//      if (tabname === 'markdown') {
+//        var preview = $("#md_preview iframe").contents().find("body");
+//        preview.get(0).innerHTML = html;
+//      } else {
+      {
+        // Populate the property sheet view container
+        const propertySheetContainer = DOM.qSel(`#${tabname}_items .view-property-sheet`);
+        if (propertySheetContainer) {
+          propertySheetContainer.innerHTML = `<div id='docdata_view' class='alignleft'>${html}</div>`;
+        } else {
+          // Fallback for tabs without view containers (like src, cons)
+          $(`#${tabname}_items`).append(`<div id='docdata_view' class='alignleft'>${html}</div>`);
+        }
+      
+        // Populate spreadsheet view container if data provided
+        const spreadsheetContainer = DOM.qSel(`#${tabname}_items .view-spreadsheet`);
+        if (spreadsheetContainer && val_sheet)
+          spreadsheetContainer.innerHTML = val_sheet;
+      
+        // Populate graph view container if data provided
+        const graphContainer = DOM.qSel(`#${tabname}_items .view-graph`);
+        if (graphContainer && val_graph)
+          graphContainer.innerHTML = val_graph;
+      }
+
+      selectTab(`${tabname}`);
+      return true;
+    }
+    else {
+      DOM.qHide(`#tab-${tabname}`);
+      DOM.qHide(`#${tabname}-save`);
+      return false;
+    }
+  } 
+
+  var html = "";
+  
+  function show_item0(tabname, title)
+  {
+      $('table.wait').hide();
       $(`#${tabname}_items #docdata_view`).remove();
       $(`#${tabname}_items`).append("<div id='docdata_view' class='alignleft'/>");
       html = "";
@@ -478,21 +656,21 @@ function show_Data(data_error, html_data)
   hideDataTabs();
 
   if (gData.type === "turtle")
-    show_item('turtle', 'Turtle');
+    show_item('turtle', 'Turtle', html_data, sheet_html, graph_html);
   else if (gData.type === "jsonld")
-    show_item('jsonld', 'JSON-LD');
+    show_item('jsonld', 'JSON-LD', html_data, sheet_html, graph_html);
   else if (gData.type === "rdf")
-    show_item('rdf', 'RDF/XML');
+    show_item('rdf', 'RDF/XML', html_data, sheet_html, graph_html);
   else if (gData.type === "json")
-    show_item('json', 'JSON');
+    show_item('json', 'JSON', html_data, sheet_html, graph_html);
   else if (gData.type === "jsonl")
-    show_item('jsonl', 'JSONL');
+    show_item('jsonl', 'JSONL', html_data, sheet_html, graph_html);
   else if (gData.type === "csv")
-    show_item('csv', 'CSV');
+    show_item('csv', 'CSV', html_data, sheet_html, graph_html);
   else if (gData.type === "rss")
-    show_item('rss', 'RSS');
+    show_item('rss', 'RSS', html_data, sheet_html, graph_html);
   else if (gData.type === "atom")
-    show_item('atom', 'Atom');
+    show_item('atom', 'Atom', html_data, sheet_html, graph_html);
 
   gData_showed = true;
 }
@@ -552,6 +730,14 @@ async function Sparql_exec()
   return false;
 }
 
+
+function Prefs_exec()
+{
+  //snow preferenses
+  Browser.openTab("options.html")
+
+  return false;
+}
 
 function Login_exec()
 {

@@ -9,10 +9,10 @@ class Graph_Block extends DataBlock {
         var error = [];
 
         try {
-            console.log('[OSDS Graph] to_html called with data:', this.n3data ? this.n3data.length : 0, 'items');
+            //console.log('[OSDS Graph] to_html called with data:', this.n3data ? this.n3data.length : 0, 'items');
             if (this.n3data) {
                 html = new Graph_Gen(this.baseURL, bnode_types).load(this.n3data);
-                console.log('[OSDS Graph] Generated HTML length:', html ? html.length : 0);
+                //console.log('[OSDS Graph] Generated HTML length:', html ? html.length : 0);
             }
             return { start_id: 0, html, error };
         } catch (ex) {
@@ -110,7 +110,7 @@ class Graph_Gen {
 
         // Resize to container
         const rect = this.canvas.parentElement.getBoundingClientRect();
-        this.canvas.width = rect.width || 800;
+        this.canvas.width = rect.width-4 || 800;
         this.canvas.height = rect.height || 600;
         this.width = this.canvas.width;
         this.height = this.canvas.height;

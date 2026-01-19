@@ -372,10 +372,8 @@ function selectTab(tab)
 function switchViewMode(mode, tabName)
 {
   const currentTab = tabName || getSelectedTab();
-  //console.log('[OSDS DEBUG] switchViewMode called - mode:', mode, 'currentTab:', currentTab);
   
   if (!currentTab) {
-    console.log('[OSDS DEBUG] No current tab found!');
     return;
   }
   
@@ -390,10 +388,8 @@ function switchViewMode(mode, tabName)
   // Show the selected view
   if (mode === 'spreadsheet') {
     if (spreadsheet && spreadsheet.innerHTML.trim() !== '') {
-      //console.log('[OSDS DEBUG] Showing spreadsheet view');
       DOM.Show(spreadsheet);
     } else {
-      //console.log('[OSDS DEBUG] No spreadsheet content, falling back to property sheet');
       DOM.Show(propertySheet);
       // Fallback to property sheet if no spreadsheet data
       const dropdown = DOM.iSel("view-mode-selector");
@@ -401,7 +397,6 @@ function switchViewMode(mode, tabName)
     }
   } else if (mode === 'graph') {
     if (graph && graph.innerHTML.trim() !== '') {
-      //console.log('[OSDS DEBUG] Showing graph view');
       DOM.Show(graph);
       // Initialize graph if needed
       initGraphInContainer(graph);
@@ -414,7 +409,6 @@ function switchViewMode(mode, tabName)
     }
   } else {
     // Default to property sheet
-    //console.log('[OSDS DEBUG] Showing property sheet view');
     DOM.Show(propertySheet);
   }
 }
@@ -524,7 +518,6 @@ function update_tab(tabname, title, val, err_tabs, val_spreadsheet, val_graph) {
     } else {
       // Populate the property sheet view container
       const propertySheetContainer = DOM.qSel(`#${tabname}_items .view-property-sheet`);
-      //console.log('[OSDS DEBUG] propertySheetContainer found:', !!propertySheetContainer);
       if (propertySheetContainer) {
         propertySheetContainer.innerHTML = `<div id='docdata_view' class='alignleft'>${html}</div>`;
       } else {
@@ -537,15 +530,12 @@ function update_tab(tabname, title, val, err_tabs, val_spreadsheet, val_graph) {
       //console.log('[OSDS DEBUG] spreadsheetContainer found:', !!spreadsheetContainer, 'spreadsheetHtml:', !!spreadsheetHtml);
       if (spreadsheetContainer && spreadsheetHtml) {
         spreadsheetContainer.innerHTML = spreadsheetHtml;
-        //console.log('[OSDS DEBUG] Spreadsheet container populated for', tabname, 'length:', spreadsheetHtml.length);
       }
       
       // Populate graph view container if data provided
       const graphContainer = DOM.qSel(`#${tabname}_items .view-graph`);
-      //console.log('[OSDS DEBUG] graphContainer found:', !!graphContainer, 'graphHtml:', !!graphHtml);
       if (graphContainer && graphHtml) {
         graphContainer.innerHTML = graphHtml;
-        //console.log('[OSDS DEBUG] Graph container populated for', tabname, 'length:', graphHtml.length);
       }
     }
     return true;
@@ -560,11 +550,9 @@ function update_tab(tabname, title, val, err_tabs, val_spreadsheet, val_graph) {
 
 async function update_tab_exec(tabname, title, block, err_tabs) 
 {
-  //??console.log('[OSDS DEBUG] update_tab_exec called for:', tabname);
-  var bnode_types = {};
-  var val = await block.to_html(bnode_types, 0);
-  var val_sheet = await block.to_html(bnode_types, 0, 'html_sheet');
-  var val_graph = await block.to_html(bnode_types, 0, 'html_graph');
+  var val = await block.to_html({}, 0);
+  var val_sheet = await block.to_html({}, 0, 'html_sheet');
+  var val_graph = await block.to_html({}, 0, 'html_graph');
   
   return update_tab(tabname, title, val, err_tabs, val_sheet, val_graph);
 }
