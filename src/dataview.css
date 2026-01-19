@@ -313,7 +313,6 @@ div#header {
   align-items: center;
   float: right;
   margin: 10px 12px 0 0;
-  z-index: 10;
 }
 
 .action_btn {

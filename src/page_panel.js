@@ -503,20 +503,17 @@ function initGraphInContainer(container) {
   if (!container) return;
   
   try {
-    const canvases = container.querySelectorAll('canvas');
-    canvases.forEach(canvas => {
-      if (canvas && window.osdsGraphs) {
-        const graphId = canvas.id;
-        const graphInstance = window.osdsGraphs[graphId];
-        if (graphInstance && !graphInstance._initialized) {
-          graphInstance.init(graphId);
-          graphInstance._initialized = true;
-          
-          // Attach button listener
-          const btn = container.querySelector('.graph-layout-btn');
-          if (btn) {
-            btn.onclick = () => graphInstance.startSimulation();
-          }
+    // New D3.js-based graphs use .rdf-graph-container divs instead of canvas
+    const graphContainers = container.querySelectorAll('.rdf-graph-container');
+    
+    graphContainers.forEach(graphContainer => {
+      if (graphContainer && window.osdsGraphs) {
+        const graphId = graphContainer.id;
+        const graphData = window.osdsGraphs[graphId];
+        
+        if (graphData && graphData.generator && !graphData._initialized) {
+          graphData.generator.init(graphId);
+          graphData._initialized = true;
         }
       }
     });

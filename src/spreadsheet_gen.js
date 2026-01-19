@@ -9,10 +9,8 @@ class Spreadsheet_Block extends DataBlock {
         var error = [];
 
         try {
-            //console.log('[OSDS Spreadsheet] to_html called with data:', this.n3data ? this.n3data.length : 0, 'items');
             if (this.n3data) {
                 html = new Spreadsheet_Gen(this.baseURL, bnode_types).load(this.n3data);
-                //console.log('[OSDS Spreadsheet] Generated HTML length:', html ? html.length : 0);
             }
             return { start_id: 0, html, error };
         } catch (ex) {

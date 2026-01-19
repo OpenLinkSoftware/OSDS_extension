@@ -203,12 +203,11 @@ function showPopup(tabId)
   }
 
   DOM.iSel("src_exit").onclick = (e) => { selectTab(prevSelectedTab); return false; }
-  const lst = DOM.qSelAll('ul.tabs li label[role="tab"]');
+  const lst = DOM.qSelAll('ul.tabs li input[type="radio"]');
   for(const t of lst) {
-    t.onclick = (e) => {
-      const v = e.target.htmlFor;
-      if (v && v.startsWith('itab-')) {
-        const tabName = v.substring(5);
+    t.onchange = (e) => {
+      if (e.target.checked) {
+        const tabName = e.target.id.substring(5);
         const dropdown = DOM.iSel("view-mode-selector");
         if (dropdown)
           switchViewMode(dropdown.value, tabName);
@@ -401,7 +400,6 @@ function switchViewMode(mode, tabName)
       // Initialize graph if needed
       initGraphInContainer(graph);
     } else {
-      //console.log('[OSDS DEBUG] No graph content, falling back to property sheet');
       // Fallback to property sheet if no graph data
       DOM.Show(propertySheet);
       const dropdown = DOM.iSel("view-mode-selector");
@@ -418,20 +416,26 @@ function initGraphInContainer(container) {
   if (!container) return;
   
   try {
-    const canvases = container.querySelectorAll('canvas');
-    canvases.forEach(canvas => {
-      if (canvas && window.osdsGraphs) {
-        const graphId = canvas.id;
-        const graphInstance = window.osdsGraphs[graphId];
-        if (graphInstance && !graphInstance._initialized) {
-          graphInstance.init(graphId);
-          graphInstance._initialized = true;
-          
-          // Attach button listener
-          const btn = container.querySelector('.graph-layout-btn');
-          if (btn) {
-            btn.onclick = () => graphInstance.startSimulation();
+    // New D3.js-based graph uses div containers instead of canvas
+    const graphContainers = container.querySelectorAll('.rdf-graph-container');
+    
+    graphContainers.forEach(graphContainer => {
+      if (graphContainer && window.osdsGraphs) {
+        const graphId = graphContainer.id;
+        
+        const graphData = window.osdsGraphs[graphId];
+        if (graphData && !graphData._initialized) {
+          // Call init on the generator instance
+          if (graphData.generator) {
+            graphData.generator.init(graphId);
+            graphData._initialized = true;
+          } else {
+            console.error('[panel.js] No generator found for graph:', graphId);
           }
+        } else if (!graphData) {
+          console.error('[panel.js] No graph data found for ID:', graphId);
+        } else {
+          console.log('[panel.js] Graph already initialized:', graphId);
         }
       }
     });
@@ -527,7 +531,6 @@ function update_tab(tabname, title, val, err_tabs, val_spreadsheet, val_graph) {
       
       // Populate spreadsheet view container if data provided
       const spreadsheetContainer = DOM.qSel(`#${tabname}_items .view-spreadsheet`);
-      //console.log('[OSDS DEBUG] spreadsheetContainer found:', !!spreadsheetContainer, 'spreadsheetHtml:', !!spreadsheetHtml);
       if (spreadsheetContainer && spreadsheetHtml) {
         spreadsheetContainer.innerHTML = spreadsheetHtml;
         
@@ -876,7 +879,7 @@ async function handle_docData(data, is_data_exists, tab_index)
       }
       else
       {
-        hideDatsaTabs();
+        hideDataTabs();
 
         selectTab('cons');
         g_RestCons.show();
