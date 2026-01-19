@@ -79,6 +79,8 @@ class DataLinks {
     }
 
     var rc = await this.block.to_html({}, start_id)
+    var val_sheet = await this.block.to_html({}, 0, 'html_sheet');
+    var val_graph = await this.block.to_html({}, 0, 'html_graph');
 
     this._loaded = true;
 
@@ -86,7 +88,7 @@ class DataLinks {
       if (err_msg.length > 0)
         rc.error.push(err_msg);
 
-      this.cb_success(this.tab, this.tabName, rc);
+      this.cb_success(this.tab, this.tabName, rc, val_sheet, val_graph);
     }
 
     return true;

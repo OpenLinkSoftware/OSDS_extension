@@ -688,10 +688,10 @@ function links_cb_error(tab)
   $(`#${tab}_items #throbber`).hide();
 }
 
-function links_cb_success(tab, tabName, rc)
+function links_cb_success(tab, tabName, rc, val_spreadsheet, val_graph)
 {
   if (rc) {
-    update_tab(tab, tabName, rc);
+    update_tab(tab, tabName, rc, [], val_spreadsheet, val_graph);
     $(`#${tab}_items table.loader`).hide();
 
     DOM.qShow(`#tab-${tab}`);
