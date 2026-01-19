@@ -135,59 +135,6 @@ class Spreadsheet_Gen {
         tableHtml += `
           </tbody>
         </table>
-        <script>
-          (function() {
-            const table = document.getElementById('${tableId}');
-            if (!table) return;
-            
-            const headers = table.querySelectorAll('.sortable-header');
-            let currentSort = { column: null, ascending: true };
-            
-            headers.forEach(header => {
-              header.style.cursor = 'pointer';
-              header.style.userSelect = 'none';
-              
-              header.addEventListener('click', function() {
-                const column = this.dataset.column;
-                const tbody = table.querySelector('tbody');
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-                
-                // Toggle sort direction if same column
-                if (currentSort.column === column) {
-                  currentSort.ascending = !currentSort.ascending;
-                } else {
-                  currentSort.column = column;
-                  currentSort.ascending = true;
-                }
-                
-                // Get column index
-                const columnIndex = column === 'subject' ? 0 : parseInt(column) + 1;
-                
-                // Sort rows
-                rows.sort((a, b) => {
-                  const aVal = a.cells[columnIndex].dataset.value || '';
-                  const bVal = b.cells[columnIndex].dataset.value || '';
-                  
-                  const comparison = aVal.localeCompare(bVal);
-                  return currentSort.ascending ? comparison : -comparison;
-                });
-                
-                // Reappend rows
-                rows.forEach(row => tbody.appendChild(row));
-                
-                // Update indicators
-                headers.forEach(h => {
-                  const indicator = h.querySelector('.sort-indicator');
-                  if (h === header) {
-                    indicator.textContent = currentSort.ascending ? ' ▲' : ' ▼';
-                  } else {
-                    indicator.textContent = '';
-                  }
-                });
-              });
-            });
-          })();
-        </script>
       </div>
       <hr/>
     `;

@@ -216,6 +216,54 @@ function showPopup(tabId)
     }
   }
 
+
+  for(const v of DOM.qSelAll('.view-spreadsheet')) {
+    let currentSort = { column: null, ascending: true };
+    
+    v.onclick = (ev) => {
+      if (ev.target.matches('th.sortable-header')) {
+        const table = ev.target.closest('table');
+        const column = ev.target.attributes.getNamedItem('data-column').value;
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.rows);
+        
+        // Toggle sort direction if same column
+        if (currentSort.column === column) {
+          currentSort.ascending = !currentSort.ascending;
+        } else {
+          currentSort.column = column;
+          currentSort.ascending = true;
+        }
+        
+        // Get column index
+        const columnIndex = column === 'subject' ? 0 : parseInt(column) + 1;
+        
+        // Sort rows
+        rows.sort((a, b) => {
+          const aVal = a.cells[columnIndex].dataset.value || '';
+          const bVal = b.cells[columnIndex].dataset.value || '';
+          
+          const comparison = aVal.localeCompare(bVal);
+          return currentSort.ascending ? comparison : -comparison;
+        });
+        
+        // Reappend rows
+        rows.forEach(row => tbody.appendChild(row));
+        
+        const headers = table.querySelectorAll('.sortable-header');
+        // Update indicators
+        headers.forEach(h => {
+          const indicator = h.querySelector('.sort-indicator');
+          if (h === ev.target) {
+            indicator.textContent = currentSort.ascending ? ' ▲' : ' ▼';
+          } else {
+            indicator.textContent = '';
+          }
+        });
+      }
+    }
+  }
+
   gData_showed = false;
 }
 
