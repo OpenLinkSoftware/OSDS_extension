@@ -556,6 +556,7 @@ div#header {
 /* Spreadsheet View Styles */
 .spreadsheet-container {
   margin: 20px 0;
+  position: relative;
 }
 
 .spreadsheet-container h3 {
@@ -568,11 +569,13 @@ div#header {
 }
 
 table.spreadsheet {
-  width: 100%;
   border-collapse: collapse;
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
+  table-layout: auto;
+  width: auto;
+  min-width: 100%;
 }
 
 table.spreadsheet th {
@@ -652,11 +655,48 @@ table.spreadsheet tbody tr:hover {
   /* Default view - property sheet */
 }
 
-.view-container.view-spreadsheet {
-  /* Spreadsheet view */
-}
-
 .view-container.view-graph {
   /* Graph view */
   min-height: 400px;
 }
+
+/* Table header styling for resizable columns */
+.spreadsheet-container table.spreadsheet thead th {
+  position: relative;
+  padding-right: 8px;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Resize handle */
+.spreadsheet-container table.spreadsheet thead th .resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  cursor: col-resize;
+  background-color: transparent;
+  user-select: none;
+  touch-action: none;
+}
+
+.spreadsheet-container table.spreadsheet thead th .resize-handle:hover {
+  background-color: #1976D2;
+  opacity: 0.5;
+}
+
+.spreadsheet-container table.spreadsheet thead th .resize-handle:active,
+.spreadsheet-container table.spreadsheet thead th .resize-handle.dragging {
+  background-color: #1976D2;
+  opacity: 0.8;
+}
+
+/* Resizing state */
+.spreadsheet-container.resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+

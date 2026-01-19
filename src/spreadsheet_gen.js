@@ -98,13 +98,13 @@ class Spreadsheet_Gen {
         const tableId = 'table_' + Math.random().toString(36).substr(2, 9);
 
         let tableHtml = `
-      <div class="spreadsheet-container">
+      <div class="spreadsheet-container" id="container-${tableId}">
         <h3>Type: ${typeLabel} (${entities.length})</h3>
-        <table id="${tableId}" class="docdata table spreadsheet sortable">
+        <table id="${tableId}" class="docdata table spreadsheet sortable" >
           <thead>
             <tr>
-              <th class="sortable-header" data-column="subject">Subject <span class="sort-indicator"></span></th>
-              ${sortedPredicates.map((pred, idx) => `<th class="sortable-header" data-column="${idx}">${this.iri2html(pred)} <span class="sort-indicator"></span></th>`).join('')}
+              <th class="sortable-header" data-column="subject">Subject <span class="sort-indicator"></span><span class="resize-handle"></span></th>
+              ${sortedPredicates.map((pred, idx) => `<th class="sortable-header" data-column="${idx}">${this.iri2html(pred)} <span class="sort-indicator"></span><span class="resize-handle"></span></th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -142,6 +142,114 @@ class Spreadsheet_Gen {
         return tableHtml;
     }
 
+    /**
+     * Initialize column resizing functionality for a table
+     */
+    static initializeColumnResizing(tableId) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        const headers = table.querySelectorAll('thead th');
+        const container = table.closest('.spreadsheet-container');
+
+        headers.forEach((header, index) => {
+            const handle = header.querySelector('.resize-handle');
+            if (!handle) return;
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startWidth = header.offsetWidth;
+                
+                container.classList.add('resizing');
+
+                const onMouseMove = (e) => {
+                    const diff = e.clientX - startX;
+                    const newWidth = startWidth + diff;
+                    
+                    if (newWidth > 100) { // Minimum width 100px
+                        header.style.width = newWidth + 'px';
+                        header.style.minWidth = newWidth + 'px';
+                        header.style.maxWidth = newWidth + 'px';
+                        
+                        // Also set width for all cells in this column
+                        const rows = table.querySelectorAll('tbody tr');
+                        rows.forEach(row => {
+                            const cell = row.children[index];
+                            if (cell) {
+                                cell.style.width = newWidth + 'px';
+                                cell.style.minWidth = newWidth + 'px';
+                                cell.style.maxWidth = newWidth + 'px';
+                            }
+                        });
+                    }
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    container.classList.remove('resizing');
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
+    }
+
+    static initializeColumnSort(tableId) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        
+        const headers = table.querySelectorAll('.sortable-header');
+        let currentSort = { column: null, ascending: true };
+        
+        headers.forEach(header => {
+          header.style.cursor = 'pointer';
+          header.style.userSelect = 'none';
+          
+          header.addEventListener('click', function(ev) {
+            const column = this.dataset.column;
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.rows);
+            
+            // Toggle sort direction if same column
+            if (currentSort.column === column) {
+              currentSort.ascending = !currentSort.ascending;
+            } else {
+              currentSort.column = column;
+              currentSort.ascending = true;
+            }
+            
+            // Get column index
+            const columnIndex = column === 'subject' ? 0 : parseInt(column) + 1;
+            
+            // Sort rows
+            rows.sort((a, b) => {
+              const aVal = a.cells[columnIndex].dataset.value || '';
+              const bVal = b.cells[columnIndex].dataset.value || '';
+              
+              const comparison = aVal.localeCompare(bVal);
+              return currentSort.ascending ? comparison : -comparison;
+            });
+            
+            // Reappend rows
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Update indicators
+            headers.forEach(h => {
+              const indicator = h.querySelector('.sort-indicator');
+              if (h === header) {
+                indicator.textContent = currentSort.ascending ? ' ▲' : ' ▼';
+              } else {
+                indicator.textContent = '';
+              }
+            });
+          });
+        });
+    }
+    
+    
     formatObject(obj) {
         if (!obj) return "";
         if (obj.iri) {

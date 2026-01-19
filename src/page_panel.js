@@ -175,53 +175,6 @@ DOM.ready(() =>
       }
   });
 
-  for(const v of DOM.qSelAll('.view-spreadsheet')) {
-    let currentSort = { column: null, ascending: true };
-    
-    v.onclick = (ev) => {
-      if (ev.target.matches('th.sortable-header')) {
-        const table = ev.target.closest('table');
-        const column = ev.target.attributes.getNamedItem('data-column').value;
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.rows);
-        
-        // Toggle sort direction if same column
-        if (currentSort.column === column) {
-          currentSort.ascending = !currentSort.ascending;
-        } else {
-          currentSort.column = column;
-          currentSort.ascending = true;
-        }
-        
-        // Get column index
-        const columnIndex = column === 'subject' ? 0 : parseInt(column) + 1;
-        
-        // Sort rows
-        rows.sort((a, b) => {
-          const aVal = a.cells[columnIndex].dataset.value || '';
-          const bVal = b.cells[columnIndex].dataset.value || '';
-          
-          const comparison = aVal.localeCompare(bVal);
-          return currentSort.ascending ? comparison : -comparison;
-        });
-        
-        // Reappend rows
-        rows.forEach(row => tbody.appendChild(row));
-        
-        const headers = table.querySelectorAll('.sortable-header');
-        // Update indicators
-        headers.forEach(h => {
-          const indicator = h.querySelector('.sort-indicator');
-          if (h === ev.target) {
-            indicator.textContent = currentSort.ascending ? ' ▲' : ' ▼';
-          } else {
-            indicator.textContent = '';
-          }
-        });
-      }
-    }
-  }
-
 });
 
 
@@ -660,8 +613,20 @@ function show_Data(data_error, html_data, sheet_html, graph_html)
       
         // Populate spreadsheet view container if data provided
         const spreadsheetContainer = DOM.qSel(`#${tabname}_items .view-spreadsheet`);
-        if (spreadsheetContainer && val_sheet)
+        if (spreadsheetContainer && val_sheet) {
           spreadsheetContainer.innerHTML = val_sheet;
+          
+          // Initialize column resizing for all tables in the spreadsheet container
+          const tables = spreadsheetContainer.querySelectorAll('table.spreadsheet');
+          tables.forEach(table => {
+            if (table.id && Spreadsheet_Gen) {
+               if (Spreadsheet_Gen.initializeColumnResizing)
+                   Spreadsheet_Gen.initializeColumnResizing(table.id);
+               if (Spreadsheet_Gen.initializeColumnSort)
+                   Spreadsheet_Gen.initializeColumnSort(table.id);
+            }
+          });
+        }
       
         // Populate graph view container if data provided
         const graphContainer = DOM.qSel(`#${tabname}_items .view-graph`);
