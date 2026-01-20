@@ -20,11 +20,15 @@ SRC_DIR=$EXT_SRC
 DST_DIR=$EXT_DIRNAME
 
 #copy common files
-for I_DIR in background.js background_web.js chat-inject.js chat-srv.js content.css converters.js datablock.js; do
+for I_DIR in background.js background_web.js chat-inject.js chat-srv.js content.css converters.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in dataview.css frame_scan.js frame_text.js handlers.js helpers.js helpers_ui.js html_gen.js ; do
+for I_DIR in datablock.js dataview.css enhanced-content.css extension-ui.css ; do
+  cp -va $SRC_DIR/$I_DIR $DST_DIR/
+done
+
+for I_DIR in frame_scan.js frame_text.js graph_gen.js handlers.js helpers.js helpers_ui.js html_gen.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
@@ -32,11 +36,11 @@ for I_DIR in oidc-webid-inject.js OidcWebid.js options.html options.js page_pane
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in panel.html panel.js settings.js sniffer.js sniffer_nano.js social_sniffer.js super_links.js ; do
+for I_DIR in panel.html panel.js settings.js sniffer.js sniffer_nano.js social_sniffer.js spreadsheet_gen.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
-for I_DIR in service_worker.js tabs.css ttl_gen.js utils.js ; do
+for I_DIR in super_links.js  tabs.css ttl_gen.js utils.js ; do
   cp -va $SRC_DIR/$I_DIR $DST_DIR/
 done
 
@@ -44,6 +48,7 @@ done
 #copy Chrome related files
 cp -va $SRC_DIR/manifest.json $DST_DIR/
 cp -va $SRC_DIR/browser.js $DST_DIR/browser.js
+cp -va $SRC_DIR/service_worker.js $DST_DIR/
 
 for I_DIR in images lib; do
   mkdir -pv $DST_DIR/$I_DIR
