@@ -301,6 +301,20 @@ class Graph_Gen {
                                 <input type="checkbox" class="physics-toggle" checked style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
                             </div>
                         </div>
+                        <!-- Predicate Display -->
+                        <div style="margin-bottom:24px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Predicate Display</div>
+                            <div style="display:flex; gap:12px;">
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:#334155; padding:2px">
+                                    <input type="radio" name="predicate-display" value="icons" class="predicate-display-radio" checked style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;top:revert;left:revert;position:revert;">
+                                    <span>Icons</span>
+                                </label>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:#334155; padding:2px">
+                                    <input type="radio" name="predicate-display" value="labels" class="predicate-display-radio" style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;top:revert;left:revert;position:revert;">
+                                    <span>Labels</span>
+                                </label>
+                            </div>
+                        </div>
                         <!-- Filtering -->
                         <div style="margin-bottom:24px;">
                             <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Filtering</div>
@@ -504,7 +518,7 @@ class Graph_Gen {
             return "➡️";
         };
 
-        // Render predicate icons (clickable, using emoji icons)
+        // Render predicate icons/labels (clickable)
         let iconSel = iconLayer.selectAll("g")
             .data(links, d => d.key)
             .join(
@@ -513,9 +527,18 @@ class Graph_Gen {
                         .attr("class", "predicate-icon-group")
                         .style("cursor", "pointer");
 
-                    // Emoji icon as text
+                    // Background rectangle for label mode (initially hidden)
+                    g.append("rect")
+                        .attr("class", "predicate-background")
+                        .attr("fill", "rgba(255,255,255,0.9)")
+                        .attr("rx", 3)
+                        .attr("ry", 3)
+                        .style("display", "none")
+                        .style("pointer-events", "none");
+
+                    // Text element for icon or label (will be updated based on mode)
                     g.append("text")
-                        .attr("class", "predicate-icon")
+                        .attr("class", "predicate-text")
                         .attr("text-anchor", "middle")
                         .attr("dy", "0.35em")
                         .attr("font-size", "16px")
@@ -523,8 +546,9 @@ class Graph_Gen {
                         .style("user-select", "none")
                         .text(d => iconForPredicate(d.predicateLabel));
 
-                    // Transparent hitbox for interactions
+                    // Transparent hitbox for interactions (will be resized based on mode)
                     g.append("rect")
+                        .attr("class", "predicate-hitbox")
                         .attr("x", -12)
                         .attr("y", -12)
                         .attr("width", 24)
@@ -722,11 +746,29 @@ class Graph_Gen {
                 return `M${sx},${sy}L${tx},${ty}`;
             });
 
-            // Position predicate icons at link midpoints
+            // Position predicate icons/labels at link midpoints with rotation for labels
             iconSel.attr("transform", d => {
                 const mx = (d.source.x + d.target.x) / 2;
                 const my = (d.source.y + d.target.y) / 2;
-                return `translate(${mx},${my})`;
+                
+                // Calculate angle for text rotation along the line
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
+                let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                // Keep text readable (don't flip upside down)
+                if (angle > 90 || angle < -90) {
+                    angle += 180;
+                }
+                
+                // Check if we're in label mode
+                const labelMode = container.querySelector('.predicate-display-radio[value="labels"]:checked');
+                
+                if (labelMode) {
+                    return `translate(${mx},${my}) rotate(${angle})`;
+                } else {
+                    return `translate(${mx},${my})`;
+                }
             });
 
             // Update node positions
@@ -1027,6 +1069,75 @@ class Graph_Gen {
                 } else {
                     simulation.stop();
                 }
+            });
+        }
+
+        // Predicate display mode toggle
+        const predicateDisplayRadios = container.querySelectorAll('.predicate-display-radio');
+        if (predicateDisplayRadios.length > 0) {
+            // Initialize: set default checked state explicitly
+            const iconsRadio = container.querySelector('.predicate-display-radio[value="icons"]');
+            if (iconsRadio) {
+                iconsRadio.checked = true;
+            }
+            
+            predicateDisplayRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const mode = e.target.value; // 'icons' or 'labels'
+                    
+                    iconSel.each(function(d) {
+                        const g = d3.select(this);
+                        const textEl = g.select('.predicate-text');
+                        const bgEl = g.select('.predicate-background');
+                        const hitboxEl = g.select('.predicate-hitbox');
+                        
+                        if (mode === 'labels') {
+                            // Show label instead of icon with smaller font
+                            textEl.text(d.predicateLabel)
+                                .attr("font-size", "7px")
+                                .attr("font-weight", "500")
+                                .style("fill", "#475569");
+                            
+                            // Get text bounding box and show background
+                            const bbox = textEl.node().getBBox();
+                            const padding = 3;
+                            
+                            bgEl
+                                .attr("x", bbox.x - padding)
+                                .attr("y", bbox.y - padding)
+                                .attr("width", bbox.width + padding * 2)
+                                .attr("height", bbox.height + padding * 2)
+                                .style("display", null);
+                            
+                            // Adjust hitbox size for text
+                            hitboxEl
+                                .attr("x", bbox.x - padding)
+                                .attr("y", bbox.y - padding)
+                                .attr("width", bbox.width + padding * 2)
+                                .attr("height", bbox.height + padding * 2);
+                        } else {
+                            // Show icon (default)
+                            textEl.text(iconForPredicate(d.predicateLabel))
+                                .attr("font-size", "16px")
+                                .attr("font-weight", "normal")
+                                .style("fill", null);
+                            
+                            // Hide background
+                            bgEl.style("display", "none");
+                            
+                            // Reset hitbox to icon size
+                            hitboxEl
+                                .attr("x", -12)
+                                .attr("y", -12)
+                                .attr("width", 24)
+                                .attr("height", 24);
+                        }
+                    });
+                    
+                    // Trigger transform update to apply rotation for labels
+                    simulation.alpha(0).restart();
+                    setTimeout(() => simulation.stop(), 100);
+                });
             });
         }
 
