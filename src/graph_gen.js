@@ -51,40 +51,20 @@ class Graph_Gen {
     }
 
     // Determine group/category for IRI
+    // Detect node type based on URI patterns (similar to rdf_visual.html)
+    detectNodeType(iri) {
+        const lowerIri = iri.toLowerCase();
+        if (lowerIri.includes('person') || lowerIri.includes('people') || lowerIri.includes('foaf')) return 'person';
+        if (lowerIri.includes('organization') || lowerIri.includes('org') || lowerIri.includes('company')) return 'organization';
+        if (lowerIri.includes('place') || lowerIri.includes('location') || lowerIri.includes('geo')) return 'place';
+        if (lowerIri.includes('concept') || lowerIri.includes('topic') || lowerIri.includes('category')) return 'concept';
+        if (lowerIri.includes('event') || lowerIri.includes('meeting') || lowerIri.includes('conference')) return 'event';
+        return 'resource';
+    }
+
+    // Deprecated: kept for backwards compatibility
     groupForIri(iri) {
-        if (!this.namespaceMap) this.initNamespaces();
-        
-        // Try to match by namespace prefix
-        for (const [nsUri, prefix] of this.namespaceMap) {
-            if (iri.startsWith(nsUri)) {
-                return prefix;
-            }
-        }
-        
-        // For local/relative IRIs, try to extract a meaningful group from the path
-        try {
-            const url = new URL(iri);
-            const path = url.pathname;
-            
-            // Extract filename without extension (e.g., /data/people.ttl -> people)
-            const lastSegment = path.split('/').filter(s => s).pop();
-            if (lastSegment) {
-                const filenameWithoutExt = lastSegment.replace(/\.(ttl|rdf|jsonld|xml|n3)$/i, '');
-                if (filenameWithoutExt && filenameWithoutExt !== 'index') {
-                    return filenameWithoutExt;
-                }
-            }
-            
-            // Use domain as group for different hosts
-            if (url.host) {
-                return url.host.replace(/^www\./, '').split('.')[0];
-            }
-        } catch (e) {
-            // Not a valid URL, might be a relative IRI or blank node
-        }
-        
-        // Fallback: generic resource
-        return "resource";
+        return this.detectNodeType(iri);
     }
 
     // Build graph from n3_data structure
@@ -258,87 +238,90 @@ class Graph_Gen {
         };
 
         return `
-            <div id="${graphId}" class="rdf-graph-container" style="width:100%; height:${this.height}px; position:relative; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
-                <div class="graph-header" style="position:absolute; top:10px; left:10px; z-index:10; background:rgba(255,255,255,0.9); padding:8px 12px; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                    <div style="font-size:12px; font-weight:600; color:#1e293b;">RDF Knowledge Graph</div>
+            <div id="${graphId}" class="rdf-graph-container" style="width:100%; height:${this.height}px; position:relative; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                <div class="graph-header" style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(255,255,255,0.95); padding:10px 14px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); backdrop-filter:blur(8px);">
+                    <div style="font-size:13px; font-weight:600; color:#1e293b; margin-bottom:2px;">RDF Knowledge Graph</div>
                     <div style="font-size:11px; color:#64748b;">Nodes: ${fullGraph.nodes.length} | Edges: ${fullGraph.links.length}</div>
                 </div>
-                <div class="graph-controls" style="position:absolute; top:10px; right:10px; z-index:10; display:flex; gap:6px;">
-                    <button class="graph-fullscreen-btn" data-graph-id="${graphId}" style="padding:6px 12px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; font-size:11px; font-weight:500; color:#475569;" title="Fullscreen">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="graph-controls" style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:8px;">
+                    <button class="graph-fullscreen-btn" data-graph-id="${graphId}" style="padding:8px; background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:#475569; transition:all 0.2s; backdrop-filter:blur(8px);" title="Fullscreen">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                         </svg>
                     </button>
-                    <button class="graph-center-btn" data-graph-id="${graphId}" style="padding:6px 12px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; font-size:11px; font-weight:500; color:#475569;" title="Center graph">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="graph-center-btn" data-graph-id="${graphId}" style="padding:8px; background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:#475569; transition:all 0.2s; backdrop-filter:blur(8px);" title="Center graph">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M15 10l4.5-4.5M19.5 5.5h-4v-4M9 14l-4.5 4.5M4.5 18.5h4v4" />
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                     </button>
-                    <button class="graph-theme-btn" data-graph-id="${graphId}" style="padding:6px 12px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; font-size:11px; font-weight:500; color:#475569;" title="Toggle theme">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="graph-theme-btn" data-graph-id="${graphId}" style="padding:8px; background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:#475569; transition:all 0.2s; backdrop-filter:blur(8px);" title="Toggle theme">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.05 16.95l-1.42 1.42m0-11.84 1.42 1.42m11.31 11.31 1.42 1.42" />
                             <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
                         </svg>
                     </button>
-                    <button class="graph-settings-btn" data-graph-id="${graphId}" style="padding:6px 12px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; font-size:11px; font-weight:500; color:#475569;" title="Graph settings">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="graph-settings-btn" data-graph-id="${graphId}" style="padding:8px; background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:#475569; transition:all 0.2s; backdrop-filter:blur(8px);" title="Graph settings">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z" />
                             <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                         </svg>
                     </button>
                 </div>
                 <svg class="graph-svg" style="width:100%; height:100%; background:#f8fafc;"></svg>
-                <div class="graph-settings-panel" style="display:none; position:absolute; right:10px; top:60px; z-index:20; width:min(380px,calc(100% - 20px)); background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 25px -12px rgba(0,0,0,0.35); backdrop-filter:blur(8px);">
-                    <div class="settings-header" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #e2e8f0; cursor:move;">
-                        <div style="font-size:13px; font-weight:600; color:#1e293b;">Graph Settings</div>
-                        <button class="settings-close-btn" style="padding:4px; background:none; border:none; cursor:pointer; color:#64748b; border-radius:6px;" title="Close">
+                <div class="graph-settings-panel" style="display:none; position:absolute; right:12px; top:70px; z-index:20; width:min(380px,calc(100% - 24px)); background:rgba(255,255,255,0.97); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); backdrop-filter:blur(12px);">
+                    <div class="settings-header" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #e2e8f0; cursor:move; background:linear-gradient(135deg, rgba(249,250,251,0.9) 0%, rgba(241,245,249,0.9) 100%); border-radius:12px 12px 0 0;">
+                        <div style="font-size:14px; font-weight:600; color:#1e293b;">Graph Settings</div>
+                        <button class="settings-close-btn" style="padding:4px; background:none; border:none; cursor:pointer; color:#64748b; border-radius:6px; transition:all 0.2s;" title="Close">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
-                    <div class="settings-body" style="padding:16px; max-height:min(70vh,500px); overflow-y:auto;">
+                    <div class="settings-body" style="padding:18px; max-height:min(70vh,500px); overflow-y:auto;">
                         <!-- Physics -->
-                        <div style="margin-bottom:20px;">
-                            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin-bottom:12px;">Physics</div>
-                            <div style="margin-bottom:12px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                    <label style="font-size:12px; color:#334155;">Charge strength</label>
-                                    <span class="charge-value" style="font-size:11px; color:#64748b; font-variant-numeric:tabular-nums;">-450</span>
+                        <div style="margin-bottom:24px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Physics Simulation</div>
+                            <div style="margin-bottom:14px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <label style="font-size:12px; color:#334155; font-weight:500;">Charge strength</label>
+                                    <span class="charge-value" style="font-size:11px; color:#64748b; font-variant-numeric:tabular-nums; font-weight:600;">-450</span>
                                 </div>
-                                <input type="range" class="charge-slider" min="-1200" max="-50" step="10" value="-450" style="width:95%; accent-color:#818cf8;">
+                                <input type="range" class="charge-slider" min="-1200" max="-50" step="10" value="-450" style="width:90%; height:6px; accent-color:#6366f1; cursor:pointer;">
                             </div>
-                            <div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                    <label style="font-size:12px; color:#334155;">Link distance</label>
-                                    <span class="link-distance-value" style="font-size:11px; color:#64748b; font-variant-numeric:tabular-nums;">140</span>
+                            <div style="margin-bottom:14px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <label style="font-size:12px; color:#334155; font-weight:500;">Link distance</label>
+                                    <span class="link-distance-value" style="font-size:11px; color:#64748b; font-variant-numeric:tabular-nums; font-weight:600;">140</span>
                                 </div>
-                                <input type="range" class="link-distance-slider" min="40" max="320" step="5" value="140" style="width:95%; accent-color:#818cf8;">
+                                <input type="range" class="link-distance-slider" min="40" max="320" step="5" value="140" style="width:90%; height:6px; accent-color:#6366f1; cursor:pointer;">
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                                <label style="font-size:12px; color:#334155; font-weight:500;">Enable Physics</label>
+                                <input type="checkbox" class="physics-toggle" checked style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
                             </div>
                         </div>
                         <!-- Filtering -->
-                        <div style="margin-bottom:20px;">
-                            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin-bottom:12px;">Faceted Filtering</div>
+                        <div style="margin-bottom:24px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Filtering</div>
                             <div class="filter-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
                         </div>
                         <!-- Legend -->
-                        <div style="margin-bottom:16px;">
-                            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#64748b; margin-bottom:12px;">Color Legend</div>
+                        <div style="margin-bottom:18px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Colors</div>
                             <div class="legend-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
                         </div>
                         <!-- Tips -->
-                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:6px 12px; box-sizing:border-box; overflow:hidden;">
-                            <div style="font-size:11px; font-weight:600; color:#1e293b; margin:0 0 8px 0;">Tips</div>
-                            <div style="font-size:11px; color:#475569; line-height:1.6;">
-                                <div style="margin:0 0 4px 0;">• Drag a node to pin it. Double-click to release.</div>
-                                <div style="margin:0 0 4px 0;">• Mouse wheel to zoom. Drag background to pan.</div>
-                                <div style="margin:0;">• Click nodes to open IRIs in new tab.</div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
+                            <div style="font-size:11px; font-weight:600; color:#1e293b; margin-bottom:8px;">💡 Tips</div>
+                            <div style="font-size:11px; color:#475569; line-height:1.7;">
+                                <div style="margin-bottom:4px;">• <strong>Mouse wheel</strong> to zoom. <strong>Drag background</strong> to pan.</div>
+                                <div>• <strong>Click</strong> nodes/predicates to open IRIs in new tab.</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="graph-tooltip" style="position:fixed; display:none; z-index:50; pointer-events:none; max-width:400px; background:rgba(255,255,255,0.95); padding:8px 12px; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.15); font-size:11px; color:#1e293b;"></div>
+                <div class="graph-tooltip" style="position:fixed; display:none; z-index:50; pointer-events:none; max-width:400px; background:rgba(15,23,42,0.95); padding:12px 16px; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.25); font-size:13px; color:white; border:1px solid rgba(255,255,255,0.15); backdrop-filter:blur(8px);"></div>
             </div>
         `;
     }
@@ -376,22 +359,22 @@ class Graph_Gen {
         // Clear any existing SVG content
         svg.selectAll('*').remove();
 
-        // Color palette for groups
-        const defaultColors = [
-            "#a78bfa", "#22c55e", "#60a5fa", "#f59e0b", "#34d399",
-            "#f472b6", "#fb7185", "#f97316", "#38bdf8", "#cbd5e1",
-            "#eab308", "#a3e635", "#06b6d4", "#ec4899", "#8b5cf6"
-        ];
+        // Node types with colors and icons (from rdf_visual.html)
+        const nodeTypes = {
+            'person': { color: '#3b82f6', icon: '👤' },
+            'organization': { color: '#10b981', icon: '🏢' },
+            'place': { color: '#ef4444', icon: '📍' },
+            'concept': { color: '#8b5cf6', icon: '💭' },
+            'event': { color: '#f59e0b', icon: '📅' },
+            'literal': { color: '#06b6d4', icon: '📝' },
+            'resource': { color: '#6b7280', icon: '🔗' }
+        };
 
         const allGroups = Array.from(new Set(fullGraph.nodes.map(n => n.group))).sort();
-        const groupColor = new Map();
-        let colorIndex = 0;
-        allGroups.forEach(g => {
-            groupColor.set(g, defaultColors[colorIndex % defaultColors.length]);
-            colorIndex++;
-        });
 
-        const colorForGroup = (g) => groupColor.get(g) || "#94a3b8";
+        const colorForGroup = (g) => {
+            return nodeTypes[g]?.color || nodeTypes['resource'].color;
+        };
 
         // Setup SVG
         const defs = svg.append("defs");
@@ -400,12 +383,12 @@ class Graph_Gen {
             .attr("viewBox", "0 -5 10 10")
             .attr("refX", 25)
             .attr("refY", 0)
-            .attr("markerWidth", 4)
-            .attr("markerHeight", 4)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
             .attr("orient", "auto")
             .append("path")
             .attr("d", "M0,-5L10,0L0,5")
-            .attr("fill", "rgba(148,163,184,0.8)");
+            .attr("fill", "rgba(100,116,139,0.75)");
 
         const gRoot = svg.append("g");
 
@@ -449,7 +432,7 @@ class Graph_Gen {
 
         // Tooltip functions (must be declared before use)
         const showTooltip = (title, sub, x, y) => {
-            tooltip.html(`<div style="font-weight:600;">${title}</div><div style="color:#64748b; margin-top:2px;">${sub}</div>`)
+            tooltip.html(`<div style="font-weight:600; margin-bottom:4px;">${title}</div><div style="color:rgba(226,232,240,0.8); font-size:11px; word-break:break-all;">${sub}</div>`)
                 .style("display", "block")
                 .style("left", `${x + 12}px`)
                 .style("top", `${y + 12}px`);
@@ -463,19 +446,22 @@ class Graph_Gen {
         let linkSel = linkLayer.selectAll("path")
             .data(links, d => d.key)
             .join("path")
-            .attr("stroke", "rgba(226,232,240,0.55)")
-            .attr("stroke-width", 1.5)
+            .attr("stroke", "rgba(100,116,139,0.65)")
+            .attr("stroke-width", 2)
             .attr("fill", "none")
             .attr("marker-end", `url(#arrow-${container.id})`)
             .style("opacity", 0.7)
+            .style("cursor", "pointer")
             .on("mouseenter", function() {
                 d3.select(this)
-                    .attr("stroke-width", 2.5)
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 3)
                     .style("opacity", 1);
             })
             .on("mouseleave", function() {
                 d3.select(this)
-                    .attr("stroke-width", 1.5)
+                    .attr("stroke", "rgba(100,116,139,0.65)")
+                    .attr("stroke-width", 2)
                     .style("opacity", 0.7);
             });
 
@@ -483,31 +469,67 @@ class Graph_Gen {
         const iconForPredicate = (label) => {
             const lowerLabel = label ? label.toLowerCase() : '';
             
+            if (lowerLabel.includes('type') || lowerLabel === 'a') {
+                return "🏷️";
+            }
             if (lowerLabel.includes('name')) {
-                return "M12 2a5 5 0 0 1 5 5c0 2-1.2 3.7-2.9 4.5A7 7 0 0 1 19 19v3H5v-3a7 7 0 0 1 4.9-7.5A5 5 0 0 1 12 2Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z";
+                return "👤";
             }
             if (lowerLabel.includes('label')) {
-                return "M4 4h16v2H4V4zm0 6h16v2H4v-2zm0 6h10v2H4v-2z";
+                return "📝";
             }
-            if (lowerLabel.includes('type')) {
-                return "M12 3l8 5v8l-8 5-8-5V8l8-5Zm0 2.2L6 8v8l6 3.8L18 16V8l-6-2.8Z";
+            if (lowerLabel.includes('knows')) {
+                return "🤝";
             }
-            if (lowerLabel.includes('url') || lowerLabel.includes('link')) {
-                return "M10.6 13.4a1 1 0 0 0 0 1.2l.2.2a3 3 0 0 0 4.2 0l3.6-3.6a3 3 0 0 0 0-4.2l-.2-.2a3 3 0 0 0-4.2 0l-1 1 1.4 1.4 1-1a1 1 0 0 1 1.4 0l.2.2a1 1 0 0 1 0 1.4L13.8 13a1 1 0 0 1-1.4 0l-.2-.2a1 1 0 0 0-1.6.6Z";
+            if (lowerLabel.includes('memberof') || lowerLabel.includes('member')) {
+                return "🏢";
+            }
+            if (lowerLabel.includes('located') || lowerLabel.includes('place')) {
+                return "📍";
+            }
+            if (lowerLabel.includes('url') || lowerLabel.includes('link') || lowerLabel.includes('sameas')) {
+                return "🔗";
+            }
+            if (lowerLabel.includes('created') || lowerLabel.includes('modified') || lowerLabel.includes('date')) {
+                return "📅";
+            }
+            if (lowerLabel.includes('broader')) {
+                return "⬆️";
+            }
+            if (lowerLabel.includes('narrower')) {
+                return "⬇️";
             }
             
-            // Fallback generic link icon
-            return "M10.6 13.4a1 1 0 0 0 0 1.2l.2.2a3 3 0 0 0 4.2 0l3.6-3.6a3 3 0 0 0 0-4.2l-.2-.2a3 3 0 0 0-4.2 0l-1 1 1.4 1.4 1-1a1 1 0 0 1 1.4 0l.2.2a1 1 0 0 1 0 1.4L13.8 13a1 1 0 0 1-1.4 0l-.2-.2a1 1 0 0 0-1.6.6ZM13.4 10.6a1 1 0 0 0 0-1.2l-.2-.2a3 3 0 0 0-4.2 0L5.4 12.8a3 3 0 0 0 0 4.2l.2.2a3 3 0 0 0 4.2 0l1-1-1.4-1.4-1 1a1 1 0 0 1-1.4 0l-.2-.2a1 1 0 0 1 0-1.4L10.2 11a1 1 0 0 1 1.4 0l.2.2a1 1 0 0 0 1.6-.6Z";
+            // Fallback generic arrow
+            return "➡️";
         };
 
-        // Render predicate icons (clickable)
-        let iconSel = iconLayer.selectAll("a")
+        // Render predicate icons (clickable, using emoji icons)
+        let iconSel = iconLayer.selectAll("g")
             .data(links, d => d.key)
             .join(
                 enter => {
-                    const a = enter.append("a")
-                        .attr("target", "_blank")
-                        .attr("rel", "noopener")
+                    const g = enter.append("g")
+                        .attr("class", "predicate-icon-group")
+                        .style("cursor", "pointer");
+
+                    // Emoji icon as text
+                    g.append("text")
+                        .attr("class", "predicate-icon")
+                        .attr("text-anchor", "middle")
+                        .attr("dy", "0.35em")
+                        .attr("font-size", "16px")
+                        .style("pointer-events", "none")
+                        .style("user-select", "none")
+                        .text(d => iconForPredicate(d.predicateLabel));
+
+                    // Transparent hitbox for interactions
+                    g.append("rect")
+                        .attr("x", -12)
+                        .attr("y", -12)
+                        .attr("width", 24)
+                        .attr("height", 24)
+                        .attr("fill", "transparent")
                         .style("cursor", "pointer")
                         .on("mouseenter", (event, d) => {
                             const iri = d.predicateIri || d.predicateLabel;
@@ -517,35 +539,34 @@ class Graph_Gen {
                                 event.clientX,
                                 event.clientY
                             );
+                            simulation.stop();
                         })
                         .on("mousemove", (event) => {
                             tooltip.style("left", `${event.clientX + 12}px`)
                                 .style("top", `${event.clientY + 12}px`);
                         })
-                        .on("mouseleave", hideTooltip);
+                        .on("mouseleave", (event, d) => {
+                            hideTooltip();
+                            const physicsToggle = container.querySelector('.physics-toggle');
+                            if (physicsToggle && physicsToggle.checked) {
+                                simulation.alpha(0.1).restart();
+                            }
+                        })
+                        .on("click", (event, d) => {
+                            event.stopPropagation();
+                            if (d.predicateIri) {
+                                window.open(d.predicateIri, "_blank", "noopener");
+                            }
+                        });
 
-                    a.append("circle")
-                        .attr("r", 10)
-                        .attr("fill", "rgba(255,255,255,0.95)")
-                        .attr("stroke", "rgba(15,23,42,0.25)")
-                        .attr("stroke-width", 1);
-
-                    a.append("path")
-                        .attr("d", d => iconForPredicate(d.predicateLabel))
-                        .attr("transform", "translate(-6,-6) scale(0.5)")
-                        .attr("fill", "rgba(15,23,42,0.65)");
-
-                    return a;
+                    return g;
                 }
-            )
-            .attr("href", d => d.predicateIri || "#");
+            );
 
         const nodeLabel = (n) => {
-            if (n.group === "literal") {
-                return n.label.length > 48 ? n.label.slice(0, 45) + "…" : n.label;
-            }
+            // Truncate labels longer than 20 characters to first 17 chars + "..."
             const base = n.label || (n.iri ? n.iri : n.id);
-            return base.length > 30 ? base.slice(0, 27) + "…" : base;
+            return base.length > 20 ? base.slice(0, 17) + "..." : base;
         };
 
         // Render nodes with enhanced effects
@@ -571,7 +592,7 @@ class Graph_Gen {
                 if (d.iri) window.open(d.iri, "_blank", "noopener");
             })
             .on("mouseenter", (event, d) => {
-                // Highlight connected nodes
+                // Highlight connected nodes and links
                 const connectedIds = new Set();
                 links.forEach(link => {
                     const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
@@ -580,11 +601,20 @@ class Graph_Gen {
                     if (targetId === d.id) connectedIds.add(sourceId);
                 });
                 
+                // Dim non-connected nodes
                 nodeSel.style("opacity", n => 
                     n.id === d.id || connectedIds.has(n.id) ? 1 : 0.2
                 );
                 
+                // Dim non-connected links
                 linkSel.style("opacity", l => {
+                    const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
+                    const targetId = typeof l.target === 'object' ? l.target.id : l.target;
+                    return sourceId === d.id || targetId === d.id ? 1 : 0.1;
+                });
+                
+                // Also dim predicate icons
+                iconSel.style("opacity", l => {
                     const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
                     const targetId = typeof l.target === 'object' ? l.target.id : l.target;
                     return sourceId === d.id || targetId === d.id ? 1 : 0.1;
@@ -605,6 +635,7 @@ class Graph_Gen {
                 // Restore opacity
                 nodeSel.style("opacity", 1);
                 linkSel.style("opacity", 0.7);
+                iconSel.style("opacity", 1);
                 hideTooltip();
             })
             .on("dblclick", (event, d) => {
@@ -629,11 +660,12 @@ class Graph_Gen {
                 })
             );
 
-        // Add shapes to nodes with glow effect
+        // Add shapes to nodes with glow effect and enhanced styling
         nodeSel.each(function(d) {
             const g = d3.select(this);
+            g.selectAll("*").remove(); // Clear any existing elements
             
-            // Glow ring for circles (behind main shape)
+            // Add glow ring for circles (behind main shape)
             if (d.shape !== 'rect') {
                 g.append("circle")
                     .attr("r", d.size + 4)
@@ -643,38 +675,45 @@ class Graph_Gen {
             }
             
             if (d.shape === 'rect') {
+                // Rectangular nodes for literals with rounded corners
                 g.append("rect")
                     .attr("x", -d.size * 2)
                     .attr("y", -d.size)
                     .attr("width", d.size * 4)
                     .attr("height", d.size * 2)
-                    .attr("rx", 3)
+                    .attr("rx", 4)
                     .attr("fill", colorForGroup(d.group))
-                    .attr("stroke", "rgba(226,232,240,0.55)")
-                    .attr("stroke-width", 1.5)
-                    .attr("opacity", 0.9);
+                    .attr("stroke", "rgba(255,255,255,0.9)")
+                    .attr("stroke-width", 2)
+                    .attr("opacity", 0.95)
+                    .style("filter", "drop-shadow(0px 2px 6px rgba(0,0,0,0.2))");
             } else {
+                // Circular nodes for resources with enhanced stroke
                 g.append("circle")
                     .attr("r", d.size)
                     .attr("fill", colorForGroup(d.group))
-                    .attr("stroke", d._pinned ? "rgba(255,215,0,0.9)" : "rgba(226,232,240,0.55)")
-                    .attr("stroke-width", d._pinned ? 3 : 1.5)
+                    .attr("stroke", d._pinned ? "rgba(239,68,68,0.9)" : "rgba(255,255,255,0.9)")
+                    .attr("stroke-width", d._pinned ? 3 : 2)
                     .attr("opacity", 0.95)
-                    .style("filter", "drop-shadow(0px 2px 4px rgba(0,0,0,0.15))");
+                    .style("filter", "drop-shadow(0px 2px 6px rgba(0,0,0,0.2))");
             }
             
+            // Node label with improved styling
             g.append("text")
-                .attr("x", d.size + 8)
-                .attr("y", 4)
-                .attr("fill", "rgba(15,23,42,0.85)")
-                .attr("font-size", d.group === 'literal' ? 10 : 12)
+                .attr("x", d.shape === 'rect' ? 0 : d.size + 10)
+                .attr("y", d.shape === 'rect' ? 0 : 5)
+                .attr("text-anchor", d.shape === 'rect' ? "middle" : "start")
+                .attr("fill", d.shape === 'rect' ? "rgba(15,23,42,0.95)" : "rgba(15,23,42,0.9)")
+                .attr("font-size", d.group === 'literal' ? 10 : (d.size > 15 ? 13 : 12))
                 .attr("font-weight", d.size > 15 ? 600 : 500)
-                .style("text-shadow", "0px 1px 2px rgba(255,255,255,0.8)")
+                .style("text-shadow", "0px 1px 3px rgba(255,255,255,0.9), 0px 0px 1px rgba(255,255,255,0.9)")
+                .style("pointer-events", "none")
                 .text(nodeLabel(d));
         });
 
-        // Simulation tick
+        // Simulation tick with smooth animations
         simulation.on("tick", () => {
+            // Update link paths with smooth curves
             linkSel.attr("d", d => {
                 const sx = d.source.x;
                 const sy = d.source.y;
@@ -690,6 +729,7 @@ class Graph_Gen {
                 return `translate(${mx},${my})`;
             });
 
+            // Update node positions
             nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
         });
 
@@ -886,11 +926,20 @@ class Graph_Gen {
                 const isDark = this.theme === 'dark';
                 
                 svg.style("background", isDark ? "#0f172a" : "#f8fafc");
-                linkSel.attr("stroke", isDark ? "rgba(100,116,139,0.65)" : "rgba(226,232,240,0.55)");
-                defs.select("marker path").attr("fill", isDark ? "rgba(100,116,139,0.75)" : "rgba(226,232,240,0.65)");
-                nodeSel.selectAll("text").attr("fill", isDark ? "rgba(226,232,240,0.9)" : "rgba(15,23,42,0.85)");
-                nodeSel.selectAll("circle:not(.glow-ring)").attr("stroke", d => d._pinned ? "rgba(255,215,0,0.9)" : (isDark ? "rgba(100,116,139,0.65)" : "rgba(226,232,240,0.55)"));
-                nodeSel.selectAll("rect").attr("stroke", isDark ? "rgba(100,116,139,0.65)" : "rgba(226,232,240,0.55)");
+                linkSel.attr("stroke", isDark ? "rgba(100,116,139,0.75)" : "rgba(100,116,139,0.65)");
+                defs.select("marker path").attr("fill", isDark ? "rgba(100,116,139,0.85)" : "rgba(100,116,139,0.75)");
+                
+                // Update node text color
+                nodeSel.selectAll("text").attr("fill", isDark ? "rgba(226,232,240,0.95)" : "rgba(15,23,42,0.9)");
+                
+                // Update node strokes
+                nodeSel.selectAll("circle:not(.glow-ring)").attr("stroke", d => 
+                    d._pinned ? "rgba(239,68,68,0.9)" : (isDark ? "rgba(100,116,139,0.75)" : "rgba(255,255,255,0.9)")
+                );
+                nodeSel.selectAll("rect").attr("stroke", isDark ? "rgba(100,116,139,0.75)" : "rgba(255,255,255,0.9)");
+                
+                // Update icon backgrounds
+                iconSel.selectAll("circle").attr("fill", isDark ? "rgba(30,41,59,0.95)" : "rgba(255,255,255,0.98)");
             });
         }
 
@@ -899,6 +948,21 @@ class Graph_Gen {
         const settingsPanel = container.querySelector('.graph-settings-panel');
         const settingsCloseBtn = container.querySelector('.settings-close-btn');
         
+        // Add hover effects to all control buttons
+        const allControlBtns = container.querySelectorAll('.graph-fullscreen-btn, .graph-center-btn, .graph-theme-btn, .graph-settings-btn');
+        allControlBtns.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.background = 'rgba(255,255,255,1)';
+                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                btn.style.transform = 'translateY(-1px)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.background = 'rgba(255,255,255,0.95)';
+                btn.style.boxShadow = 'none';
+                btn.style.transform = 'translateY(0)';
+            });
+        });
+        
         if (settingsBtn && settingsPanel) {
             settingsBtn.addEventListener('click', () => {
                 settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
@@ -906,6 +970,14 @@ class Graph_Gen {
         }
         
         if (settingsCloseBtn && settingsPanel) {
+            settingsCloseBtn.addEventListener('mouseenter', () => {
+                settingsCloseBtn.style.background = 'rgba(239,68,68,0.1)';
+                settingsCloseBtn.style.color = '#ef4444';
+            });
+            settingsCloseBtn.addEventListener('mouseleave', () => {
+                settingsCloseBtn.style.background = 'none';
+                settingsCloseBtn.style.color = '#64748b';
+            });
             settingsCloseBtn.addEventListener('click', () => {
                 settingsPanel.style.display = 'none';
             });
@@ -946,27 +1018,64 @@ class Graph_Gen {
             });
         }
 
-        // Build filter chips (faceted filtering by group)
+        // Physics toggle
+        const physicsToggle = container.querySelector('.physics-toggle');
+        if (physicsToggle) {
+            physicsToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    simulation.alpha(0.3).restart();
+                } else {
+                    simulation.stop();
+                }
+            });
+        }
+
+        // Build filter checkboxes (faceted filtering by group)
         const filterContainer = container.querySelector('.filter-container');
         if (filterContainer) {
             const hiddenGroups = new Set();
             
             allGroups.forEach(group => {
-                const chip = document.createElement('button');
-                chip.className = 'filter-chip';
-                chip.style.cssText = 'display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid rgba(15,23,42,0.12); border-radius:6px; background:rgba(255,255,255,0.75); font-size:11px; color:rgba(15,23,42,0.88); cursor:pointer; transition:all 0.15s;';
-                chip.innerHTML = `
-                    <span style="width:10px; height:10px; border-radius:50%; background:${colorForGroup(group)};"></span>
-                    <span style="flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${group}</span>
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'display:flex; align-items:center; padding:0px 0px; background:rgba(255,255,255,0.9); transition:all 0.2s;';
+                
+                const label = document.createElement('label');
+                label.style.cssText = 'display:flex; align-items:center; padding: 2px 4px; gap:8px; cursor:pointer; flex:1;';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.style.cssText = 'width:16px; height:16px; cursor:pointer; accent-color:#3b82f6; border-radius:4px; flex-shrink:0;';
+                
+                const textWrapper = document.createElement('span');
+                textWrapper.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(15,23,42,0.9); font-weight:500;';
+                const groupIcon = nodeTypes[group]?.icon || '🔗';
+                textWrapper.innerHTML = `
+                    <span style="font-size:14px; flex-shrink:0;">${groupIcon}</span>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${group}</span>
                 `;
                 
-                chip.addEventListener('click', () => {
-                    if (hiddenGroups.has(group)) {
+                label.appendChild(checkbox);
+                label.appendChild(textWrapper);
+                wrapper.appendChild(label);
+                
+                // Add hover effect
+                wrapper.addEventListener('mouseenter', () => {
+                    wrapper.style.background = 'rgba(249,250,251,1)';
+                    wrapper.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                    wrapper.style.transform = 'translateY(-1px)';
+                });
+                wrapper.addEventListener('mouseleave', () => {
+                    wrapper.style.background = 'rgba(255,255,255,0.9)';
+                    wrapper.style.boxShadow = 'none';
+                    wrapper.style.transform = 'translateY(0)';
+                });
+                
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
                         hiddenGroups.delete(group);
-                        chip.style.opacity = '1';
                     } else {
                         hiddenGroups.add(group);
-                        chip.style.opacity = '0.35';
                     }
                     
                     // Update visibility
@@ -979,9 +1088,17 @@ class Graph_Gen {
                         }
                         return null;
                     });
+                    iconSel.style('display', d => {
+                        const source = nodes.find(n => n.id === d.source.id || n.id === d.source);
+                        const target = nodes.find(n => n.id === d.target.id || n.id === d.target);
+                        if (hiddenGroups.has(source?.group) || hiddenGroups.has(target?.group)) {
+                            return 'none';
+                        }
+                        return null;
+                    });
                 });
                 
-                filterContainer.appendChild(chip);
+                filterContainer.appendChild(wrapper);
             });
         }
 
@@ -991,16 +1108,18 @@ class Graph_Gen {
             allGroups.forEach(group => {
                 const chip = document.createElement('div');
                 chip.className = 'legend-chip';
-                chip.style.cssText = 'display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid rgba(15,23,42,0.12); border-radius:6px; background:rgba(255,255,255,0.75); font-size:11px; color:rgba(15,23,42,0.88);';
+                chip.style.cssText = 'display:flex; align-items:center; gap:7px; padding:7px 11px; border:1px solid rgba(226,232,240,0.8); border-radius:7px; background:rgba(255,255,255,0.9); font-size:11px; color:rgba(15,23,42,0.9); font-weight:500;';
+                const groupIcon = nodeTypes[group]?.icon || '🔗';
                 chip.innerHTML = `
-                    <span style="width:10px; height:10px; border-radius:50%; background:${colorForGroup(group)};"></span>
+                    <span style="width:11px; height:11px; border-radius:50%; background:${colorForGroup(group)}; box-shadow:0 0 0 2px rgba(255,255,255,0.5);"></span>
+                    <span style="font-size:14px;">${groupIcon}</span>
                     <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${group}</span>
                 `;
                 legendContainer.appendChild(chip);
             });
         }
 
-        // Initial zoom
-        svg.call(zoom.transform, d3.zoomIdentity.scale(0.95));
+        // Initial zoom with smooth animation (reduced to fit ~90% of graph in viewport)
+        svg.call(zoom.transform, d3.zoomIdentity.scale(0.65));
     }
 }
