@@ -269,7 +269,7 @@ class Graph_Gen {
                     </button>
                 </div>
                 <svg class="graph-svg" style="width:100%; height:100%; background:#f8fafc;"></svg>
-                <div class="graph-settings-panel" style="display:flex; flex-flow:column; position:absolute; right:12px; top:55px; z-index:20; width:min(380px,calc(100% - 24px)); background:rgba(255,255,255,0.97); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); backdrop-filter:blur(12px); height:calc(100vh - 300px);">
+                <div class="graph-settings-panel" style="display:none; flex-flow:column; position:absolute; right:12px; top:55px; z-index:20; width:min(380px,calc(100% - 24px)); background:rgba(255,255,255,0.97); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); backdrop-filter:blur(12px); height:calc(100vh - 300px);">
                     <div class="settings-header" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #e2e8f0; cursor:move; background:linear-gradient(135deg, rgba(249,250,251,0.9) 0%, rgba(241,245,249,0.9) 100%); border-radius:12px 12px 0 0;">
                         <div style="font-size:14px; font-weight:600; color:#1e293b;">Graph Settings</div>
                         <button class="settings-close-btn" style="padding:4px; background:none; border:none; cursor:pointer; color:#64748b; border-radius:6px; transition:all 0.2s;" title="Close">
@@ -1022,7 +1022,8 @@ class Graph_Gen {
         
         if (settingsBtn && settingsPanel) {
             settingsBtn.addEventListener('click', () => {
-                settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+                const isVisible = settingsPanel.style.display !== 'none';
+                settingsPanel.style.display = isVisible ? 'none' : 'flex';
             });
         }
         

@@ -21,7 +21,7 @@
 
 (function () {
 
-    const SLinks = new SuperLinks();
+    const SLinks = new ShowSuperLinks();
 
     var micro_items = 0;
     var json_ld_Text = null;

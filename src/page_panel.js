@@ -523,7 +523,7 @@ function initGraphInContainer(container) {
 }
 
 function getSelectedTab() {
-  var el = DOM.qSel('.tabs input:checked');
+  var el = DOM.qSel('.tabs li > input:checked');
   if (el)
     return el.parentNode.id.substring(4);
   else
@@ -585,7 +585,6 @@ function show_Data(data_error, html_data, sheet_html, graph_html)
 
     if (val_html && val_html.trim().length > 0) {
       html += val_html;
-//??      gData.tabs.push(`${tabname}`);
     }
     if (data_error && data_error.length > 0) {
       var err_msg = create_err_msg(title, data_error);
@@ -594,10 +593,6 @@ function show_Data(data_error, html_data, sheet_html, graph_html)
       }
     }
     if (html.length > 0 && html.replace(/\s/g, "").length > 0) {
-//      if (tabname === 'markdown') {
-//        var preview = $("#md_preview iframe").contents().find("body");
-//        preview.get(0).innerHTML = html;
-//      } else {
       {
         // Populate the property sheet view container
         const propertySheetContainer = DOM.qSel(`#${tabname}_items .view-property-sheet`);
@@ -1089,7 +1084,7 @@ function showInfo(msg, href)
   let el;
 
   el = DOM.iSel('alert-msg');
-  el.textContent = msg;
+  el.innerHTML = msg;
 
   el = DOM.iSel('alert_href')
   if (href) {

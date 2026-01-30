@@ -32,6 +32,7 @@ class Convert_Turtle{
   {
     var self = this;
     var handler = new Handle_Turtle(0, 'ttl', true);
+    handler.skip_error = false;
     var ret = await handler.parse(ttlData, baseURL);
 
     if (ret.errors.length>0)

@@ -322,7 +322,7 @@ class Handle_Turtle {
               if (self.skip_error) {
                 self.skipped_error.push(error);
 
-                resolve('');
+                resolve({data:'', baseURI:docURL});
               }
               else
               {

@@ -445,7 +445,7 @@ function initGraphInContainer(container) {
 }
 
 function getSelectedTab() {
-  var el = DOM.qSel('.tabs input:checked');
+  var el = DOM.qSel('.tabs li > input:checked');
   if (el)
     return el.parentNode.id.substring(4);
   else
@@ -928,7 +928,7 @@ async function SuperLinks_exec()
   if (doc_URL !== null) {
     Browser.api.runtime.sendMessage({ cmd: 'reset_uploads' });
     Browser.api.runtime.sendMessage({ cmd: 'actionSuperLinks' });
-    close(); // close popup
+    //close(); // close popup
   }
   return false;
 }
@@ -1412,7 +1412,7 @@ function showInfo(msg, href)
   let el;
 
   el = DOM.iSel('alert-msg');
-  el.textContent = msg;
+  el.innerHTML = msg;
 
   el = DOM.iSel('alert_href')
   if (href) {

@@ -410,7 +410,6 @@
 
   function init_handlers()
   {
-
     if (Browser.is_safari) {
       Browser.api.webNavigation.onBeforeNavigate.addListener(
         (d) => {
