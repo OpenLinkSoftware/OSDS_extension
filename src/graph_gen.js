@@ -269,7 +269,7 @@ class Graph_Gen {
                     </button>
                 </div>
                 <svg class="graph-svg" style="width:100%; height:100%; background:#f8fafc;"></svg>
-                <div class="graph-settings-panel" style="display:none; position:absolute; right:12px; top:70px; z-index:20; width:min(380px,calc(100% - 24px)); background:rgba(255,255,255,0.97); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); backdrop-filter:blur(12px);">
+                <div class="graph-settings-panel" style="display:flex; flex-flow:column; position:absolute; right:12px; top:55px; z-index:20; width:min(380px,calc(100% - 24px)); background:rgba(255,255,255,0.97); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); backdrop-filter:blur(12px); height:calc(100vh - 300px);">
                     <div class="settings-header" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #e2e8f0; cursor:move; background:linear-gradient(135deg, rgba(249,250,251,0.9) 0%, rgba(241,245,249,0.9) 100%); border-radius:12px 12px 0 0;">
                         <div style="font-size:14px; font-weight:600; color:#1e293b;">Graph Settings</div>
                         <button class="settings-close-btn" style="padding:4px; background:none; border:none; cursor:pointer; color:#64748b; border-radius:6px; transition:all 0.2s;" title="Close">
@@ -280,30 +280,30 @@ class Graph_Gen {
                     </div>
                     <div class="settings-body" style="padding:18px; max-height:min(70vh,500px); overflow-y:auto;">
                         <!-- Physics -->
-                        <div style="margin-bottom:24px;">
-                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Physics Simulation</div>
-                            <div style="margin-bottom:14px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:6px;">Physics Simulation</div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <label style="font-size:12px; color:#334155; font-weight:500;">Charge strength</label>
                                     <span class="charge-value" style="font-size:11px; color:#64748b; font-variant-numeric:tabular-nums; font-weight:600;">-450</span>
                                 </div>
                                 <input type="range" class="charge-slider" min="-1200" max="-50" step="10" value="-450" style="width:90%; height:6px; accent-color:#6366f1; cursor:pointer;">
                             </div>
-                            <div style="margin-bottom:14px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <label style="font-size:12px; color:#334155; font-weight:500;">Link distance</label>
                                     <span class="link-distance-value" style="font-size:11px; color:#64748b; font-variant-numeric:tabular-nums; font-weight:600;">140</span>
                                 </div>
                                 <input type="range" class="link-distance-slider" min="40" max="320" step="5" value="140" style="width:90%; height:6px; accent-color:#6366f1; cursor:pointer;">
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <label style="font-size:12px; color:#334155; font-weight:500;">Enable Physics</label>
                                 <input type="checkbox" class="physics-toggle" checked style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;">
                             </div>
                         </div>
                         <!-- Predicate Display -->
-                        <div style="margin-bottom:24px;">
-                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Predicate Display</div>
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:6px;">Predicate Display</div>
                             <div style="display:flex; gap:12px;">
                                 <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:#334155; padding:2px">
                                     <input type="radio" name="predicate-display" value="icons" class="predicate-display-radio" checked style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;top:revert;left:revert;position:revert;">
@@ -316,12 +316,27 @@ class Graph_Gen {
                             </div>
                         </div>
                         <!-- Filtering -->
-                        <div style="margin-bottom:24px;">
-                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Filtering</div>
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:6px;">Node Filtering</div>
                             <div class="filter-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
                         </div>
+                        <!-- Predicate Filtering -->
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="predicate-filter-toggle">
+                                <span class="toggle-icon" style="font-size:16px; transition:transform 0.2s; transform:rotate(-90deg);">▼</span>
+                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Predicate Filtering</div>
+                            </div>
+                            <div class="predicate-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; margin-bottom:-8px;">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px;">Select predicates to include in graph:</div>
+                                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                                    <button class="select-all-predicates" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Select all predicates">Select All</button>
+                                    <button class="deselect-all-predicates" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Deselect all predicates">Deselect All</button>
+                                </div>
+                                <div class="predicate-checkboxes" style="display:grid; grid-template-columns:repeat(1,1fr);"></div>
+                            </div>
+                        </div>
                         <!-- Legend -->
-                        <div style="margin-bottom:18px;">
+                        <div style="margin-bottom:16px;">
                             <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Colors</div>
                             <div class="legend-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
                         </div>
@@ -1211,6 +1226,233 @@ class Graph_Gen {
                 
                 filterContainer.appendChild(wrapper);
             });
+        }
+        
+        // Build predicate filter checkboxes
+        const predicateCheckboxesContainer = container.querySelector('.predicate-checkboxes');
+        if (predicateCheckboxesContainer) {
+            const hiddenPredicates = new Set();
+            
+            // Extract unique predicates from links
+            const uniquePredicates = [];
+            const predicateMap = new Map();
+            
+            fullGraph.links.forEach(link => {
+                const predicateLabel = link.predicateLabel || link.predicateIri;
+                if (!predicateMap.has(predicateLabel)) {
+                    predicateMap.set(predicateLabel, {
+                        label: predicateLabel,
+                        iri: link.predicateIri,
+                        count: 1
+                    });
+                } else {
+                    predicateMap.get(predicateLabel).count++;
+                }
+            });
+            
+            // Convert to array and sort by count (descending)
+            predicateMap.forEach(predicate => uniquePredicates.push(predicate));
+            uniquePredicates.sort((a, b) => b.count - a.count);
+            
+            // Create checkboxes for each predicate
+            uniquePredicates.forEach(predicate => {
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'display:flex; align-items:center; background:rgba(255,255,255,0.9); border-radius:6px; transition:all 0.2s;';
+                
+                const label = document.createElement('label');
+                label.style.cssText = 'display:flex; align-items:center; padding: 6px; gap:8px; cursor:pointer; flex:1;';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = true;
+                checkbox.style.cssText = 'width:16px; height:16px; cursor:pointer; accent-color:#3b82f6; border-radius:4px; flex-shrink:0;';
+                checkbox.dataset.predicateIri = predicate.iri;
+                checkbox.dataset.predicateLabel = predicate.label;
+                
+                const textWrapper = document.createElement('span');
+                textWrapper.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:11px; color:rgba(15,23,42,0.9); font-weight:500;';
+                
+                const iconSpan = document.createElement('span');
+                iconSpan.style.cssText = 'font-size:14px; flex-shrink:0;';
+                iconSpan.textContent = iconForPredicate(predicate.label);
+                
+                const labelSpan = document.createElement('span');
+                labelSpan.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;';
+                labelSpan.textContent = predicate.label;
+                
+                const countSpan = document.createElement('span');
+                countSpan.style.cssText = 'font-size:10px; color:#64748b; font-weight:600; background:#f1f5f9; padding:1px 6px; border-radius:4px;';
+                countSpan.textContent = predicate.count;
+                
+                textWrapper.appendChild(iconSpan);
+                textWrapper.appendChild(labelSpan);
+                textWrapper.appendChild(countSpan);
+                
+                label.appendChild(checkbox);
+                label.appendChild(textWrapper);
+                wrapper.appendChild(label);
+                
+                // Add hover effect
+                wrapper.addEventListener('mouseenter', () => {
+                    wrapper.style.background = 'rgba(249,250,251,1)';
+                    wrapper.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+                    wrapper.style.transform = 'translateY(-1px)';
+                });
+                wrapper.addEventListener('mouseleave', () => {
+                    wrapper.style.background = 'rgba(255,255,255,0.9)';
+                    wrapper.style.boxShadow = 'none';
+                    wrapper.style.transform = 'translateY(0)';
+                });
+                
+                // Add click handler for predicate label to open IRI
+                labelSpan.style.cursor = 'pointer';
+                labelSpan.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (predicate.iri) {
+                        window.open(predicate.iri, "_blank", "noopener");
+                    }
+                });
+                
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        hiddenPredicates.delete(predicate.label);
+                    } else {
+                        hiddenPredicates.add(predicate.label);
+                    }
+                    
+                    // Update visibility based on predicate filtering
+                    linkSel.style('display', d => {
+                        const predicateLabel = d.predicateLabel || d.predicateIri;
+                        if (hiddenPredicates.has(predicateLabel)) {
+                            return 'none';
+                        }
+                        return null;
+                    });
+                    
+                    iconSel.style('display', d => {
+                        const predicateLabel = d.predicateLabel || d.predicateIri;
+                        if (hiddenPredicates.has(predicateLabel)) {
+                            return 'none';
+                        }
+                        return null;
+                    });
+                    
+                    // Also hide nodes that have no visible connections
+                    const visibleNodeIds = new Set();
+                    linkSel.filter(d => {
+                        const predicateLabel = d.predicateLabel || d.predicateIri;
+                        return !hiddenPredicates.has(predicateLabel);
+                    }).each(d => {
+                        const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+                        const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+                        visibleNodeIds.add(sourceId);
+                        visibleNodeIds.add(targetId);
+                    });
+                    
+                    nodeSel.style('display', d => visibleNodeIds.has(d.id) ? null : 'none');
+                });
+                
+                predicateCheckboxesContainer.appendChild(wrapper);
+            });
+            
+            // Add event handlers for Select All and Deselect All buttons
+            const selectAllBtn = container.querySelector('.select-all-predicates');
+            const deselectAllBtn = container.querySelector('.deselect-all-predicates');
+            const predicateCheckboxes = container.querySelectorAll('.predicate-checkboxes input[type="checkbox"]');
+            
+            if (selectAllBtn && predicateCheckboxes.length > 0) {
+                selectAllBtn.addEventListener('click', () => {
+                    predicateCheckboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                    
+                    // Reset hidden predicates set
+                    hiddenPredicates.clear();
+                    
+                    // Show all elements
+                    linkSel.style('display', null);
+                    iconSel.style('display', null);
+                    nodeSel.style('display', null);
+                });
+            }
+            
+            if (deselectAllBtn && predicateCheckboxes.length > 0) {
+                deselectAllBtn.addEventListener('click', () => {
+                    predicateCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    
+                    // Add all predicates to hidden set
+                    predicateCheckboxes.forEach(checkbox => {
+                        hiddenPredicates.add(checkbox.dataset.predicateLabel);
+                    });
+                    
+                    // Hide all links and icons
+                    linkSel.style('display', 'none');
+                    iconSel.style('display', 'none');
+                    nodeSel.style('display', 'none');
+                });
+            }
+            
+            // Add toggle functionality for Predicate Filtering section
+            const toggleButton = container.querySelector('.predicate-filter-toggle');
+            const toggleIcon = container.querySelector('.predicate-filter-toggle .toggle-icon');
+            const filterContent = container.querySelector('.predicate-filter-content');
+            
+            if (toggleButton && filterContent) {
+                // Initialize toggle state (collapsed by default)
+                let isExpanded = false;
+                
+                // Get the actual height of content when expanded
+                const getContentHeight = () => {
+                    filterContent.style.maxHeight = 'none';
+                    filterContent.style.visibility = 'visible';
+                    const height = filterContent.scrollHeight;
+                    return height;
+                };
+                
+                const contentHeight = getContentHeight();
+                
+                // Reset to collapsed state
+                filterContent.style.maxHeight = '0px';
+                filterContent.style.visibility = 'hidden';
+                filterContent.style.opacity = '0';
+                filterContent.style.overflow = 'hidden';
+                filterContent.style.marginBottom = '-8px';
+                filterContent.style.padding = '0px';
+                
+                toggleButton.addEventListener('click', () => {
+                    isExpanded = !isExpanded;
+                    
+                    if (isExpanded) {
+                        // Expand
+                        filterContent.style.maxHeight = contentHeight + 'px';
+                        filterContent.style.visibility = 'visible';
+                        filterContent.style.opacity = '1';
+                        filterContent.style.marginBottom = '0px';
+                        filterContent.style.overflow = 'visible';
+                        filterContent.style.padding = '8px';
+                        toggleIcon.style.transform = 'rotate(0deg)';
+                    } else {
+                        // Collapse
+                        filterContent.style.maxHeight = '0px';
+                        filterContent.style.opacity = '0';
+                        filterContent.style.visibility = 'hidden';
+                        filterContent.style.overflow = 'hidden';
+                        filterContent.style.marginBottom = '-8px';
+                        filterContent.style.padding = '0px';
+                        toggleIcon.style.transform = 'rotate(-90deg)';
+                    }
+                });
+                
+                // Add hover effect to toggle button
+                toggleButton.addEventListener('mouseenter', () => {
+                    toggleButton.style.background = 'rgba(226,232,240,0.5)';
+                });
+                toggleButton.addEventListener('mouseleave', () => {
+                    toggleButton.style.background = 'transparent';
+                });
+            }
         }
 
         // Build legend
