@@ -189,8 +189,9 @@
       if (dd_el)
         continue;
 
-      const btn_copy = hdr.querySelector('button')
-      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+      const btn_copy = hdr?.querySelector('button')
+      if (btn_copy)
+        hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
     }
     lst = document.querySelectorAll('article pre');
     for(const v of lst) 
@@ -200,8 +201,9 @@
       if (dd_el)
         continue;
 
-      const btn_copy = hdr.querySelector('button')
-      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+      const btn_copy = hdr?.querySelector('button')
+      if (btn_copy)
+        hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
     }
   }
 

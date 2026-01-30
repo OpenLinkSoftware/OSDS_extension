@@ -33,6 +33,11 @@
       "ext.osds.pref.user": ""
     };
 
+  function get_setting(key)
+  {
+    const v = localStorage.getItem(key);
+    return (v) ? v : chk_setting[key];
+  }  
 
   async function reload_settings()
   {
@@ -43,17 +48,24 @@
 
     chk_setting['ext.osds.pref.user.chk'] = await setting.getValue('ext.osds.pref.user.chk');
     chk_setting['ext.osds.pref.user'] = await setting.getValue('ext.osds.pref.user');
+
+    localStorage.setItem("ext.osds.handle_all", chk_setting["ext.osds.handle_all"]);
+    localStorage.setItem("ext.osds.handle_csv", chk_setting["ext.osds.handle_csv"]);
+    localStorage.setItem("ext.osds.handle_json", chk_setting["ext.osds.handle_json"]);
+    localStorage.setItem("ext.osds.handle_xml", chk_setting["ext.osds.handle_xml"]);
+    localStorage.setItem("ext.osds.pref.user.chk", chk_setting["ext.osds.pref.user.chk"]);
+    localStorage.setItem("ext.osds.pref.user", chk_setting["ext.osds.pref.user"]);
   }
 
   function onBeforeLoadName(url, tabId)
   {
-    var chk_all = chk_setting["ext.osds.handle_all"];
+    var chk_all = get_setting("ext.osds.handle_all");
 
-    var chk_csv = chk_setting["ext.osds.handle_csv"];
+    var chk_csv = get_setting("ext.osds.handle_csv");
     var handle_csv = (chk_csv && chk_csv==="1");
-    var chk_json = chk_setting["ext.osds.handle_json"];
+    var chk_json = get_setting("ext.osds.handle_json");
     var handle_json = (chk_json && chk_json==="1");
-    var chk_xml = chk_setting["ext.osds.handle_xml"];
+    var chk_xml = get_setting("ext.osds.handle_xml");
     var handle_xml = (chk_xml && chk_xml==="1");
 
     var handle = false;
@@ -162,11 +174,11 @@
       }
     }
 
-    var chk_all = chk_setting["ext.osds.handle_all"];
+    var chk_all =  get_setting("ext.osds.handle_all");
 
-    var chk_xml = chk_setting["ext.osds.handle_xml"];
-    var chk_csv = chk_setting["ext.osds.handle_csv"];
-    var chk_json = chk_setting["ext.osds.handle_json"];
+    var chk_xml =  get_setting("ext.osds.handle_xml");
+    var chk_csv =  get_setting("ext.osds.handle_csv");
+    var chk_json = get_setting("ext.osds.handle_json");
 
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
@@ -396,9 +408,8 @@
 
   });
 
-  async function init_handlers()
+  function init_handlers()
   {
-    await reload_settings();
 
     if (Browser.is_safari) {
       Browser.api.webNavigation.onBeforeNavigate.addListener(
@@ -421,9 +432,9 @@
     if (Browser.is_ff && !Browser.is_ff_v3 && !Browser.is_safari) {
       Browser.api.webRequest.onBeforeSendHeaders.addListener(
         function(details) {
-          var chk = chk_setting['ext.osds.pref.user.chk'];
+          var chk = get_setting('ext.osds.pref.user.chk');
           if (chk && chk==="1") {
-            var pref_user = chk_setting['ext.osds.pref.user'];
+            var pref_user = get_setting('ext.osds.pref.user');
             if (pref_user && pref_user.length> 0) {
               details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
             }
@@ -438,9 +449,9 @@
 
     if (!Browser.is_safari) {  // isn't supported by Safari
       Browser.api.webRequest.onHeadersReceived.addListener(
-  	onHeadersReceived, 
-  	{types: ["main_frame"], urls: ["<all_urls>"]}, 
-        (Browser.is_chrome_v3 || Browser.is_ff_v3) ? ["responseHeaders"] : ["responseHeaders", "blocking"] );
+  	    onHeadersReceived, 
+  	      {types: ["main_frame"], urls: ["<all_urls>"]}, 
+          (Browser.is_chrome_v3 || Browser.is_ff_v3) ? ["responseHeaders"] : ["responseHeaders", "blocking"] );
     }
   }
 
