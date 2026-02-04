@@ -450,8 +450,8 @@
               return true;
           }
           else if (request.cmd === "req_doc_data") {
-              request_doc_data();
               sendResponse({ping:1});
+              request_doc_data();
               return true;
           }
           else if (request.cmd == "super_links_chatgpt_return") {

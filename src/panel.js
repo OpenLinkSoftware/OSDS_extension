@@ -221,6 +221,11 @@ function showPopup(tabId)
 
 async function loadPopup()
 {
+  if (Browser.is_safari) {
+    const body = DOM.qSel('body');
+    body.classList.add('sniffer_sf');
+  }
+    
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
   $("#query_place").hide();

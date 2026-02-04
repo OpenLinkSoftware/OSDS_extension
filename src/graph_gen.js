@@ -326,13 +326,13 @@ class Graph_Gen {
                                 <span class="toggle-icon" style="font-size:16px; transition:transform 0.2s; transform:rotate(-90deg);">▼</span>
                                 <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Predicate Filtering</div>
                             </div>
-                            <div class="predicate-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; margin-bottom:-8px;">
-                                <div style="font-size:11px; color:#64748b; margin-bottom:8px;">Select predicates to include in graph:</div>
-                                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                            <div class="predicate-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden;">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Select predicates to include in graph:</div>
+                                <div style="display:flex; gap:8px; margin-bottom:8px; padding:0 12px;">
                                     <button class="select-all-predicates" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Select all predicates">Select All</button>
                                     <button class="deselect-all-predicates" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Deselect all predicates">Deselect All</button>
                                 </div>
-                                <div class="predicate-checkboxes" style="display:grid; grid-template-columns:repeat(1,1fr);"></div>
+                                <div class="predicate-checkboxes" style="display:grid; grid-template-columns:repeat(1,1fr); padding:0 12px 12px;"></div>
                             </div>
                         </div>
                         <!-- Legend -->
@@ -793,6 +793,9 @@ class Graph_Gen {
         // Controls
         const fullscreenBtn = container.querySelector('.graph-fullscreen-btn');
         if (fullscreenBtn) {
+            if (Browser.is_safari)
+                fullscreenBtn.style.display = 'none';
+            
             let isExpanded = false;
             let originalStyle = null;
             
@@ -1406,43 +1409,59 @@ class Graph_Gen {
                 
                 // Get the actual height of content when expanded
                 const getContentHeight = () => {
+                    // Temporarily make visible to measure
+                    const originalMaxHeight = filterContent.style.maxHeight;
+                    const originalVisibility = filterContent.style.visibility;
+                    const originalDisplay = filterContent.style.display;
+                    
                     filterContent.style.maxHeight = 'none';
-                    filterContent.style.visibility = 'visible';
+                    filterContent.style.visibility = 'hidden';
+                    filterContent.style.display = 'block';
+                    
                     const height = filterContent.scrollHeight;
+                    
+                    // Restore original values
+                    filterContent.style.maxHeight = originalMaxHeight;
+                    filterContent.style.visibility = originalVisibility;
+                    filterContent.style.display = originalDisplay;
+                    
                     return height;
                 };
-                
-                const contentHeight = getContentHeight();
-                
-                // Reset to collapsed state
-                filterContent.style.maxHeight = '0px';
-                filterContent.style.visibility = 'hidden';
-                filterContent.style.opacity = '0';
-                filterContent.style.overflow = 'hidden';
-                filterContent.style.marginBottom = '-8px';
-                filterContent.style.padding = '0px';
                 
                 toggleButton.addEventListener('click', () => {
                     isExpanded = !isExpanded;
                     
                     if (isExpanded) {
-                        // Expand
-                        filterContent.style.maxHeight = contentHeight + 'px';
+                        // Calculate height before expanding
+                        const height = getContentHeight();
+                        
+                        // Expand - Safari needs explicit height
+                        filterContent.style.display = 'block';
                         filterContent.style.visibility = 'visible';
+                        filterContent.style.maxHeight = height + 'px';
                         filterContent.style.opacity = '1';
-                        filterContent.style.marginBottom = '0px';
-                        filterContent.style.overflow = 'visible';
-                        filterContent.style.padding = '8px';
+                        filterContent.style.overflow = 'hidden'; // Keep hidden during transition
                         toggleIcon.style.transform = 'rotate(0deg)';
+                        
+                        // After transition completes, allow overflow for checkboxes
+                        setTimeout(() => {
+                            if (isExpanded) { // Check if still expanded
+                                filterContent.style.overflow = 'auto';
+                            }
+                        }, 300); // Match transition duration
                     } else {
                         // Collapse
                         filterContent.style.maxHeight = '0px';
                         filterContent.style.opacity = '0';
-                        filterContent.style.visibility = 'hidden';
                         filterContent.style.overflow = 'hidden';
-                        filterContent.style.marginBottom = '-8px';
-                        filterContent.style.padding = '0px';
                         toggleIcon.style.transform = 'rotate(-90deg)';
+                        
+                        // Hide completely after transition
+                        setTimeout(() => {
+                            if (!isExpanded) { // Check if still collapsed
+                                filterContent.style.visibility = 'hidden';
+                            }
+                        }, 300); // Match transition duration
                     }
                 });
                 
