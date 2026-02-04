@@ -14,7 +14,7 @@
   },
   "action": {
     "default_icon": "images/icon16.png",
-    "default_title": "Show Document Metadata"
+    "default_title": "Show Metadata"
   },
   "side_panel": {
     "default_path": "panel.html"
