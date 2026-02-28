@@ -78,7 +78,7 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
-  const dd_base_pplabs = `<span style="background-color: lightgreen;">Data format:</span>
+  const dd_base_pplabs = `<span style="background-color: lightgreen;" class="text-quiet">Data format:</span>
            <SELECT id="code_type" class="bg-offsetPlus dark:bg-offsetPlusDark" >
                  <OPTION id="none" selected></OPTION>
                  <OPTION id="turtle">RDF-Turtle</OPTION>
@@ -118,12 +118,11 @@
 
   const dropDown_openai = `<div class="flex items-center gap-2" style="height:24px;margin-right:300px"> ${dd_base_openai} </div>`;
 
-  const ms_wrap = '<div style="display:flex; flex-direction:row-reverse; margin-right:70px">'
   const dropDown_ms = `<div> ${dd_base_rev} </div>`;
 
   const dropDown_claude = `<div style="display:flex; flex-direction:row; align-items:center; margin-left:200px; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
-  const dropDown_claude_ar = `<div style="display:flex; flex-direction:row; align-items:center; justify-content:center; background: lightgray; height:24px;" class="text-text-500">
+  const dropDown_claude_ar = `<div style="display:flex; flex-direction:row; align-items:center; margin-left:100px; justify-content:center; background: lightgray; height:24px;" class="text-text-500">
            ${dd_base_rev} </div>`;
 
   const dropDown_gemini = `<div style="display:flex; flex-direction:row; align-items:center; height:24px;">
@@ -131,10 +130,10 @@
   const dropDown_gemini1 = `<div style="display:flex; flex-direction:row-reverse; align-items:center; margin-right:10px">
            ${dropDown_gemini} </div>`;
 
-  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
-  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark text-quiet" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark text-quiet" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;"> ${dd_base_pplabs} </div>`;
 
-  const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-left:300px"> ${dd_base_rev} </div>`;
+  const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-right:200px"> ${dd_base_rev} </div>`;
   const dropDown_huggingface = `<div style="margin-left:300px; display:flex; flex-flow:row; height:18px; align-items:center;"> ${dd_base_hugging} </div>`;
   const dropDown_you = `<div style="display:flex; flex-direction:row; height:24px;align-items:center; color:black"> ${dd_base_pplabs} </div>`;
   const dropDown_meta = `<div style="height:20px;margin-left:200px;position:absolute;"> ${dd_base_hugging} </div>`;
@@ -164,10 +163,19 @@
   const dropDown_allenai = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline;">
            ${dd_base_rev} </div>`;
 
-  const dropDown_github = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:200px;">
+  const dropDown_github = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:100px;">
            ${dd_base_rev} </div>`;
 
   const dropDown_librechat = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_kimi = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_diffy = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
+           ${dd_base_rev} </div>`;
+
+  const dropDown_aistudio = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
            ${dd_base_rev} </div>`;
 
 
@@ -177,12 +185,13 @@
     for(const v of lst) 
     {
       const hdr = v.children[0];
-      const dd_el = hdr.querySelector('#code_type');
+      const dd_el = hdr?.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const btn_copy = hdr.querySelector('button')
-      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+      const btn_copy = hdr?.querySelector('button')
+      if (btn_copy)
+        hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
     }
     lst = document.querySelectorAll('article pre');
     for(const v of lst) 
@@ -192,63 +201,61 @@
       if (dd_el)
         continue;
 
-      const btn_copy = hdr.querySelector('button')
-      hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+      const btn_copy = hdr?.querySelector('button')
+      if (btn_copy)
+        hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
     }
   }
 
 
   function scan_code_openai_play()
   {
-    const lst = document.querySelectorAll('div[data-panel] pre');
+    const lst = document.querySelectorAll('main pre code');
     for(const v of lst) 
     {
-      const hdr = v.parentNode
-      const dd_el = hdr.querySelector('#code_type');
+      const blk = v.parentNode.parentNode;
+      const dd_el = blk.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const btn_copy = hdr.querySelector('button')
+      const btn_copy = blk.querySelector('button')
       if (btn_copy)
-      	hdr.insertBefore(DOM.htmlToElements(dropDown_openai_play)[0], btn_copy);
+        btn_copy.insertAdjacentHTML('beforebegin', dropDown_openai_play);
     }
   }
 
 
   function scan_code_claude()
   {
-    let lst = document.querySelectorAll('pre > div');
-    for(const v of lst) 
+    let lst = document.querySelectorAll('pre > code');
+    for(const v of lst)
     {
-      const hdr = v.querySelector('div')
-      const dd_el = v.querySelector('#code_type');
-      if (dd_el)
-        continue;
-
-      if (v.childNodes.length > 1) {
-        v.childNodes[0].append(DOM.htmlToElements(dropDown_claude)[0]);
-        v.childNodes[0].style['display']='flex';
+      const blk = v.parentNode.parentNode.parentNode;
+      const child = blk.childNodes;
+      if (child.length >= 3) {
+        const dd_el = blk.querySelector('#code_type');
+        if (dd_el)
+          continue;
+        const title = child[1];
+        title.style['display'] = 'flex';
+        title.insertAdjacentHTML('beforeend', dropDown_claude);
       }
     }
 
     lst = document.querySelectorAll('div > code');
-    for(const v of lst) 
+    for(const v of lst)
     {
-      const blk = v.parentNode.parentNode.parentNode.parentNode;
+      const blk = v.parentNode.parentNode.parentNode.parentNode.parentNode;
       const child = blk.childNodes;
-      if (child.length >= 3) {
-        const title = child[0];
-        const dd_el = title.querySelector('#code_type');
-        if (dd_el)
-          continue;
-        title.childNodes[0].insertAdjacentHTML('afterend', dropDown_claude_ar);
-      }
       // artifacts
       if (child.length >= 2) {
         const dd_el = blk.querySelector('#code_type');
         if (dd_el)
           continue;
-        blk.insertAdjacentHTML('afterbegin',dropDown_claude_ar);
+        const title_blk = child[0]
+        const title = title_blk.querySelectorAll(':scope > div')[0];
+
+        title.insertAdjacentHTML('beforebegin',dropDown_claude_ar);
       }
     }
   }
@@ -328,15 +335,13 @@
     const lst = document.querySelectorAll('pre');
     for(const v of lst) 
     {
-      let i=0;
-      const block = v.children[0];
-      const dd_el = block.querySelector('#code_type');
+      const dd_el = v.querySelector('#code_type');
       if (dd_el)
         continue;
 
-      const btn_copy = block?.querySelector('button')
-      if (btn_copy && block)
-        block.insertBefore(DOM.htmlToElements(dropDown_mistral)[0], btn_copy);
+      const btn_copy = v.querySelector('button')
+      if (btn_copy)
+        btn_copy.insertAdjacentHTML('beforebegin',dropDown_mistral);
     }
   }
 
@@ -420,13 +425,19 @@
       if (dd_el)
         continue;
 
-      const btn_copy = block.querySelector('div > button');
+      let btn_copy = block.querySelector('div > svg');
       if (btn_copy) {
         const btn_block = btn_copy.parentNode.closest('div'); 
-        btn_block.insertAdjacentHTML('afterbegin', dropDown_grok);
-        btn_block.style['display']='flex';
-        btn_block.style['flex-flow']='row';
-        btn_block.style['justify-content']='space-between';
+        btn_block.insertAdjacentHTML('beforebegin', dropDown_grok);
+      } else {
+        btn_copy = block.querySelector('div > button');
+        if (btn_copy) {
+          btn_copy.insertAdjacentHTML('beforebegin', dropDown_grok);
+          const parentBtn = btn_copy.parentNode
+          parentBtn.style['display'] = 'flex';
+          parentBtn.style['flex-direction'] = 'row';
+          parentBtn.style['justify-content'] = 'space-between';
+        }
       }
     }
   }
@@ -445,6 +456,20 @@
     }
   }
 
+  function scan_code_groq()
+  {
+    const lst = document.querySelectorAll('main pre > code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      
+      block.insertAdjacentHTML('afterbegin', dropDown_groq_chat);
+    }
+  }
+
   function scan_code_deepseek()
   {
     const lst = document.querySelectorAll('pre');
@@ -455,9 +480,9 @@
       if (dd_el)
         continue;
 
-      const el = block.querySelector('div > div > div:last-child > div:first-child');
+      const el = block.firstChild?.firstChild?.firstChild?.lastChild;
       if (el)
-        el.insertAdjacentHTML('afterend', dropDown_deepseek);
+        el.insertAdjacentHTML('beforebegin', dropDown_deepseek);
     }
   }
 
@@ -512,8 +537,8 @@
       const dd_el = block.parentNode.querySelector('#code_type');
       if (dd_el)
         continue;
-      const title = block.querySelector('figcaption');
-      title.insertAdjacentHTML('beforeend', dropDown_github);
+      const title = block.querySelector('div').childNodes[1];
+      title.insertAdjacentHTML('afterend', dropDown_github);
     }
   }
 
@@ -532,11 +557,53 @@
   }
 
   
+  function scan_code_kimi()
+  {
+    const lst = document.querySelectorAll('pre code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      const btns = block.querySelector('header > div > div');
+      btns.insertAdjacentHTML('beforebegin', dropDown_kimi);
+    }
+  }
+
+  
+  function scan_code_diffy()
+  {
+    const lst = document.querySelectorAll('main pre code:not(.hidden)');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      block.insertAdjacentHTML('afterbegin', dropDown_diffy);
+    }
+  }
+
+  
+  function scan_code_aistudio()
+  {
+    const lst = document.querySelectorAll('pre > code');
+    for(const v of lst) 
+    {
+      const block = v.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        continue;
+      const title = block.firstChild;
+      title.insertAdjacentHTML('beforebegin', dropDown_aistudio);
+    }
+  }
+
+  
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
         if (g_chat_id === 'ch_openai') 
-          scan_code_openai();
-        else if (g_chat_id === 'ch_openai_play') 
           scan_code_openai();
         else if (g_chat_id === 'ch_copilot')
           scan_code_ms_copilot()
@@ -632,6 +699,11 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_groq_chat, 3*1000);
       }
+      else if (g_chat_id === 'ch_groq') {
+        scan_code_groq();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_groq, 3*1000);
+      }
       else if (g_chat_id === 'ch_qwen') {
         scan_code_qwen();
         g_top = document.querySelector('body');
@@ -652,7 +724,7 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_allenai, 3*1000);
       }
-      else if (g_chat_id === 'ch_github') {
+      else if (g_chat_id === 'ch_github' || g_chat_id === 'ch_github_cp') {
         scan_code_github();
         g_top = document.querySelector('body');
         setInterval(scan_code_github, 3*1000);
@@ -662,7 +734,21 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_librechat, 3*1000);
       }
-
+      else if (g_chat_id === 'ch_kimi') {
+        scan_code_kimi();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_kimi, 3*1000);
+      }
+      else if (g_chat_id === 'ch_diffy') {
+        scan_code_diffy();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_diffy, 3*1000);
+      }
+      else if (g_chat_id === 'ch_aistudio') {
+        scan_code_aistudio();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_aistudio, 3*1000);
+      }
 
       if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
@@ -709,7 +795,7 @@
   {
     if (location.host==='chat.openai.com' || location.host==='chatgpt.com')
       return 'ch_openai';
-    else if (location.href.startsWith('https://platform.openai.com/playground'))
+    else if (location.href.startsWith('https://platform.openai.com/playground') || location.href.startsWith('https://platform.openai.com/chat/'))
       return 'ch_openai_play';
     else if (location.href.startsWith('https://copilot.microsoft.com'))
       return 'ch_copilot';
@@ -719,7 +805,7 @@
       return 'ch_claude_artifacts';
     else if (location.href.startsWith('https://gemini.google.com'))
       return 'ch_gemini';
-    else if (location.href.startsWith('https://labs.perplexity.ai/'))
+    else if (location.href.startsWith('https://labs.perplexity.ai/') || location.href.startsWith('https://playground.perplexity.ai/'))
       return 'ch_perplexity_labs';
     else if (location.href.startsWith('https://www.perplexity.ai'))
       return 'ch_perplexity';
@@ -731,15 +817,19 @@
       return 'ch_you';
     else if (location.href.startsWith('https://www.meta.ai'))
       return 'ch_meta';
-    else if (location.href.startsWith('https://openperplex.com'))
+    else if (location.href.startsWith('https://openperplex.com')) //?? renamed to new service
       return 'ch_openperplex';
     else if (location.href.startsWith('https://x.com/i/grok'))
       return 'ch_grok';
     else if (location.href.startsWith('https://chat.groq.com'))
       return 'ch_groq_chat';
+
+    // used iframe for chat, so disabled for now
+    //else if (location.href.startsWith('https://groq.com'))
+    //  return 'ch_groq';
     else if (location.href.startsWith('https://chat.deepseek.com/'))
       return 'ch_deepseek';
-    else if (location.href.startsWith('https://chat.qwenlm.ai/'))
+    else if (location.href.startsWith('https://chat.qwen.ai/'))
       return 'ch_qwen';
     else if (location.href.startsWith('https://inference.cerebras.ai/'))
       return 'ch_cerebras';
@@ -747,9 +837,18 @@
       return 'ch_allenai';
     else if (location.href.startsWith('https://github.com/marketplace/models/'))
       return 'ch_github';
+    else if (location.href.startsWith('https://github.com/copilot/'))
+      return 'ch_github_cp';
     else if (location.href.startsWith('https://librechat-librechat.hf.space/'))
       return 'ch_librechat';
+    else if (location.href.startsWith('https://www.kimi.com/'))
+      return 'ch_kimi';
+    else if (location.href.startsWith('https://diffy.chat/'))
+      return 'ch_diffy';
+    else if (location.href.startsWith('https://aistudio.google.com/app/prompts'))
+      return 'ch_aistudio';
 
+    
     else
      return null;
   }
@@ -783,26 +882,9 @@
   {
     g_chat_id = getChatID();
 
-    if (g_chat_id === 'ch_openai' || g_chat_id === 'ch_openai_play' 
-       || g_chat_id === 'ch_copilot' 
-       || g_chat_id === 'ch_claude' || g_chat_id === 'ch_claude_artifacts' 
-       || g_chat_id === 'ch_gemini'
-       || g_chat_id === 'ch_perplexity_labs' || g_chat_id === 'ch_perplexity' 
-       || g_chat_id === 'ch_mistral' 
-       || g_chat_id === 'ch_huggingface'
-       || g_chat_id === 'ch_you' 
-       || g_chat_id === 'ch_meta'
-       || g_chat_id === 'ch_grok' 
-       || g_chat_id === 'ch_groq_chat' 
-       || g_chat_id === 'ch_deepseek' 
-       || g_chat_id === 'ch_qwen' 
-       || g_chat_id === 'ch_cerebras' 
-       || g_chat_id === 'ch_allenai'
-       || g_chat_id === 'ch_github'
-       || g_chat_id === 'ch_librechat'
-       || g_chat_id == 'ch_openperplex')
+    if (g_chat_id)
       handle_chat_code();
-
+      
     await init_prompt_inject();
 
     if (g_prompt_id && g_prompt_set) {

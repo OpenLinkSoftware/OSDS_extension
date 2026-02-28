@@ -326,10 +326,10 @@ Nano.llm_chats = {
                        url: ['https://chat.openai.com', 'https://chatgpt.com']
                      }, 
 
-             openai_play: { menu:'div[data-panel] select#code_type option:checked', 
+             openai_play: { menu:'main select#code_type option:checked', 
                        sel: [{ parentNode:3 }], 
-                       code_all:'pre code code ~ *',
-                       url: ['https://platform.openai.com/playground']
+                       code:'pre code',
+                       url: ['https://platform.openai.com/chat/']
                      }, 
 
              gemini: { menu:'message-content code-block select#code_type option:checked', 
@@ -345,7 +345,7 @@ Nano.llm_chats = {
              claude1: { menu:'div > select#code_type option:checked', 
                        sel: [{ parentNode:4 }], 
                        code:'code',
-                       url: ['https://claude.site/', 'https://claude.site/artifacts/']
+                       url: ['https://claude.site/', 'https://claude.site/artifacts/', 'https://claude.ai/',]
                      }, 
              ms_copilot: { menu:'main select#code_type option:checked', 
                        sel: [{ parentNode:4 }],
@@ -360,7 +360,7 @@ Nano.llm_chats = {
              perplexity_labs: { menu:'main pre select#code_type option:checked',  
                        sel: [{closest:'pre'}], 
                        code:'code',
-                       url: ['https://labs.perplexity.ai']
+                       url: ['https://labs.perplexity.ai','https://playground.perplexity.ai']
                      }, 
 
              mistral: { menu:'pre select#code_type option:checked', 
@@ -396,7 +396,7 @@ Nano.llm_chats = {
              qwen: { menu:'select#code_type option:checked',  
                        sel: [{ parentNode:3 }],
                        code:'div[id^="code-textarea-"] div[role="textbox"]',
-                       url: ['https://chat.qwenlm.ai/']
+                       url: ['https://chat.qwen.ai/']
                      }, 
              cerebras: { menu:'select#code_type option:checked',  
                        sel: [{ parentNode:3 }],
@@ -405,7 +405,7 @@ Nano.llm_chats = {
                        url: ['https://inference.cerebras.ai/']
                      }, 
              deepseek: { menu:'select#code_type option:checked', 
-                       sel: [{ parentNode:5 }],
+                       sel: [{ parentNode:6 }],
                        code:'pre',
                        url: ['https://chat.deepseek.com/']
                      }, 
@@ -423,13 +423,28 @@ Nano.llm_chats = {
              github: { menu:'select#code_type option:checked', 
                        sel: [{ parentNode:4 }],
                        code:'pre code',
-                       url: ['https://github.com/marketplace/models/']
+                       url: ['https://github.com/marketplace/models/','https://github.com/copilot/']
                      }, 
 
              librechat: { menu:'select#code_type option:checked', 
                        sel: [{ parentNode:4 }],
                        code:'pre code',
                        url: ['https://librechat-librechat.hf.space/']
+                     }, 
+             kimi: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:5 }],
+                       code:'pre code',
+                       url: ['https://www.kimi.com/']
+                     }, 
+             diffy: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://diffy.chat/']
+                     }, 
+             aistudio: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:3 }],
+                       code:'pre code',
+                       url: ['https://aistudio.google.com/app/prompts']
                      }, 
 
            }

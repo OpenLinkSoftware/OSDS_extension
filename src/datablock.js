@@ -79,6 +79,8 @@ class DataLinks {
     }
 
     var rc = await this.block.to_html({}, start_id)
+    var val_sheet = await this.block.to_html({}, 0, 'html_sheet');
+    var val_graph = await this.block.to_html({}, 0, 'html_graph');
 
     this._loaded = true;
 
@@ -86,7 +88,7 @@ class DataLinks {
       if (err_msg.length > 0)
         rc.error.push(err_msg);
 
-      this.cb_success(this.tab, this.tabName, rc);
+      this.cb_success(this.tab, this.tabName, rc, val_sheet, val_graph);
     }
 
     return true;
@@ -152,6 +154,7 @@ class DataBlock {
     this.content_type = "text/turtle;charset=utf-8";
     this.start_id = 0;
     this.add_namespaces = add_namespaces;
+    this.n3data = null;
   }
 
   add_data(_text)
@@ -166,14 +169,15 @@ class DataBlock {
       this.text = this.text.concat(_nano_data);
   }
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
     var html = null;
     var error = [];
+    mode = mode ?? 'html';
 
     try {
       if (this.text && this.text.length > 0) {
-        var handler = new Handle_Turtle(start_id, false, false, bnode_types);
+        var handler = new Handle_Turtle(start_id, mode, false, bnode_types);
         if (this.add_namespaces) {
           var ns = new Namespace();
           handler.ns_pref = ns.get_ns_desc();
@@ -184,7 +188,7 @@ class DataBlock {
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
 
-        html = ret.data;
+        html = ret.data.join('\n');
         this.start_id = handler.start_id;
       }
 
@@ -269,10 +273,11 @@ class DataBlock_Prepare extends DataBlock {
     return {ttl:this.text, error:[]};
   }
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
     var html = null;
     var error = [];
+    mode = mode ?? 'html';
 
     try {
       if (this.text && this.text.length > 0) {
@@ -281,13 +286,13 @@ class DataBlock_Prepare extends DataBlock {
         if (v.error.length > 0)
           error = error.concat(v.error);
 
-        var handler = new Handle_Turtle(start_id, false, false, bnode_types);
+        var handler = new Handle_Turtle(start_id, mode, false, bnode_types);
         var ret = await handler.parse(v.ttl, this.baseURL);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
 
-        html = ret.data;
+        html = ret.data.join('\n');
         this.start_id = handler.start_id;
       }
 
@@ -373,14 +378,17 @@ class Markdown_Block extends DataBlock {
   }
 
 
-  async to_html(bnode_types, start_id)
+  async to_html(bnode_types, start_id, mode)
   {
     var html = [];
     var error = [];
-    try {
-      for(const v of this.text)
-        html.push('<div>'+DOMPurify.sanitize(this.md.render(v))+'</div>');
+    mode = mode ?? 'html';
 
+    try {
+      if (mode === 'html'){
+        for(const v of this.text)
+          html.push('<div>'+DOMPurify.sanitize(this.md.render(v))+'</div>');
+      }
       return {start_id:this.start_id, html:html.join('\n'), error};
 
     } catch(ex) {
@@ -465,18 +473,19 @@ class TTL_Block extends DataBlock {
     }
   }
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
-    var rc = await super.to_html(bnode_types, start_id);
+    var rc = await super.to_html(bnode_types, start_id, mode);
     
     var html = rc.html;
     var error = rc.error;
+    mode = mode ?? 'html';
 
     start_id = rc.start_id;
 
     try {
       if (this.text_nano && this.text_nano.length > 0) {
-        var handler = new Handle_Turtle(start_id, false, false, bnode_types);
+        var handler = new Handle_Turtle(start_id, mode, false, bnode_types);
         var ret = await handler.parse_nano(this.text_nano, this.baseURL);
 
         if (ret.errors.length>0)
@@ -485,24 +494,24 @@ class TTL_Block extends DataBlock {
         this.text_nano = ret.text;
 
         if (html)
-          html += ret.data;
+          html += ret.data.join('\n');
         else
-          html = ret.data;
+          html = ret.data.join('\n');
 
         this.start_id = handler.start_id;
       }
 
       if (this.text_nano_curly && this.text_nano_curly.length > 0) {
-        var handler = new Handle_Turtle(start_id, false, false, bnode_types);
+        var handler = new Handle_Turtle(start_id, mode, false, bnode_types);
         var ret = await handler.parse_nano_curly(this.text_nano_curly, this.baseURL);
 
-        this.text_nano = ret.text;
+        this.text_nano.push(ret.text);
         this.text_nano_curly = [];
 
         if (html)
-          html += ret.data;
+          html += ret.data.join('\n');
         else
-          html = ret.data;
+          html = ret.data.join('\n');
 
         this.start_id = handler.start_id;
       }
@@ -525,7 +534,7 @@ class TTL_Block extends DataBlock {
 
     if (this.text_nano) {
       if (for_query) {
-        var handler = new Handle_Turtle(0, true, false);
+        var handler = new Handle_Turtle(0, 'ttl', false);
         var ret = await handler.parse_nano(this.text_nano, this.baseURL);
         if (ret.errors.length>0)
           error = ret.errors;
@@ -565,20 +574,21 @@ class JSONLD_Block extends DataBlock {
   }
 
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
     var html = null;
     var error = [];
+    mode = mode ?? 'html';
 
     try {
       if (this.text && this.text.length > 0) {
-        var handler = new Handle_JSONLD();
+        var handler = new Handle_JSONLD(mode); 
         var ret = await handler.parse(this.text, this.baseURL, bnode_types);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
 
-        html = ret.data;
+        html = ret.data.join('\n');
         this.start_id = handler.start_id;
       }
 
@@ -619,20 +629,21 @@ class RDF_Block extends DataBlock {
     this.content_type = "application/rdf+xml;charset=utf-8";
   }
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
     var html = null;
     var error = [];
+    mode = mode ?? 'html';
 
     try {
       if (this.text && this.text.length > 0) {
         var handler = new Handle_RDF_XML();
-        var ret = await handler.parse(this.text, this.baseURL, bnode_types);
+        var ret = await handler.parse(this.text, this.baseURL, bnode_types, mode);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
 
-        html = ret.data;
+        html = ret.data.join('\n');
         this.start_id = handler.start_id;
       }
 
@@ -745,16 +756,21 @@ class RDFa_Block extends DataBlock_Prepare {
     return {ttl: ttl_data, error: handler.skipped_error};
   }
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
     const setting = new Settings();
     const uimode = await setting.getValue("ext.osds.uiterm.mode");
     var html = null;
     var error = [];
-
+    mode = mode ?? 'html';
     try {
       if (this.n3data) {
-        html = new HTML_Gen(this.baseURL, bnode_types, uimode).load(this.n3data);
+        if (mode==='html_sheet')
+          html = new Spreadsheet_Gen(this.baseURL, bnode_types, uimode).load(this.n3data);
+        else if (mode==='html_graph')
+          html = new Graph_Gen(this.baseURL, bnode_types, uimode).load(this.n3data);
+        else
+          html = new HTML_Gen(this.baseURL, bnode_types, uimode).load(this.n3data);
       }
 
       return {start_id:0, html, error};
@@ -779,26 +795,27 @@ class Microdata_Block extends DataBlock_Prepare {
   async _prepare_ttl()
   {
     var data = JSON.parse(this.text[0]);
-    var handler = new Handle_Microdata(true);
+    var handler = new Handle_Microdata('ttl');
     var rc = await handler.parse(data, this.baseURL);
     return {ttl: [rc.data], error: rc.errors};
   }
 
 
-  async to_html(bnode_types, start_id) 
+  async to_html(bnode_types, start_id, mode) 
   {
     var html = null;
     var error = [];
+    mode = mode ?? 'html';
 
     try {
       if (this.n3data) {
-        var handler = new Handle_Microdata();
+        var handler = new Handle_Microdata(mode);
         var ret = await handler.parse(this.n3data, this.baseURL, bnode_types);
 
         if (ret.errors.length>0)
           error = error.concat(ret.errors);
 
-        html = ret.data;
+        html = ret.data.join('\n');
       }
 
       return {start_id:0, html, error};

@@ -15,6 +15,14 @@
 		857D79762C8FA5440067699F /* background_web.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D79742C8FA5440067699F /* background_web.js */; };
 		857D797B2C8FCDBA0067699F /* service_worker_sf.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D797A2C8FCDB90067699F /* service_worker_sf.js */; };
 		857D797C2C8FCDBA0067699F /* service_worker_sf.js in Resources */ = {isa = PBXBuildFile; fileRef = 857D797A2C8FCDB90067699F /* service_worker_sf.js */; };
+		85A1F0392F32A02200D5D54E /* graph_gen.js in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F0382F32A02200D5D54E /* graph_gen.js */; };
+		85A1F03A2F32A02200D5D54E /* graph_gen.js in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F0382F32A02200D5D54E /* graph_gen.js */; };
+		85A1F03D2F32A03E00D5D54E /* extension-ui.css in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F03C2F32A03E00D5D54E /* extension-ui.css */; };
+		85A1F03E2F32A03E00D5D54E /* enhanced-content.css in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F03B2F32A03E00D5D54E /* enhanced-content.css */; };
+		85A1F03F2F32A03E00D5D54E /* extension-ui.css in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F03C2F32A03E00D5D54E /* extension-ui.css */; };
+		85A1F0402F32A03E00D5D54E /* enhanced-content.css in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F03B2F32A03E00D5D54E /* enhanced-content.css */; };
+		85A1F0422F32A05200D5D54E /* spreadsheet_gen.js in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F0412F32A05200D5D54E /* spreadsheet_gen.js */; };
+		85A1F0432F32A05200D5D54E /* spreadsheet_gen.js in Resources */ = {isa = PBXBuildFile; fileRef = 85A1F0412F32A05200D5D54E /* spreadsheet_gen.js */; };
 		85B1CBBA27B70B1A0031698A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B1CBB927B70B1A0031698A /* AppDelegate.swift */; };
 		85B1CBBC27B70B1A0031698A /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B1CBBB27B70B1A0031698A /* SceneDelegate.swift */; };
 		85B1CBBF27B70B1A0031698A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85B1CBBD27B70B1A0031698A /* LaunchScreen.storyboard */; };
@@ -155,6 +163,10 @@
 		857D79742C8FA5440067699F /* background_web.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = background_web.js; path = Resources/background_web.js; sourceTree = "<group>"; };
 		857D797A2C8FCDB90067699F /* service_worker_sf.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = service_worker_sf.js; path = Resources/service_worker_sf.js; sourceTree = "<group>"; };
 		859E4F8A27E6A01900A84BB4 /* OSDS (macOS)Release.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "OSDS (macOS)Release.entitlements"; sourceTree = "<group>"; };
+		85A1F0382F32A02200D5D54E /* graph_gen.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = graph_gen.js; path = Resources/graph_gen.js; sourceTree = "<group>"; };
+		85A1F03B2F32A03E00D5D54E /* enhanced-content.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = "enhanced-content.css"; path = "Resources/enhanced-content.css"; sourceTree = "<group>"; };
+		85A1F03C2F32A03E00D5D54E /* extension-ui.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = "extension-ui.css"; path = "Resources/extension-ui.css"; sourceTree = "<group>"; };
+		85A1F0412F32A05200D5D54E /* spreadsheet_gen.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = spreadsheet_gen.js; path = Resources/spreadsheet_gen.js; sourceTree = "<group>"; };
 		85B1CBAA27B70B180031698A /* Base */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = Base; path = ../Base.lproj/Main.html; sourceTree = "<group>"; };
 		85B1CBAB27B70B180031698A /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		85B1CBAC27B70B180031698A /* Style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = Style.css; sourceTree = "<group>"; };
@@ -344,6 +356,10 @@
 		85B1CC0427B70B1B0031698A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				85A1F0412F32A05200D5D54E /* spreadsheet_gen.js */,
+				85A1F03B2F32A03E00D5D54E /* enhanced-content.css */,
+				85A1F03C2F32A03E00D5D54E /* extension-ui.css */,
+				85A1F0382F32A02200D5D54E /* graph_gen.js */,
 				857D797A2C8FCDB90067699F /* service_worker_sf.js */,
 				857D79742C8FA5440067699F /* background_web.js */,
 				85B27E462BC097840085F466 /* social_sniffer.js */,
@@ -539,6 +555,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85A1F0432F32A05200D5D54E /* spreadsheet_gen.js in Resources */,
 				85B1CC4827B70B1B0031698A /* oidc-webid-inject.js in Resources */,
 				85B27E442BC097780085F466 /* sniffer_nano.js in Resources */,
 				85B1CC4427B70B1B0031698A /* background.js in Resources */,
@@ -559,9 +576,12 @@
 				85B1CC5727B70B1B0031698A /* options.html in Resources */,
 				85B27E3F2BC0976B0085F466 /* frame_scan.js in Resources */,
 				85B1CC5C27B70B1B0031698A /* CREDITS in Resources */,
+				85A1F0392F32A02200D5D54E /* graph_gen.js in Resources */,
 				85B1CC4727B70B1B0031698A /* images in Resources */,
 				857D79752C8FA5440067699F /* background_web.js in Resources */,
 				85B1CC5D27B70B1B0031698A /* settings.js in Resources */,
+				85A1F03D2F32A03E00D5D54E /* extension-ui.css in Resources */,
+				85A1F03E2F32A03E00D5D54E /* enhanced-content.css in Resources */,
 				85B1CC4C27B70B1B0031698A /* datablock.js in Resources */,
 				85B1CC5827B70B1B0031698A /* page_panel.html in Resources */,
 				85B1CC5927B70B1B0031698A /* utils.js in Resources */,
@@ -584,6 +604,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85A1F0422F32A05200D5D54E /* spreadsheet_gen.js in Resources */,
 				85B1CC2A27B70B1B0031698A /* oidc-webid-inject.js in Resources */,
 				85B27E452BC097780085F466 /* sniffer_nano.js in Resources */,
 				85B1CC2627B70B1B0031698A /* background.js in Resources */,
@@ -604,9 +625,12 @@
 				85B1CC3927B70B1B0031698A /* options.html in Resources */,
 				85B27E402BC0976B0085F466 /* frame_scan.js in Resources */,
 				85B1CC3E27B70B1B0031698A /* CREDITS in Resources */,
+				85A1F03A2F32A02200D5D54E /* graph_gen.js in Resources */,
 				85B1CC2927B70B1B0031698A /* images in Resources */,
 				857D79762C8FA5440067699F /* background_web.js in Resources */,
 				85B1CC3F27B70B1B0031698A /* settings.js in Resources */,
+				85A1F03F2F32A03E00D5D54E /* extension-ui.css in Resources */,
+				85A1F0402F32A03E00D5D54E /* enhanced-content.css in Resources */,
 				85B1CC2E27B70B1B0031698A /* datablock.js in Resources */,
 				85B1CC3A27B70B1B0031698A /* page_panel.html in Resources */,
 				85B1CC3B27B70B1B0031698A /* utils.js in Resources */,
@@ -970,7 +994,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "macOS (Extension)/OSDS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 34;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -983,7 +1007,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.19;
+				MARKETING_VERSION = 1.22;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -1002,7 +1026,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = "macOS (Extension)/OSDS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 34;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1015,7 +1039,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.19;
+				MARKETING_VERSION = 1.22;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -1037,7 +1061,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "macOS (App)/OSDS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 34;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1051,7 +1075,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.19;
+				MARKETING_VERSION = 1.22;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,
@@ -1074,7 +1098,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "OSDS (macOS)Release.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 34;
 				DEVELOPMENT_TEAM = E4G7YC8M82;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1088,7 +1112,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
-				MARKETING_VERSION = 1.19;
+				MARKETING_VERSION = 1.24;
 				OTHER_LDFLAGS = (
 					"-framework",
 					SafariServices,

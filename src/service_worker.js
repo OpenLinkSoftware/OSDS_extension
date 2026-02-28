@@ -1,3 +1,16 @@
+importScripts(
+              "./lib/gpt3-encoder.js",
+              "./browser.js",
+              "./settings.js",
+              "./utils.js",
+              "./helpers.js",
+              "./lib/solid-client-authn.bundle.js",
+              "./OidcWebid.js",
+              "./chat-srv.js",
+              "./background_web.js",
+              "./background.js"
+);
+
 class wStore {
   constructor()
   {
@@ -52,19 +65,6 @@ var gpt3encoder;
 
 try {
 
-  importScripts(
-                "./lib/gpt3-encoder.js",
-                "./browser.js",
-                "./settings.js",
-                "./utils.js",
-                "./helpers.js",
-                "./lib/solid-client-authn.bundle.js",
-                "./OidcWebid.js",
-                "./chat-srv.js",
-                "./background_web.js",
-                "./background.js"
-  );
-
   gpt3encoder = window.gpt3encoder;
 
   //=====================================
@@ -85,6 +85,15 @@ try {
       await GVars.clear();
     } catch(ex) {
       console.log(ex);
+    }
+  });
+
+  // Handle extension icon click to open sidebar
+  Browser.api.action.onClicked.addListener(async (tab) => {
+    try {
+      await Browser.api.sidePanel.open({ windowId: tab.windowId });
+    } catch (error) {
+      console.error('Error opening side panel:', error);
     }
   });
 

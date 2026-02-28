@@ -133,8 +133,8 @@ class Rest_Cons {
   create_row(h,v)
   {
     return `<td width="12px"><button id="rest_del" class="rest_del">Del</button></td>
-            <td><input id="h" style="WIDTH: 100%" value="${h}"></td>
-            <td><textarea id="v" style="WIDTH: 100%; height:3em">${v}</textarea></td>`;
+            <td><input id="h" style="width: calc(100% - 24px)" value="${h}"></td>
+            <td><textarea id="v" style="width: calc(100% - 24px); height:3em">${v}</textarea></td>`;
   }
 
 

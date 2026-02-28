@@ -1,0 +1,286 @@
+/* Extension Internal UI Styling
+   This file is ONLY loaded in panel.html and options.html
+   It is NOT a content script - safe to use generic selectors */
+
+/* Form Elements */
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="button"]):not([type="submit"]) {
+	border: 1px solid #D1D5DA;
+	border-radius: 4px;
+	padding: 6px 10px;
+	/*font-size: 13px;*/
+	transition: all 0.2s ease;
+	background: #FFFFFF;
+	color: #24292E;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="email"]:focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="image"]):not([type="button"]):not([type="submit"]):focus {
+	outline: none;
+	border-color: #1976D2;
+	box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+textarea {
+	border: 1px solid #D1D5DA;
+	border-radius: 4px;
+	padding: 8px 10px;
+	font-size: 13px;
+	transition: all 0.2s ease;
+	background: #FFFFFF;
+	color: #24292E;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	line-height: 1.5;
+}
+
+textarea:focus {
+	outline: none;
+	border-color: #1976D2;
+	box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+select {
+	border: 1px solid #D1D5DA;
+	border-radius: 4px;
+	padding: 6px 10px;
+	font-size: 13px;
+	transition: all 0.2s ease;
+	background: #FFFFFF;
+	color: #24292E;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	cursor: pointer;
+}
+
+select:focus {
+	outline: none;
+	border-color: #1976D2;
+	box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+/* Button Styling */
+button {
+	padding: 6px 16px;
+	border: 1px solid #D1D5DA;
+	border-radius: 4px;
+	background: #FFFFFF;
+	color: #24292E;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	min-height: 26px;
+}
+
+/* Image Button Variant */
+button.image-btn {
+	padding: 4px;
+	min-height: auto;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Toolbar-style Image Buttons */
+input[type="image"],
+.image_btn {
+	width: 24px;
+	height: 24px;
+	padding: 4px;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+	min-height: auto;
+}
+
+button:hover {
+	background: #F6F8FA;
+	border-color: #1976D2;
+}
+
+button:active {
+	background: #E1E4E8;
+}
+
+/* Primary Button Variant */
+button.primary {
+	background: #1976D2;
+	color: white;
+	border-color: #1565C0;
+}
+
+button.primary:hover {
+	background: #1565C0;
+}
+
+button.primary:active {
+	background: #0D47A1;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+	button {
+		padding: 5px 12px;
+		font-size: 12px;
+		min-height: 24px;
+	}
+
+	button.image-btn {
+		width: 28px;
+		height: 28px;
+		padding: 3px;
+	}
+}
+
+@media (max-width: 480px) {
+	button {
+		padding: 4px 10px;
+		font-size: 11px;
+		min-height: 22px;
+	}
+
+	button.image-btn {
+		width: 24px;
+		height: 24px;
+		padding: 2px;
+	}
+}
+
+/* Checkboxes */
+input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	accent-color: #1976D2;
+}
+
+input[type="radio"] {
+	cursor: pointer;
+	accent-color: #1976D2;
+}
+
+/* Tables */
+table.footable {
+	border: 1px solid #E1E4E8;
+	background: #FFFFFF;
+	border-collapse: collapse;
+	width: 100%;
+}
+
+table.footable thead {
+	background: #F6F8FA;
+	color: #24292E;
+	font-weight: 600;
+}
+
+table.footable th,
+table.footable td {
+	padding: 10px 12px;
+	border-bottom: 1px solid #E1E4E8;
+	text-align: left;
+	font-size: 13px;
+}
+
+table.footable tbody tr:hover {
+	background: #F6F8FA;
+}
+
+/* Links */
+a {
+	color: #0366D6;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+a:hover {
+	color: #1976D2;
+	text-decoration: underline;
+}
+
+/* Scrollbar Styling (for webkit browsers) */
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: #F6F8FA;
+	border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #C1C7CD;
+	border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #959DA5;
+}
+
+/* Dialog Overrides for jQuery UI */
+.ui-dialog {
+	border: 1px solid #D1D5DA !important;
+	border-radius: 8px !important;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.ui-dialog-titlebar {
+	background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
+	color: white !important;
+	border-bottom: 1px solid #1565C0 !important;
+	border-radius: 8px 8px 0 0 !important;
+	font-weight: 600 !important;
+	border: none !important;
+}
+
+.ui-dialog-title {
+	color: white !important;
+}
+
+.ui-dialog-titlebar-close {
+	background: transparent !important;
+	border: none !important;
+}
+
+.ui-dialog-titlebar-close:hover {
+	background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ui-dialog-content {
+	background: #FFFFFF !important;
+	color: #24292E !important;
+}
+
+.ui-button {
+	padding: 6px 16px !important;
+	border: 1px solid #D1D5DA !important;
+	border-radius: 4px !important;
+	background: #FFFFFF !important;
+	color: #24292E !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+}
+
+.ui-button:hover {
+	background: #F6F8FA !important;
+	border-color: #1976D2 !important;
+}
+
+.ui-button-primary,
+.ui-button.ui-state-active {
+	background: #1976D2 !important;
+	color: white !important;
+	border-color: #1565C0 !important;
+}
+
+.ui-button-primary:hover,
+.ui-button.ui-state-active:hover {
+	background: #1565C0 !important;
+}

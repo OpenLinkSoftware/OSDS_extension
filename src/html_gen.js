@@ -125,9 +125,36 @@ class HTML_Gen {
         // end replace bNode with IRI
       }
 
+      // Group entities by rdf:type
+      const typeGroups = {};
+      const untypedEntities = [];
+
       for (let i = 0; i < n_data.length; i++) {
         const item = n_data[i];
-        const item_num = start_id + item.n;
+        let entityType = null;
+
+        // Find the rdf:type for this entity
+        if (item.props && item.props[this.ns.RDF_TYPE]) {
+          const types = item.props[this.ns.RDF_TYPE];
+          if (types.length > 0 && types[0].iri) {
+            entityType = types[0].iri;
+          }
+        }
+
+        if (entityType) {
+          if (!typeGroups[entityType]) {
+            typeGroups[entityType] = [];
+          }
+          typeGroups[entityType].push(item);
+        } else {
+          untypedEntities.push(item);
+        }
+      }
+
+      // Generate HTML grouped by type
+      for (const [typeIri, entities] of Object.entries(typeGroups)) {
+        const typeLabel = this.iri2html(null, typeIri, true, null, true);
+        
         str += `
           <table class='docdata table'>
             <thead>
@@ -138,25 +165,85 @@ class HTML_Gen {
             </thead>
             <tbody>
               <tr class='major'>
-                <td><a name='sc${item_num}'>Fact Collection #${item_num}</a></td>
-                <td></td>
+                <td colspan='2'><strong>Type: ${typeLabel}</strong> (${entities.length} ${entities.length === 1 ? 'entity' : 'entities'})</td>
               </tr>
-              ${this.format_id(item.s, id_list)}
         `;
 
-        let props = "";
-        let rc = this.format_props(item.props, id_list, true);
-        props += rc.str;
-        rc = this.format_props(item.props, id_list, false, rc.type);
-        props += rc.str;
+        // Render each entity of this type
+        for (let j = 0; j < entities.length; j++) {
+          const item = entities[j];
+          const item_num = start_id + item.n;
 
-        if (props.length > 0) {
           str += `
-            <tr class='major'>
-              <td>${this.PredName}s</td>
-              <td></td>
-            </tr>${props}
+              <tr class='major'>
+                <td colspan='2'><a name='sc${item_num}'>Entity #${item_num}</a></td>
+              </tr>
+              ${this.format_id(item.s, id_list)}
           `;
+
+          let props = "";
+          let rc = this.format_props(item.props, id_list, true);
+          props += rc.str;
+          rc = this.format_props(item.props, id_list, false, rc.type);
+          props += rc.str;
+
+          if (props.length > 0) {
+            str += `
+              <tr class='major'>
+                <td>${this.PredName}s</td>
+                <td></td>
+              </tr>${props}
+            `;
+          }
+        }
+
+        str += `
+            </tbody>
+          </table>
+        `;
+      }
+
+      // Handle untyped entities
+      if (untypedEntities.length > 0) {
+        str += `
+          <table class='docdata table'>
+            <thead>
+              <tr>
+                <th width='40%'></th>
+                <th width='60%'></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class='major'>
+                <td colspan='2'><strong>Untyped Entities</strong> (${untypedEntities.length} ${untypedEntities.length === 1 ? 'entity' : 'entities'})</td>
+              </tr>
+        `;
+
+        for (let j = 0; j < untypedEntities.length; j++) {
+          const item = untypedEntities[j];
+          const item_num = start_id + item.n;
+
+          str += `
+              <tr class='major'>
+                <td colspan='2'><a name='sc${item_num}'>Entity #${item_num}</a></td>
+              </tr>
+              ${this.format_id(item.s, id_list)}
+          `;
+
+          let props = "";
+          let rc = this.format_props(item.props, id_list, true);
+          props += rc.str;
+          rc = this.format_props(item.props, id_list, false, rc.type);
+          props += rc.str;
+
+          if (props.length > 0) {
+            str += `
+              <tr class='major'>
+                <td>${this.PredName}s</td>
+                <td></td>
+              </tr>${props}
+            `;
+          }
         }
 
         str += `
@@ -193,7 +280,7 @@ class HTML_Gen {
         continue;
       }
 
-      const key_str = this.iri2html(null, key, true);
+      const key_str = this.iri2html(null, key, true, null, true);
 
       for (let i = 0; i < val.length; i++) {
         const obj = val[i];
@@ -206,7 +293,7 @@ class HTML_Gen {
               <tr class='data_row'>
                 <td> ${key_str} </td>
                 <td class='major'>
-                  <a href='#sc${entity_id}'><i>See Fact Collection #${entity_id}</i></a>
+                  <a href='#sc${entity_id}'><i>See Entity #${entity_id}</i></a>
                 </td>
               </tr>
             `;

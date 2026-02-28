@@ -21,7 +21,7 @@
 
 (function () {
 
-    const SLinks = new SuperLinks();
+    const SLinks = new ShowSuperLinks();
 
     var micro_items = 0;
     var json_ld_Text = null;
@@ -445,9 +445,13 @@
       // install message listeners 
       try {
         Browser.api.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-          if (request.cmd === "req_doc_data") {
-              request_doc_data();
+          if (request.cmd === "ping") {
+              sendResponse({pong:1});
+              return true;
+          }
+          else if (request.cmd === "req_doc_data") {
               sendResponse({ping:1});
+              request_doc_data();
               return true;
           }
           else if (request.cmd == "super_links_chatgpt_return") {

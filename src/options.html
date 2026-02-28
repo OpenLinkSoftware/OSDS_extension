@@ -26,6 +26,9 @@
     <link type="text/css" href="lib/css/footable-0.1.css" rel="stylesheet" />
     <link type="text/css" href="lib/css/codemirror.css" rel="stylesheet" />
     <link type="text/css" href="lib/css/yasqe.css" rel="stylesheet" />
+    
+    <!-- Extension internal UI styles (not injected into web pages) -->
+    <link rel="stylesheet" href="extension-ui.css" />
 
     <script type="text/javascript" src="lib/jquery-3.1.0.min.js"></script>
     <script type="text/javascript" src="lib/jquery-migrate-3.0.0.min.js"></script>
@@ -47,21 +50,93 @@
 	body{ 
 	  margin: 50px;
 	  font-size: 13px;
+	  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	  background: #F8F9FA;
+	  color: #24292E;
 	}
 	#dialog_link {padding: .4em 1em .4em 20px;text-decoration: none;position: relative;}
 	#dialog_link span.ui-icon {margin: 0 5px 0 0;position: absolute;left: .2em;top: 50%;margin-top: -8px;}
 	ul#icons {margin: 0; padding: 0;}
 	ul#icons li {margin: 2px; position: relative; padding: 4px 0; cursor: pointer; float: left;  list-style: none;}
 	ul#icons span.ui-icon {float: left; margin: 0 4px;}
-	div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:5px;}
-	div.r1item {display:flex; flex-direction:row; align-items: baseline; padding-top:5px; padding-left:10px}
+	div.ritem {display:flex; flex-direction:row; align-items: baseline; padding-top:8px;}
+	div.r1item {display:flex; flex-direction:row; align-items: baseline; padding-top:8px; padding-left:10px}
 	.ml5 {margin-left:5px}
 	.align_end {
 	  text-align: end;
 	}
 
 	tbody#prompt-list tr.prompt_checked{
-	  background: cyan;
+	  background: #E3F2FD;
+	  border-left: 3px solid #1976D2;
+	}
+
+	/* Modern table styling */
+	table {
+	  border-collapse: collapse;
+	  width: 100%;
+	  background: #FFFFFF;
+	  overflow: hidden;
+	}
+
+	table th {
+	  background: #F6F8FA;
+	  color: #24292E;
+	  font-weight: 600;
+	  padding: 12px;
+	  border-bottom: 2px solid #E1E4E8;
+	}
+
+	table td {
+	  padding: 5px 6px;
+	}
+
+	/* Button styling */
+	button {
+	  padding: 8px 16px;
+	  border: 1px solid #D1D5DA;
+	  border-radius: 6px;
+	  background: #FFFFFF;
+	  color: #24292E;
+	  font-size: 13px;
+	  font-weight: 500;
+	  cursor: pointer;
+	  transition: all 0.2s ease;
+	}
+
+	button:hover {
+	  background: #F6F8FA;
+	  border-color: #1976D2;
+	}
+
+	button.users_add {
+	  background: #1976D2;
+	  color: white;
+	  border-color: #1565C0;
+	}
+
+	button.users_add:hover {
+	  background: #1565C0;
+	}
+
+	/* Dialog styling */
+	.ui-dialog {
+	  border: 1px solid #D1D5DA !important;
+	  border-radius: 8px !important;
+	  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+	}
+
+	.ui-dialog-titlebar {
+	  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
+	  color: white !important;
+	  border-bottom: 1px solid #1565C0 !important;
+	  border-radius: 8px 8px 0 0 !important;
+	  font-weight: 600 !important;
+	}
+
+	.ui-dialog-content {
+	  background: #FFFFFF !important;
+	  color: #24292E !important;
 	}
     </style>
 
@@ -166,7 +241,7 @@
              <table>
               <tr>
                 <td class="align_end">SPARQL&nbsp;Endpoint:</td>
-                <td><input class="ml5" id="upload_sparql_endpoint" style="WIDTH: 500px"></td>
+                <td><input class="ml5" id="upload_sparql_endpoint" style="WIDTH: 450px"></td>
               </tr>
               <tr>
                 <td class="align_end">Query&nbsp;Timeout:</td>
@@ -174,7 +249,7 @@
               </tr>
               <tr>
                 <td class="align_end">Default&nbsp;Graph&nbsp;Name:</td>
-                <td><input class="ml5" id="upload_sparql_graph" style="WIDTH: 500px"></td>
+                <td><input class="ml5" id="upload_sparql_graph" style="WIDTH: 450px"></td>
               </tr>
              </table>
              
@@ -341,7 +416,7 @@
            <hr style="width:100%"/>
            <div style="margin-bottom:5px;"><b>ChatGPT request</b></div>
            <div class="ritem">
-             <div>&nbsp;&nbsp;&nbsp;GPT Model:</div>
+             <div>&nbsp;&nbsp;&nbsp;&nbsp;GPT Model:</div>
              <SELECT class="ml5" id="chatgpt-model" style="WIDTH: 100px" >
                    <OPTION id="gpt-3.5-turbo" selected>GPT-3.5</OPTION>
                    <OPTION id="gpt-4">GPT-4</OPTION>
@@ -352,7 +427,7 @@
              <input id="chatgpt_temp" style="WIDTH: 60px" type="number" value="1">
            </div>
            <div class="ritem">
-             OpenAI token:
+             <div>OpenAI token:&nbsp;</div>
              <input id="chatgpt_token" style="WIDTH:500px" value="sk-xxxxxxxx">
            </div>
            <div>Prompt:</div>

@@ -3,78 +3,103 @@
 }
 
 .osds_popup {
-        all: initial;
+	all: initial;
 	position: fixed !important; 
 	display: none;
-	border: 2px solid #000 !important;
-	border-radius: 4px !important; 
-	width: 510px;
-	top:100px !important;
+	border: 1px solid #D1D5DA !important;
+	border-radius: 8px !important; 
+	width: 540px;
+	top: 100px !important;
 	left: 20px !important;
-	background: #fff !important;
-	color: black !important;
- 	z-index: 2147483647 !important;
-        marging: 2px !important;
-        marging-bottom: 10px !important;
-	font-family: Arial, Helvetica, sans-serif !important;
+	background: #FFFFFF !important;
+	color: #24292E !important;
+	z-index: 2147483647 !important;
+	margin: 0 !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
 	line-height: normal !important;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
 }
+
 .osds_popup-title {
-	width: 100% !important;
-	height: 18px !important;
+	width: calc(100% - 20px) !important;
+	min-height: 22px !important;
 	display: flex;
-	background-color: #0000a0 !important;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
 	color: white !important;
-	border-bottom: 1px solid #000 !important;
+	border-bottom: 1px solid #1565C0 !important;
 	position: relative !important;
 	cursor: move !important;
-        font-size: 14px !important;
-        text-align: center;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	text-align: center;
+	padding: 10px 10px !important;
+	border-radius: 8px 8px 0 0 !important;
 }
 
 .osds_popup-content {
-	height: calc(100% - 10px - 10px - 18px) !important;
+	height: calc(100% - 42px) !important;
 	overflow: auto !important;
-	padding: 10px 10px 10px 10px !important;
-	background: khaki !important;
-        display:flex !important; 
-        flex-direction: column !important;
+	padding: 20px !important;
+	background: #FFFFFF !important;
+	display: flex !important; 
+	flex-direction: column !important;
 }
 
 .osds_popup_msg {
-	margin: 10px 0px !important;
+	margin: 12px 0 !important;
+	color: #24292E !important;
+	font-size: 14px !important;
+	line-height: 1.5 !important;
 }
 
 .osds_popup_btn {
-        min-width:60px !important; 
-        margin-left: 10px !important;
+	min-width: 70px !important; 
+	margin-left: 8px !important;
+	padding: 8px 16px !important;
+	border: 1px solid #D1D5DA !important;
+	border-radius: 6px !important;
+	background: #FFFFFF !important;
+	color: #24292E !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+}
+
+.osds_popup_btn:hover {
+	background: #F6F8FA !important;
+	border-color: #1976D2 !important;
 }
 
 .osds_popup_btns {
-        margin:auto !important;
+	margin: 16px auto 0 !important;
+	display: flex !important;
+	gap: 8px !important;
 }
 
-
-
 .super_links_msg {
-        all: initial;
+	all: initial;
 	display: none;
 	line-height: normal !important;
 	flex-direction: row !important; 
 	position: fixed !important;
-	border: 2px solid #000 !important;
-	border-radius: 2px !important;
+	border: 1px solid #1976D2 !important;
+	border-radius: 6px !important;
 	width: 200px !important;
-	height: 20px !important;
-	top:4px !important;
-	left: 4px !important;
-	background: khaki !important;
-	color: black !important;
- 	z-index: 2147483647 !important;
-	padding: 10px 10px 10px 20px !important;
-	font-family: Arial, Helvetica, sans-serif !important;
-	font-size: 14px !important;
+	min-height: 20px !important;
+	top: 8px !important;
+	left: 8px !important;
+	background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%) !important;
+	color: #1565C0 !important;
+	z-index: 2147483647 !important;
+	padding: 12px 16px !important;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
 	box-sizing: content-box !important;
+	box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15) !important;
 }
 
 .super_links_img {
@@ -83,55 +108,54 @@
 }
 
 
+
 .super_links_popup {
-        all: initial;
+    all: initial;
 	position: absolute;
 	display: none;
-	border: 2px solid #000 !important;
-	border-radius: 4px !important; 
+	border: 1px solid #000 !important;
+	border-radius: 8px !important; 
 	width: 910px;
 	height: 305px;
 	background: #fff !important;
 	color: black !important;
  	z-index: 2147483647 !important;
-        marging: 2px !important;
-        marging-bottom: 10px !important;
+    marging: 2px !important;
+    marging-bottom: 10px !important;
 	font-family: Arial, Helvetica, sans-serif !important;
 	line-height: normal !important;
 }
 .super_links_chatgpt {
-        all: initial;
+    all: initial;
 	position: absolute;
 	display: none;
-	border: 2px solid #000 !important;
-	border-radius: 4px !important; 
+	border: 1px solid #000 !important;
+	border-radius: 8px !important; 
 	width: 900px;
 	height: 400px;
 	background: #fff !important;
 	color: black !important;
  	z-index: 2147483647 !important;
-        marging: 2px !important;
-        marging-bottom: 10px !important;
+    marging: 2px !important;
+    marging-bottom: 10px !important;
 	font-family: Arial, Helvetica, sans-serif !important;
 	line-height: normal !important;
 }
-.super_links_popup-title, .super_links_chatgpt-title{
+.super_links_popup_title, .super_links_chatgpt_title{
 	width: 100% !important;
 	height: 18px !important;
+	background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%) !important;
 	display: flex;
+	align-items: center;
 	color: white !important;
 	border-bottom: 1px solid #000 !important;
 	position: relative !important;
 	cursor: move !important;
-        font-size: 14px !important;
+    font-size: 14px !important;
+    padding: 8px 0px;
+	border-radius: 8px 8px 0 0 !important;
+	justify-content: center;
 }
-.super_links_popup-title{
-	background-color: #0000a0 !important;
-}
-.super_links_chatgpt-title{
-        background: #6c7ae0 !important;
-}
-
 
 .super_links_popup-content {
 	width: 100% !important;

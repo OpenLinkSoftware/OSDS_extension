@@ -18,7 +18,7 @@
  *
  */
 
-class SuperLinks {
+class ShowSuperLinks {
   constructor()
   {
     this.super_links = null;
@@ -31,13 +31,13 @@ class SuperLinks {
     if ($(".super_links_popup").length == 0) {
       $('body').append(
        `<div class="osds_revert_css super_links_popup" style="display:none" >
-         <div class="osds_revert_css super_links_popup-title"> &nbsp;Super Links </div>
+         <div class="osds_revert_css super_links_popup_title"> &nbsp;Super Links </div>
          <a href="#close" title="Close" class="osds_revert_css super_links_popup_close">&times;</a> 
          <div class="osds_revert_css super_links_popup-content"></div>
          <img class="osds_revert_css super_links_popup-resizer" src="data:image/gif;base64,R0lGODlhCgAKAJEAAAAAAP///6CgpP///yH5BAEAAAMALAAAAAAKAAoAAAIRnI+JosbN3hryRDqvxfp2zhUAOw==" alt="Resize" width="10" height="10"/>
         </div> 
         <div class="osds_revert_css super_links_chatgpt" style="display:none" >
-         <div class="osds_revert_css super_links_chatgpt-title"> &nbsp;ChatGPT </div>
+         <div class="osds_revert_css super_links_chatgpt_title"> &nbsp;ChatGPT </div>
          <a href="#close" title="Close" class="osds_revert_css super_links_chatgpt_close">&times;</a> 
          <div class="osds_revert_css super_links_chatgpt-content">
            <textarea id="osds_words"class="osds_revert_css super_links_chatgpt-content-text"></textarea>
@@ -136,7 +136,7 @@ class SuperLinks {
       el.value = chat_resp;
 
       const popup = DOM.qSel('.super_links_chatgpt');
-      dragElement(popup, DOM.qSel('.super_links_chatgpt-title'));
+      dragElement(popup, DOM.qSel('.super_links_chatgpt_title'));
       makeResizable(popup, DOM.qSel('.super_links_chatgpt-resizer'));
 
       $('.super_links_chatgpt_close').click(function(e){
@@ -249,7 +249,7 @@ class SuperLinks {
       const columns_css = ['minmax(100px, 1.5fr)', 'minmax(100px, 2.5fr)', 'minmax(100px, 4fr)', 'minmax(100px, 2fr)', 'minmax(100px, 2fr)'];
       makeResizableTable('table.super_links_table', columns_css, '.super_links_popup');
 
-      dragElement(popup, DOM.qSel('.super_links_popup-title'));
+      dragElement(popup, DOM.qSel('.super_links_popup_title'));
       makeResizable(popup, DOM.qSel('.super_links_popup-resizer'));
 
       this.handle_ask('table.super_links_table');

@@ -22,17 +22,22 @@
 
 (function () {
 
-const setting = new Settings();
-const page_panel_url = Browser.api.runtime.getURL("page_panel.html");
-var chk_setting = {
+  const setting = new Settings();
+  const page_panel_url = Browser.api.runtime.getURL("page_panel.html");
+  var chk_setting = {
       "ext.osds.handle_all" : "1",
-      "ext.osds.handle_csv": "1",
-      "ext.osds.handle_json": "1",
-      "ext.osds.handle_xml": "1",
+      "ext.osds.handle_csv": "0",
+      "ext.osds.handle_json": "0",
+      "ext.osds.handle_xml": "0",
       "ext.osds.pref.user.chk": "0",
       "ext.osds.pref.user": ""
     };
 
+  function get_setting(key)
+  {
+    const v = localStorage.getItem(key);
+    return (v) ? v : chk_setting[key];
+  }  
 
   async function reload_settings()
   {
@@ -43,19 +48,24 @@ var chk_setting = {
 
     chk_setting['ext.osds.pref.user.chk'] = await setting.getValue('ext.osds.pref.user.chk');
     chk_setting['ext.osds.pref.user'] = await setting.getValue('ext.osds.pref.user');
-  }
 
-  reload_settings();
+    localStorage.setItem("ext.osds.handle_all", chk_setting["ext.osds.handle_all"]);
+    localStorage.setItem("ext.osds.handle_csv", chk_setting["ext.osds.handle_csv"]);
+    localStorage.setItem("ext.osds.handle_json", chk_setting["ext.osds.handle_json"]);
+    localStorage.setItem("ext.osds.handle_xml", chk_setting["ext.osds.handle_xml"]);
+    localStorage.setItem("ext.osds.pref.user.chk", chk_setting["ext.osds.pref.user.chk"]);
+    localStorage.setItem("ext.osds.pref.user", chk_setting["ext.osds.pref.user"]);
+  }
 
   function onBeforeLoadName(url, tabId)
   {
-    var chk_all = chk_setting["ext.osds.handle_all"];
+    var chk_all = get_setting("ext.osds.handle_all");
 
-    var chk_csv = chk_setting["ext.osds.handle_csv"];
+    var chk_csv = get_setting("ext.osds.handle_csv");
     var handle_csv = (chk_csv && chk_csv==="1");
-    var chk_json = chk_setting["ext.osds.handle_json"];
+    var chk_json = get_setting("ext.osds.handle_json");
     var handle_json = (chk_json && chk_json==="1");
-    var chk_xml = chk_setting["ext.osds.handle_xml"];
+    var chk_xml = get_setting("ext.osds.handle_xml");
     var handle_xml = (chk_xml && chk_xml==="1");
 
     var handle = false;
@@ -136,7 +146,7 @@ var chk_setting = {
 
     if (chk_all && chk_all!=="1") 
     {
-      if (could_handle) {
+      if (handle) {
         GVars.updatePage(tabId, {content:"", url, type, ext});
       } else {
         GVars.deletePage(tabId);
@@ -147,51 +157,6 @@ var chk_setting = {
       Browser.api.tabs.update(tabId, { "url": page_url });
       return { cancel: false };
     }
-  }
-
-
-  if (Browser.is_safari) {
-      Browser.api.webNavigation.onBeforeNavigate.addListener(
-        (d) => {
-           return onBeforeLoadName(d.url, d.tabId);
-        });
-  }
-
-
-
-  if (!Browser.is_safari) {  // isn't supported by Safari
-    Browser.api.webRequest.onBeforeRequest.addListener(
-        (d) => {
-           return onBeforeLoadName(d.url, d.tabId);
-        },
-        {types: ["main_frame"], urls: ["file:///*"]}, 
-        (Browser.is_chrome_v3 || Browser.is_ff_v3) ? [] :["blocking"]);
-  }
-
-
-  if (Browser.is_ff && !Browser.is_ff_v3 && !Browser.is_safari) {
-    Browser.api.webRequest.onBeforeSendHeaders.addListener(
-        function(details) {
-          var chk = chk_setting['ext.osds.pref.user.chk'];
-          if (chk && chk==="1") {
-            var pref_user = chk_setting['ext.osds.pref.user'];
-            if (pref_user && pref_user.length> 0) {
-              details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
-            }
-          }
-          
-          return {"requestHeaders": details.requestHeaders};
-        },
-        {urls: ["<all_urls>"]},
-        (Browser.is_chrome_v3 || Browser.is_ff_v3)? ["requestHeaders"] :["blocking", "requestHeaders"]);
-  }
-
-
-  if (!Browser.is_safari) {  // isn't supported by Safari
-    Browser.api.webRequest.onHeadersReceived.addListener(
-  	onHeadersReceived, 
-  	{types: ["main_frame"], urls: ["<all_urls>"]}, 
-        (Browser.is_chrome_v3 || Browser.is_ff_v3) ? ["responseHeaders"] : ["responseHeaders", "blocking"] );
   }
 
 
@@ -209,11 +174,11 @@ var chk_setting = {
       }
     }
 
-    var chk_all = chk_setting["ext.osds.handle_all"];
+    var chk_all =  get_setting("ext.osds.handle_all");
 
-    var chk_xml = chk_setting["ext.osds.handle_xml"];
-    var chk_csv = chk_setting["ext.osds.handle_csv"];
-    var chk_json = chk_setting["ext.osds.handle_json"];
+    var chk_xml =  get_setting("ext.osds.handle_xml");
+    var chk_csv =  get_setting("ext.osds.handle_csv");
+    var chk_json = get_setting("ext.osds.handle_json");
 
     var handle_xml = (chk_xml && chk_xml==="1");
     var handle_csv = (chk_csv && chk_csv==="1");
@@ -297,7 +262,7 @@ var chk_setting = {
       }
       else if (headerContent.value.match(/(application\/jsonl)/)) 
       {
-        handle = true;
+        handle = handle_json;
         type = "jsonl";
         could_handle = true;
       }
@@ -386,7 +351,7 @@ var chk_setting = {
 
     if (chk_all && chk_all!=="1") 
     {
-      if (could_handle) {
+      if (handle) {
         GVars.updatePage(d.tabId, {content:headerContent.value, url:d.url, type, ext});
       } else {
         GVars.deletePage(d.tabId);
@@ -430,19 +395,65 @@ var chk_setting = {
 
 /**** End WebRequest ****/
 
-Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
-{
-  try {
-    if (request.cmd === "reloadSettings")
-    {
-      reload_settings();
+  Browser.api.runtime.onMessage.addListener(function(request, sender, sendResponse)
+  {
+    try {
+      if (request.cmd === "reloadSettings")
+      {
+        reload_settings();
+      }
+    } catch(e) {
+      console.log("OSDS: onMsg="+e);
     }
-  } catch(e) {
-    console.log("OSDS: onMsg="+e);
+
+  });
+
+  function init_handlers()
+  {
+    if (Browser.is_safari) {
+      Browser.api.webNavigation.onBeforeNavigate.addListener(
+        (d) => {
+           return onBeforeLoadName(d.url, d.tabId);
+        });
+    }
+
+
+    if (!Browser.is_safari) {  // isn't supported by Safari
+      Browser.api.webRequest.onBeforeRequest.addListener(
+        (d) => {
+           return onBeforeLoadName(d.url, d.tabId);
+        },
+        {types: ["main_frame"], urls: ["file:///*"]}, 
+        (Browser.is_chrome_v3 || Browser.is_ff_v3) ? [] :["blocking"]);
+    }
+
+
+    if (Browser.is_ff && !Browser.is_ff_v3 && !Browser.is_safari) {
+      Browser.api.webRequest.onBeforeSendHeaders.addListener(
+        function(details) {
+          var chk = get_setting('ext.osds.pref.user.chk');
+          if (chk && chk==="1") {
+            var pref_user = get_setting('ext.osds.pref.user');
+            if (pref_user && pref_user.length> 0) {
+              details.requestHeaders.push({name:"On-Behalf-Of", value:pref_user})
+            }
+          }
+          
+          return {"requestHeaders": details.requestHeaders};
+        },
+        {urls: ["<all_urls>"]},
+        (Browser.is_chrome_v3 || Browser.is_ff_v3)? ["requestHeaders"] :["blocking", "requestHeaders"]);
+    }
+
+
+    if (!Browser.is_safari) {  // isn't supported by Safari
+      Browser.api.webRequest.onHeadersReceived.addListener(
+  	    onHeadersReceived, 
+  	      {types: ["main_frame"], urls: ["<all_urls>"]}, 
+          (Browser.is_chrome_v3 || Browser.is_ff_v3) ? ["responseHeaders"] : ["responseHeaders", "blocking"] );
+    }
   }
 
-});
-
-
+  init_handlers();
 
 })();
