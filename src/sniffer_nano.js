@@ -321,8 +321,8 @@ Nano.sniff_nanotation_Document = (doc_Texts) =>
  
 Nano.llm_chats = {
              openai: { menu:'main pre select#code_type option:checked, article pre select#code_type option:checked', 
-                       sel: [{parentNode:4}], 
-                       code:'code',
+                       sel: [{parentNode:6}], 
+                       code:'div#code-block-viewer',
                        url: ['https://chat.openai.com', 'https://chatgpt.com']
                      }, 
 
@@ -348,7 +348,7 @@ Nano.llm_chats = {
                        url: ['https://claude.site/', 'https://claude.site/artifacts/', 'https://claude.ai/',]
                      }, 
              ms_copilot: { menu:'main select#code_type option:checked', 
-                       sel: [{ parentNode:4 }],
+                       sel: [{ parentNode:5 }],
                        code:'pre code',
                        url: ['https://copilot.microsoft.com/']
                      }, 
@@ -394,15 +394,15 @@ Nano.llm_chats = {
                        url: ['https://chat.groq.com']
                      }, 
              qwen: { menu:'select#code_type option:checked',  
-                       sel: [{ parentNode:3 }],
-                       code:'div[id^="code-textarea-"] div[role="textbox"]',
+                       sel: [{ parentNode:5 }],
+                       code:'div.qwen-markdown-code-body div.view-lines',
                        url: ['https://chat.qwen.ai/']
                      }, 
              cerebras: { menu:'select#code_type option:checked',  
                        sel: [{ parentNode:3 }],
                        code:'div[data-testid$="-code-block"] div[role="textbox"]',
                        drop_first: true,
-                       url: ['https://inference.cerebras.ai/']
+                       url: ['https://inference.cerebras.ai/', 'https://chat.cerebras.ai/']
                      }, 
              deepseek: { menu:'select#code_type option:checked', 
                        sel: [{ parentNode:6 }],
@@ -423,7 +423,13 @@ Nano.llm_chats = {
              github: { menu:'select#code_type option:checked', 
                        sel: [{ parentNode:4 }],
                        code:'pre code',
-                       url: ['https://github.com/marketplace/models/','https://github.com/copilot/']
+                       url: ['https://github.com/marketplace/models/']
+                     }, 
+
+             github_cp: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'div[data-testid="codemirror-editor"] div.cm-content',
+                       url: ['https://github.com/copilot/']
                      }, 
 
              librechat: { menu:'select#code_type option:checked', 

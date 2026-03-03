@@ -78,6 +78,30 @@
                  <OPTION id="rss">RSS</OPTION>
                  <OPTION id="atom">Atom</OPTION>
            </SELECT>`;
+  const dd_base_github = `<span style="background-color:darksalmon;">Data format:</span>
+           <SELECT style="all:revert;" id="code_type" >
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
+  const dd_base_perplex = `<span style="background-color: lightgreen; color:gray;" class="text-quiet">Data format:</span>
+           <SELECT id="code_type" class="bg-offsetPlus dark:bg-offsetPlusDark" style="background: lightgray; color:gray;">
+                 <OPTION id="none" selected></OPTION>
+                 <OPTION id="turtle">RDF-Turtle</OPTION>
+                 <OPTION id="jsonld">JSON-LD</OPTION>
+                 <OPTION id="json">JSON</OPTION>
+                 <OPTION id="csv">CSV</OPTION>
+                 <OPTION id="rdfxml">RDF/XML</OPTION>
+                 <OPTION id="markdown">Markdown</OPTION>
+                 <OPTION id="rss">RSS</OPTION>
+                 <OPTION id="atom">Atom</OPTION>
+           </SELECT>`;
   const dd_base_pplabs = `<span style="background-color: lightgreen;" class="text-quiet">Data format:</span>
            <SELECT id="code_type" class="bg-offsetPlus dark:bg-offsetPlusDark" >
                  <OPTION id="none" selected></OPTION>
@@ -131,7 +155,7 @@
            ${dropDown_gemini} </div>`;
 
   const dropDown_perplexity_labs = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark text-quiet" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;top:0px;"> ${dd_base_pplabs} </div>`;
-  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark text-quiet" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;"> ${dd_base_pplabs} </div>`;
+  const dropDown_perplexity = `<div class="flex items-center gap-2 ml-auto text-textOff dark:text-textOffDark text-quiet" style="height:24px;margin-left:200px;margin-right:100px;position:absolute;"> ${dd_base_perplex} </div>`;
 
   const dropDown_mistral = `<div class="flex items-center gap-2 ml-auto" style="height:24px;margin-right:200px"> ${dd_base_rev} </div>`;
   const dropDown_huggingface = `<div style="margin-left:300px; display:flex; flex-flow:row; height:18px; align-items:center;"> ${dd_base_hugging} </div>`;
@@ -164,7 +188,7 @@
            ${dd_base_rev} </div>`;
 
   const dropDown_github = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:100px;">
-           ${dd_base_rev} </div>`;
+           ${dd_base_github} </div>`;
 
   const dropDown_librechat = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
            ${dd_base_rev} </div>`;
@@ -178,7 +202,6 @@
   const dropDown_aistudio = `<div style="display:flex; flex-direction:row; justify-content:center; height:24px; align-items:baseline; margin-right:150px;">
            ${dd_base_rev} </div>`;
 
-
   function scan_code_openai()
   {
     let lst = document.querySelectorAll('main pre');
@@ -191,7 +214,7 @@
 
       const btn_copy = hdr?.querySelector('button')
       if (btn_copy)
-        hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+        btn_copy.insertAdjacentHTML('beforebegin', dropDown_openai);
     }
     lst = document.querySelectorAll('article pre');
     for(const v of lst) 
@@ -203,7 +226,7 @@
 
       const btn_copy = hdr?.querySelector('button')
       if (btn_copy)
-        hdr.children[0]?.append(DOM.htmlToElements(dropDown_openai)[0]);
+        btn_copy.insertAdjacentHTML('beforebegin', dropDown_openai);
     }
   }
 
@@ -294,7 +317,7 @@
       if (dd_el)
         continue;
 
-      const btn_copy = block.querySelector('div > button');
+      const btn_copy = block.querySelector('div > button[data-copy]');
       if (btn_copy)
         btn_copy.parentNode.insertBefore(DOM.htmlToElements(dropDown_ms)[0], btn_copy);
     }
@@ -488,15 +511,16 @@
 
   function scan_code_qwen()
   {
-    const lst = document.querySelectorAll('div[id^="code-textarea-"]');
+    const lst = document.querySelectorAll('pre.qwen-markdown-code');
     for(const v of lst) 
     {
-      const block = v.parentNode.parentNode.parentNode;
-      const dd_el = block.querySelector('#code_type');
+      const dd_el = v.querySelector('#code_type');
       if (dd_el)
         continue;
-
-      block.insertAdjacentHTML('afterbegin', dropDown_qwen);
+      
+      const btn = v.querySelector('div.qwen-markdown-code-header-actions')
+      if (btn)
+        btn.insertAdjacentHTML('beforebegin', dropDown_qwen);
     }
   }
 
@@ -528,6 +552,7 @@
     }
   }
   
+
   function scan_code_github()
   {
     const lst = document.querySelectorAll('main pre code');
@@ -541,6 +566,21 @@
       title.insertAdjacentHTML('afterend', dropDown_github);
     }
   }
+
+  function scan_code_github_cp()
+  {
+    const block = document.querySelector('div.content-preview-content');
+    if (block) {
+      const dd_el = block.querySelector('#code_type');
+      if (dd_el)
+        return;
+
+      const title = block?.firstChild?.firstChild?.firstChild;
+      if (title)
+        title.insertAdjacentHTML('afterend', dropDown_github);
+    }
+  }
+
 
   function scan_code_librechat()
   {
@@ -724,10 +764,15 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_allenai, 3*1000);
       }
-      else if (g_chat_id === 'ch_github' || g_chat_id === 'ch_github_cp') {
+      else if (g_chat_id === 'ch_github') {
         scan_code_github();
         g_top = document.querySelector('body');
         setInterval(scan_code_github, 3*1000);
+      }
+      else if (g_chat_id === 'ch_github_cp') {
+        scan_code_github_cp();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_github_cp, 3*1000);
       }
       else if (g_chat_id === 'ch_librechat') {
         scan_code_librechat();
@@ -831,7 +876,7 @@
       return 'ch_deepseek';
     else if (location.href.startsWith('https://chat.qwen.ai/'))
       return 'ch_qwen';
-    else if (location.href.startsWith('https://inference.cerebras.ai/'))
+    else if (location.href.startsWith('https://inference.cerebras.ai/') || location.href.startsWith('https://chat.cerebras.ai/'))
       return 'ch_cerebras';
     else if (location.href.startsWith('https://playground.allenai.org/'))
       return 'ch_allenai';
