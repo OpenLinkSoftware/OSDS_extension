@@ -454,6 +454,7 @@
     }
   }
 
+  reload_settings();
   init_handlers();
 
 })();
