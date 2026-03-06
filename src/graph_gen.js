@@ -67,6 +67,64 @@ class Graph_Gen {
         return this.detectNodeType(iri);
     }
 
+    normalizeEntityTypeLabel(typeIri) {
+        const compact = this.compactIri(typeIri);
+        const local = compact.includes(':') ? compact.split(':').pop() : compact;
+        const decoded = local.replace(/[_-]+/g, ' ');
+        const spaced = decoded
+            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (!spaced) {
+            return compact || 'Resource';
+        }
+
+        return spaced
+            .split(' ')
+            .map(part => part ? part.charAt(0).toUpperCase() + part.slice(1) : part)
+            .join(' ');
+    }
+
+    scoreEntityType(typeIri) {
+        const compact = this.compactIri(typeIri).toLowerCase();
+        const genericTypes = new Set([
+            'rdf:resource',
+            'rdfs:resource',
+            'rdfs:class',
+            'owl:class',
+            'owl:thing',
+            'owl:namedindividual',
+            'schema:thing',
+            'skos:concept',
+            'foaf:agent'
+        ]);
+
+        if (genericTypes.has(compact)) {
+            return -10;
+        }
+
+        if (compact.startsWith('schema:') || compact.startsWith('foaf:') || compact.startsWith('dbo:') || compact.startsWith('wikidata:') || compact.startsWith('wd:')) {
+            return 10;
+        }
+
+        return 0;
+    }
+
+    facetLabelForGroup(group) {
+        const labels = {
+            person: 'Person',
+            organization: 'Organization',
+            place: 'Place',
+            concept: 'Concept',
+            event: 'Event',
+            literal: 'Literal',
+            resource: 'Resource'
+        };
+
+        return labels[group] || 'Resource';
+    }
+
     // Build graph from n3_data structure
     buildGraphFromN3Data(n3_data, baseUrl) {
         const nodesById = new Map();
@@ -89,6 +147,7 @@ class Graph_Gen {
                     nodesById.set(id, {
                         id,
                         iri: null,
+                        literalValue: String(term),
                         label: String(term).length > 48 ? String(term).slice(0, 45) + '…' : String(term),
                         group: 'literal',
                         size: 10,
@@ -186,8 +245,34 @@ class Graph_Gen {
                 .map((t) => resolveRelativeIri(t.object.value, baseUrl))
         );
 
+        const typeAssignments = new Map();
+        for (const t of triples) {
+            const isTypeTriple = t.predicate.display === 'rdf:type' || t.predicate.value.endsWith('#type');
+            if (!isTypeTriple || t.object.type !== 'iri') continue;
+
+            const subjectIri = resolveRelativeIri(t.subject.value, baseUrl);
+            const objectIri = resolveRelativeIri(t.object.value, baseUrl);
+            if (!typeAssignments.has(subjectIri)) {
+                typeAssignments.set(subjectIri, []);
+            }
+            typeAssignments.get(subjectIri).push(objectIri);
+        }
+
         // Set node sizes based on importance
         for (const n of nodesById.values()) {
+            const assignedTypes = n.iri ? (typeAssignments.get(n.iri) || []) : [];
+            let primaryType = null;
+
+            if (assignedTypes.length > 0) {
+                primaryType = assignedTypes
+                    .slice()
+                    .sort((a, b) => this.scoreEntityType(b) - this.scoreEntityType(a))[0];
+            }
+
+            n.entityTypeIri = primaryType;
+            n.baseFilterType = this.facetLabelForGroup(n.group);
+            n.filterType = primaryType ? this.normalizeEntityTypeLabel(primaryType) : this.facetLabelForGroup(n.group);
+
             if (n.group === 'literal') {
                 // Literals are always small
                 n.size = 8;
@@ -268,7 +353,7 @@ class Graph_Gen {
                         </svg>
                     </button>
                 </div>
-                <svg class="graph-svg" style="width:100%; height:100%; background:#f8fafc;"></svg>
+                <svg class="graph-svg" style="width:100%; height:100%; background:#081122;"></svg>
                 <div class="graph-settings-panel" style="display:none; flex-flow:column; position:absolute; right:12px; top:55px; z-index:20; width:min(380px,calc(100% - 24px)); background:rgba(255,255,255,0.97); border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); backdrop-filter:blur(12px); height:calc(100vh - 300px);">
                     <div class="settings-header" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #e2e8f0; cursor:move; background:linear-gradient(135deg, rgba(249,250,251,0.9) 0%, rgba(241,245,249,0.9) 100%); border-radius:12px 12px 0 0;">
                         <div style="font-size:14px; font-weight:600; color:#1e293b;">Graph Settings</div>
@@ -315,19 +400,14 @@ class Graph_Gen {
                                 </label>
                             </div>
                         </div>
-                        <!-- Filtering -->
+                        <!-- Edge Filtering -->
                         <div style="margin-bottom:16px;">
-                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:6px;">Node Filtering</div>
-                            <div class="filter-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
-                        </div>
-                        <!-- Predicate Filtering -->
-                        <div style="margin-bottom:16px;">
-                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="predicate-filter-toggle">
-                                <span class="toggle-icon" style="font-size:16px; transition:transform 0.2s; transform:rotate(-90deg);">▼</span>
-                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Predicate Filtering</div>
+                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="edge-filter-toggle">
+                                <span class="toggle-icon" style="font-size:14px; transition:transform 0.2s; transform:rotate(-90deg);">▶</span>
+                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Edge Filtering</div>
                             </div>
-                            <div class="predicate-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden;">
-                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Select predicates to include in graph:</div>
+                            <div class="edge-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden;">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Select edges to include in graph:</div>
                                 <div style="display:flex; gap:8px; margin-bottom:8px; padding:0 12px;">
                                     <button class="select-all-predicates" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Select all predicates">Select All</button>
                                     <button class="deselect-all-predicates" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Deselect all predicates">Deselect All</button>
@@ -335,9 +415,67 @@ class Graph_Gen {
                                 <div class="predicate-checkboxes" style="display:grid; grid-template-columns:repeat(1,1fr); padding:0 12px 12px;"></div>
                             </div>
                         </div>
+                        <!-- Node Filtering -->
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="node-filter-toggle">
+                                <span class="toggle-icon" style="font-size:14px; transition:transform 0.2s; transform:rotate(-90deg);">▶</span>
+                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Node Filtering</div>
+                            </div>
+                            <div class="node-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Select node types to include in graph:</div>
+                                <div style="display:flex; gap:8px; margin-bottom:8px; padding:0 12px;">
+                                    <button class="select-all-nodes" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Select all node types">Select All</button>
+                                    <button class="deselect-all-nodes" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Deselect all node types">Deselect All</button>
+                                </div>
+                                <div class="filter-container" style="display:grid; grid-template-columns:repeat(1,1fr); gap:6px; max-height:220px; overflow-y:auto; padding:0 12px 12px;"></div>
+                            </div>
+                        </div>
+                        <!-- Literal Text Filtering -->
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="literal-filter-toggle">
+                                <span class="toggle-icon" style="font-size:14px; transition:transform 0.2s; transform:rotate(-90deg);">▶</span>
+                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Literal Text Filtering</div>
+                            </div>
+                            <div class="literal-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Show only literal relationship values containing this text:</div>
+                                <div style="display:flex; gap:8px; align-items:center; padding:0 12px 8px;">
+                                    <input type="text" class="literal-text-input" placeholder="Filter literal values" style="flex:1; padding:8px 10px; font-size:12px; color:#0f172a; background:#fff; border:1px solid #cbd5e1; border-radius:6px; outline:none;">
+                                    <button class="clear-literal-filter" style="padding:8px 10px; font-size:11px; font-weight:500; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; transition:all 0.2s;">Clear</button>
+                                </div>
+                                <div class="literal-filter-status" style="font-size:10px; color:#64748b; padding:0 12px 12px;">No literal text filter applied.</div>
+                            </div>
+                        </div>
+                        <!-- Literal Text Filtering -->
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="resolver-filter-toggle">
+                                <span class="toggle-icon" style="font-size:14px; transition:transform 0.2s; transform:rotate(-90deg);">▶</span>
+                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Resolver Preference</div>
+                            </div>
+                            <div class="resolver-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Choose how IRIs open from the graph:</div>
+                                <div class="resolver-options" style="display:flex; flex-direction:column; gap:6px; padding:0 12px 8px;">
+                                    <label class="resolver-option" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                        <span style="font-size:12px; color:#1e293b;">None</span>
+                                        <input type="radio" name="graph-resolver-preference" value="none" class="resolver-pref-radio" style="accent-color:#6366f1;">
+                                    </label>
+                                    <label class="resolver-option" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                        <span style="font-size:12px; color:#1e293b;">https://linkeddata.uriburner.com/describe/?url=&#123;uri&#125;</span>
+                                        <input type="radio" name="graph-resolver-preference" value="uriburner" class="resolver-pref-radio" style="accent-color:#6366f1;">
+                                    </label>
+                                    <label class="resolver-option" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                        <span style="font-size:12px; color:#1e293b;">Other</span>
+                                        <input type="radio" name="graph-resolver-preference" value="other" class="resolver-pref-radio" style="accent-color:#6366f1;">
+                                    </label>
+                                </div>
+                                <div style="padding:0 12px 8px;">
+                                    <input type="text" class="resolver-pattern-input" placeholder="https://example.org/resolve?target={uri}" style="display:none; width:100%; padding:8px 10px; font-size:12px; color:#0f172a; background:#fff; border:1px solid #cbd5e1; border-radius:6px; outline:none;">
+                                </div>
+                                <div class="resolver-status" style="font-size:10px; color:#64748b; padding:0 12px 12px;">IRIs currently open directly.</div>
+                            </div>
+                        </div>
                         <!-- Legend -->
                         <div style="margin-bottom:16px;">
-                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Colors</div>
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Colors By Type</div>
                             <div class="legend-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
                         </div>
                         <!-- Tips -->
@@ -400,13 +538,93 @@ class Graph_Gen {
         };
 
         const allGroups = Array.from(new Set(fullGraph.nodes.map(n => n.group))).sort();
+        const facetPalette = [
+            '#2563eb', '#0f766e', '#dc2626', '#7c3aed', '#ea580c', '#0891b2',
+            '#16a34a', '#c026d3', '#ca8a04', '#4f46e5', '#db2777', '#059669'
+        ];
+        const hashString = (value) => {
+            let hash = 0;
+            const input = String(value || '');
+            for (let i = 0; i < input.length; i++) {
+                hash = ((hash << 5) - hash) + input.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        };
 
         const colorForGroup = (g) => {
             return nodeTypes[g]?.color || nodeTypes['resource'].color;
         };
+        const themeStyles = {
+            dark: {
+                background: '#081122',
+                link: 'rgba(148,163,184,0.34)',
+                linkHover: 'rgba(125,211,252,0.95)',
+                arrow: 'rgba(148,163,184,0.68)',
+                nodeLabel: 'rgba(248,250,252,0.98)',
+                nodeLabelHalo: 'rgba(3,7,18,0.96)',
+                literalLabel: 'rgba(236,253,245,0.98)',
+                nodeStroke: 'rgba(226,232,240,0.74)',
+                pinnedStroke: 'rgba(251,113,133,0.95)',
+                literalStroke: 'rgba(226,232,240,0.6)',
+                iconText: '#e2e8f0',
+                labelBadgeFill: 'rgba(15,23,42,0.92)',
+                labelBadgeStroke: 'rgba(148,163,184,0.35)',
+                labelBadgeText: '#f8fafc',
+                controlBackground: 'rgba(255,255,255,0.95)',
+                controlHoverBackground: 'rgba(255,255,255,1)'
+            },
+            light: {
+                background: '#f8fafc',
+                link: 'rgba(100,116,139,0.62)',
+                linkHover: '#2563eb',
+                arrow: 'rgba(100,116,139,0.75)',
+                nodeLabel: 'rgba(15,23,42,0.92)',
+                nodeLabelHalo: 'rgba(255,255,255,0.96)',
+                literalLabel: 'rgba(15,23,42,0.94)',
+                nodeStroke: 'rgba(255,255,255,0.92)',
+                pinnedStroke: 'rgba(239,68,68,0.9)',
+                literalStroke: 'rgba(255,255,255,0.92)',
+                iconText: '#334155',
+                labelBadgeFill: 'rgba(255,255,255,0.98)',
+                labelBadgeStroke: 'rgba(203,213,225,0.9)',
+                labelBadgeText: '#334155',
+                controlBackground: 'rgba(255,255,255,0.95)',
+                controlHoverBackground: 'rgba(255,255,255,1)'
+            }
+        };
+        const getThemeStyle = () => themeStyles[this.theme === 'dark' ? 'dark' : 'light'];
 
         // Setup SVG
         const defs = svg.append("defs");
+        defs.append("linearGradient")
+            .attr("id", `graph-bg-gradient-${container.id}`)
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "100%")
+            .selectAll("stop")
+            .data([
+                { offset: "0%", color: "#081122" },
+                { offset: "52%", color: "#0b1630" },
+                { offset: "100%", color: "#111f3f" }
+            ])
+            .join("stop")
+            .attr("offset", d => d.offset)
+            .attr("stop-color", d => d.color);
+        defs.append("radialGradient")
+            .attr("id", `graph-vignette-${container.id}`)
+            .attr("cx", "50%")
+            .attr("cy", "50%")
+            .attr("r", "75%")
+            .selectAll("stop")
+            .data([
+                { offset: "0%", color: "rgba(15,23,42,0)" },
+                { offset: "100%", color: "rgba(2,6,23,0.55)" }
+            ])
+            .join("stop")
+            .attr("offset", d => d.offset)
+            .attr("stop-color", d => d.color);
         defs.append("marker")
             .attr("id", `arrow-${container.id}`)
             .attr("viewBox", "0 -5 10 10")
@@ -418,6 +636,40 @@ class Graph_Gen {
             .append("path")
             .attr("d", "M0,-5L10,0L0,5")
             .attr("fill", "rgba(100,116,139,0.75)");
+
+        const backgroundLayer = svg.append("g").attr("class", "graph-background");
+        backgroundLayer.append("rect")
+            .attr("class", "graph-surface")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .attr("fill", `url(#graph-bg-gradient-${container.id})`);
+        backgroundLayer.append("circle")
+            .attr("class", "graph-aura")
+            .attr("cx", width * 0.18)
+            .attr("cy", height * 0.28)
+            .attr("r", Math.max(width, height) * 0.26)
+            .attr("fill", "rgba(34,197,94,0.08)");
+        backgroundLayer.append("circle")
+            .attr("class", "graph-aura")
+            .attr("cx", width * 0.82)
+            .attr("cy", height * 0.22)
+            .attr("r", Math.max(width, height) * 0.22)
+            .attr("fill", "rgba(59,130,246,0.09)");
+        backgroundLayer.append("circle")
+            .attr("class", "graph-aura")
+            .attr("cx", width * 0.66)
+            .attr("cy", height * 0.84)
+            .attr("r", Math.max(width, height) * 0.2)
+            .attr("fill", "rgba(168,85,247,0.07)");
+        backgroundLayer.append("rect")
+            .attr("class", "graph-vignette")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .attr("fill", `url(#graph-vignette-${container.id})`);
 
         const gRoot = svg.append("g");
 
@@ -433,13 +685,261 @@ class Graph_Gen {
         // Simulation
         let nodes = fullGraph.nodes.map(d => ({ ...d }));
         let links = fullGraph.links.map(d => ({ ...d }));
+        const nodeLookup = new Map(nodes.map(node => [node.id, node]));
+        const connectedNodeIds = new Set();
+
+        links.forEach(link => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            connectedNodeIds.add(sourceId);
+            connectedNodeIds.add(targetId);
+        });
+        
+        const hiddenNodeFacets = new Set();
+        const hiddenPredicates = new Set();
+        const effectiveNodeFacetById = new Map();
+        let currentNodeFacets = [];
+        let literalTextFilter = '';
+        const resolverPreferenceKey = 'osds.graph.resolverPreference';
+        const resolverPatternKey = 'osds.graph.resolverPattern';
+        let resolverPreference = window.localStorage.getItem(resolverPreferenceKey) || 'none';
+        let customResolverPattern = window.localStorage.getItem(resolverPatternKey) || '';
+
+        const getNodeById = (nodeRef) => {
+            const nodeId = typeof nodeRef === 'object' ? nodeRef.id : nodeRef;
+            return nodeLookup.get(nodeId);
+        };
+        const buildResolvedUri = (uri) => {
+            if (!uri) {
+                return uri;
+            }
+
+            let pattern = '';
+            if (resolverPreference === 'uriburner') {
+                pattern = 'https://linkeddata.uriburner.com/describe/?url={uri}';
+            } else if (resolverPreference === 'other') {
+                pattern = customResolverPattern;
+            }
+
+            if (!pattern || !pattern.includes('{uri}')) {
+                return uri;
+            }
+
+            return pattern.replaceAll('{uri}', encodeURIComponent(uri));
+        };
+        const openGraphUri = (uri) => {
+            if (!uri) {
+                return;
+            }
+            window.open(buildResolvedUri(uri), "_blank", "noopener");
+        };
+
+        const normalizedLiteralFilter = () => literalTextFilter.trim().toLowerCase();
+        const literalNodeMatchesFilter = (node) => {
+            if (!node || node.group !== 'literal') {
+                return true;
+            }
+
+            const filterValue = normalizedLiteralFilter();
+            if (!filterValue) {
+                return true;
+            }
+
+            const literalValue = String(node.literalValue || node.label || '').toLowerCase();
+            return literalValue.includes(filterValue);
+        };
+
+        const isTypePredicate = (link) => {
+            const predicateLabel = link.predicateLabel || '';
+            const predicateIri = link.predicateIri || '';
+            return predicateLabel === 'rdf:type'
+                || predicateLabel === 'a'
+                || predicateIri.endsWith('#type')
+                || predicateIri.endsWith('/type');
+        };
+
+        const isPredicateVisible = (link) => !hiddenPredicates.has(link.predicateLabel || link.predicateIri);
+        const isEdgeVisibleBySelection = (link) => isPredicateVisible(link);
+        const nodeIsReachableFromSelectedEdges = (nodeId) => links.some(link => {
+            if (!isEdgeVisibleBySelection(link)) {
+                return false;
+            }
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            return sourceId === nodeId || targetId === nodeId;
+        });
+        const linkPassesEdgeAndLiteralSelection = (link) => {
+            if (!isEdgeVisibleBySelection(link)) {
+                return false;
+            }
+
+            const source = getNodeById(link.source);
+            const target = getNodeById(link.target);
+            return literalNodeMatchesFilter(source) && literalNodeMatchesFilter(target);
+        };
+        const nodeIsReachableFromVisibleEdges = (nodeId) => links.some(link => {
+            if (!linkPassesEdgeAndLiteralSelection(link)) {
+                return false;
+            }
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            return sourceId === nodeId || targetId === nodeId;
+        });
+        const getActiveNodeFacet = (node) => {
+            if (!node) {
+                return null;
+            }
+
+            const baseFacet = node.baseFilterType || this.facetLabelForGroup(node.group);
+            const visibleTypes = [];
+
+            links.forEach(link => {
+                if (!isTypePredicate(link) || !isEdgeVisibleBySelection(link)) {
+                    return;
+                }
+
+                const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                if (sourceId !== node.id) {
+                    return;
+                }
+
+                const target = getNodeById(link.target);
+                if (!target || !target.iri) {
+                    return;
+                }
+
+                visibleTypes.push({
+                    iri: target.iri,
+                    label: this.normalizeEntityTypeLabel(target.iri),
+                    score: this.scoreEntityType(target.iri)
+                });
+            });
+
+            if (visibleTypes.length === 0) {
+                return {
+                    label: baseFacet,
+                    group: node.group,
+                    typeIri: null
+                };
+            }
+
+            visibleTypes.sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
+            return {
+                label: visibleTypes[0].label,
+                group: node.group,
+                typeIri: visibleTypes[0].iri
+            };
+        };
+
+        const colorForFacet = (facet) => {
+            if (!facet) {
+                return colorForGroup('resource');
+            }
+            const key = typeof facet === 'string' ? facet : facet.label;
+            return facetPalette[hashString(key) % facetPalette.length];
+        };
+
+        const recomputeNodeFacetState = () => {
+            effectiveNodeFacetById.clear();
+            const facetMap = new Map();
+
+            nodes.forEach(node => {
+                const facet = getActiveNodeFacet(node);
+                effectiveNodeFacetById.set(node.id, facet);
+
+                if (!literalNodeMatchesFilter(node)) {
+                    return;
+                }
+
+                const hasVisibleEdge = nodeIsReachableFromVisibleEdges(node.id);
+                const isStandalone = !connectedNodeIds.has(node.id);
+                if (!hasVisibleEdge && !isStandalone) {
+                    return;
+                }
+
+                if (!facetMap.has(facet.label)) {
+                    facetMap.set(facet.label, {
+                        label: facet.label,
+                        count: 0,
+                        group: facet.group,
+                        color: colorForFacet(facet)
+                    });
+                }
+
+                const entry = facetMap.get(facet.label);
+                entry.count++;
+                if (entry.group === 'resource' && facet.group !== 'resource') {
+                    entry.group = facet.group;
+                }
+            });
+
+            currentNodeFacets = Array.from(facetMap.values())
+                .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+
+            hiddenNodeFacets.forEach(label => {
+                if (!facetMap.has(label)) {
+                    hiddenNodeFacets.delete(label);
+                }
+            });
+        };
+
+        const getCurrentFacetForNode = (node) => effectiveNodeFacetById.get(node.id) || {
+            label: node.baseFilterType || this.facetLabelForGroup(node.group),
+            group: node.group,
+            typeIri: null
+        };
+
+        const isNodeVisible = (node) => {
+            if (!literalNodeMatchesFilter(node)) {
+                return false;
+            }
+
+            return !hiddenNodeFacets.has(getCurrentFacetForNode(node).label);
+        };
+        const isLinkVisible = (link) => {
+            const source = getNodeById(link.source);
+            const target = getNodeById(link.target);
+            return !!source && !!target && isNodeVisible(source) && isNodeVisible(target) && isEdgeVisibleBySelection(link);
+        };
+
+        const applyVisibilityFilters = () => {
+            recomputeNodeFacetState();
+            const connectedVisibleNodes = new Set();
+
+            linkSel.each(function(d) {
+                if (isLinkVisible(d)) {
+                    const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+                    const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+                    connectedVisibleNodes.add(sourceId);
+                    connectedVisibleNodes.add(targetId);
+                }
+            });
+
+            nodeSel.style('display', d => {
+                if (!isNodeVisible(d)) {
+                    return 'none';
+                }
+
+                const hasVisibleConnection = connectedVisibleNodes.has(d.id);
+                const isStandalone = !connectedNodeIds.has(d.id);
+
+                return hasVisibleConnection || isStandalone ? null : 'none';
+            });
+
+            linkSel.style('display', d => isLinkVisible(d) ? null : 'none');
+            iconSel.style('display', d => isLinkVisible(d) ? null : 'none');
+            refreshNodeFilterUI();
+            refreshLegendUI();
+            refreshLiteralFilterUI();
+            refreshNodeColors();
+        };
         
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links)
                 .id(d => d.id)
                 .distance(d => {
-                    const source = nodes.find(n => n.id === d.source.id || n.id === d.source);
-                    const target = nodes.find(n => n.id === d.target.id || n.id === d.target);
+                    const source = getNodeById(d.source);
+                    const target = getNodeById(d.target);
                     if (source?.group === 'literal' || target?.group === 'literal') {
                         return 80;
                     }
@@ -475,23 +975,23 @@ class Graph_Gen {
         let linkSel = linkLayer.selectAll("path")
             .data(links, d => d.key)
             .join("path")
-            .attr("stroke", "rgba(100,116,139,0.65)")
-            .attr("stroke-width", 2)
+            .attr("stroke", getThemeStyle().link)
+            .attr("stroke-width", 1.7)
             .attr("fill", "none")
             .attr("marker-end", `url(#arrow-${container.id})`)
-            .style("opacity", 0.7)
+            .style("opacity", 0.82)
             .style("cursor", "pointer")
             .on("mouseenter", function() {
                 d3.select(this)
-                    .attr("stroke", "#3b82f6")
-                    .attr("stroke-width", 3)
+                    .attr("stroke", getThemeStyle().linkHover)
+                    .attr("stroke-width", 2.8)
                     .style("opacity", 1);
             })
             .on("mouseleave", function() {
                 d3.select(this)
-                    .attr("stroke", "rgba(100,116,139,0.65)")
-                    .attr("stroke-width", 2)
-                    .style("opacity", 0.7);
+                    .attr("stroke", getThemeStyle().link)
+                    .attr("stroke-width", 1.7)
+                    .style("opacity", 0.82);
             });
 
         // Function to select icon for predicate
@@ -545,7 +1045,9 @@ class Graph_Gen {
                     // Background rectangle for label mode (initially hidden)
                     g.append("rect")
                         .attr("class", "predicate-background")
-                        .attr("fill", "rgba(255,255,255,0.9)")
+                        .attr("fill", getThemeStyle().labelBadgeFill)
+                        .attr("stroke", getThemeStyle().labelBadgeStroke)
+                        .attr("stroke-width", 1)
                         .attr("rx", 3)
                         .attr("ry", 3)
                         .style("display", "none")
@@ -557,6 +1059,7 @@ class Graph_Gen {
                         .attr("text-anchor", "middle")
                         .attr("dy", "0.35em")
                         .attr("font-size", "16px")
+                        .attr("fill", getThemeStyle().iconText)
                         .style("pointer-events", "none")
                         .style("user-select", "none")
                         .text(d => iconForPredicate(d.predicateLabel));
@@ -594,7 +1097,7 @@ class Graph_Gen {
                         .on("click", (event, d) => {
                             event.stopPropagation();
                             if (d.predicateIri) {
-                                window.open(d.predicateIri, "_blank", "noopener");
+                                openGraphUri(d.predicateIri);
                             }
                         });
 
@@ -628,7 +1131,7 @@ class Graph_Gen {
             .style("cursor", d => d.iri ? "pointer" : "default")
             .on("click", (event, d) => {
                 if (event.defaultPrevented) return;
-                if (d.iri) window.open(d.iri, "_blank", "noopener");
+                if (d.iri) openGraphUri(d.iri);
             })
             .on("mouseenter", (event, d) => {
                 // Highlight connected nodes and links
@@ -673,7 +1176,7 @@ class Graph_Gen {
             .on("mouseleave", () => {
                 // Restore opacity
                 nodeSel.style("opacity", 1);
-                linkSel.style("opacity", 0.7);
+                linkSel.style("opacity", 0.82);
                 iconSel.style("opacity", 1);
                 hideTooltip();
             })
@@ -707,45 +1210,52 @@ class Graph_Gen {
             // Add glow ring for circles (behind main shape)
             if (d.shape !== 'rect') {
                 g.append("circle")
-                    .attr("r", d.size + 4)
+                    .attr("r", d.size + 5)
                     .attr("fill", colorForGroup(d.group))
-                    .attr("opacity", 0.15)
+                    .attr("opacity", d.group === 'literal' ? 0.08 : 0.22)
                     .attr("class", "glow-ring");
             }
             
             if (d.shape === 'rect') {
                 // Rectangular nodes for literals with rounded corners
                 g.append("rect")
+                    .attr("class", "node-shape")
                     .attr("x", -d.size * 2)
                     .attr("y", -d.size)
                     .attr("width", d.size * 4)
                     .attr("height", d.size * 2)
                     .attr("rx", 4)
                     .attr("fill", colorForGroup(d.group))
-                    .attr("stroke", "rgba(255,255,255,0.9)")
-                    .attr("stroke-width", 2)
-                    .attr("opacity", 0.95)
-                    .style("filter", "drop-shadow(0px 2px 6px rgba(0,0,0,0.2))");
+                    .attr("fill-opacity", this.theme === 'dark' ? 0.2 : 0.9)
+                    .attr("stroke", getThemeStyle().literalStroke)
+                    .attr("stroke-width", 1.4)
+                    .style("filter", "drop-shadow(0px 10px 18px rgba(2,6,23,0.32))");
             } else {
                 // Circular nodes for resources with enhanced stroke
                 g.append("circle")
+                    .attr("class", "node-shape")
                     .attr("r", d.size)
                     .attr("fill", colorForGroup(d.group))
-                    .attr("stroke", d._pinned ? "rgba(239,68,68,0.9)" : "rgba(255,255,255,0.9)")
-                    .attr("stroke-width", d._pinned ? 3 : 2)
-                    .attr("opacity", 0.95)
-                    .style("filter", "drop-shadow(0px 2px 6px rgba(0,0,0,0.2))");
+                    .attr("fill-opacity", 0.96)
+                    .attr("stroke", d._pinned ? getThemeStyle().pinnedStroke : getThemeStyle().nodeStroke)
+                    .attr("stroke-width", d._pinned ? 2.8 : 1.8)
+                    .style("filter", "drop-shadow(0px 10px 18px rgba(2,6,23,0.28))");
             }
             
             // Node label with improved styling
             g.append("text")
+                .attr("class", "node-label")
                 .attr("x", d.shape === 'rect' ? 0 : d.size + 10)
                 .attr("y", d.shape === 'rect' ? 0 : 5)
                 .attr("text-anchor", d.shape === 'rect' ? "middle" : "start")
-                .attr("fill", d.shape === 'rect' ? "rgba(15,23,42,0.95)" : "rgba(15,23,42,0.9)")
-                .attr("font-size", d.group === 'literal' ? 10 : (d.size > 15 ? 13 : 12))
-                .attr("font-weight", d.size > 15 ? 600 : 500)
-                .style("text-shadow", "0px 1px 3px rgba(255,255,255,0.9), 0px 0px 1px rgba(255,255,255,0.9)")
+                .attr("fill", d.group === 'literal' ? getThemeStyle().literalLabel : getThemeStyle().nodeLabel)
+                .attr("font-size", d.group === 'literal' ? 10.5 : (d.size > 15 ? 13.5 : 12.5))
+                .attr("font-weight", d.size > 15 ? 700 : 600)
+                .attr("stroke", getThemeStyle().nodeLabelHalo)
+                .attr("stroke-width", d.group === 'literal' ? 3.4 : 3.1)
+                .attr("stroke-linejoin", "round")
+                .attr("paint-order", "stroke")
+                .style("letter-spacing", "0.01em")
                 .style("pointer-events", "none")
                 .text(nodeLabel(d));
         });
@@ -789,6 +1299,42 @@ class Graph_Gen {
             // Update node positions
             nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
         });
+
+        const applyGraphTheme = () => {
+            const isDark = this.theme === 'dark';
+            const theme = getThemeStyle();
+
+            svg.style("background", theme.background);
+            backgroundLayer.select('.graph-surface')
+                .attr('fill', isDark ? `url(#graph-bg-gradient-${container.id})` : '#f8fafc');
+            backgroundLayer.selectAll('.graph-aura')
+                .style('display', isDark ? null : 'none');
+            backgroundLayer.select('.graph-vignette')
+                .style('display', isDark ? null : 'none');
+
+            defs.select("marker path").attr("fill", theme.arrow);
+            linkSel.attr("stroke", theme.link).style("opacity", 0.82);
+
+            nodeSel.selectAll('.node-label')
+                .attr('fill', d => d.group === 'literal' ? theme.literalLabel : theme.nodeLabel)
+                .attr('stroke', theme.nodeLabelHalo);
+            nodeSel.selectAll('circle.node-shape')
+                .attr("stroke", d => d._pinned ? theme.pinnedStroke : theme.nodeStroke);
+            nodeSel.selectAll('rect.node-shape')
+                .attr("stroke", theme.literalStroke)
+                .attr("fill-opacity", isDark ? 0.2 : 0.9);
+            nodeSel.selectAll('.glow-ring')
+                .attr('opacity', d => isDark ? (d.group === 'literal' ? 0.08 : 0.22) : (d.group === 'literal' ? 0.08 : 0.15));
+
+            iconSel.selectAll('.predicate-background')
+                .attr('fill', theme.labelBadgeFill)
+                .attr('stroke', theme.labelBadgeStroke);
+            iconSel.selectAll('.predicate-text')
+                .attr('fill', function() {
+                    const size = d3.select(this).attr('font-size');
+                    return size === '16px' ? theme.iconText : theme.labelBadgeText;
+                });
+        };
 
         // Controls
         const fullscreenBtn = container.querySelector('.graph-fullscreen-btn');
@@ -983,23 +1529,7 @@ class Graph_Gen {
         if (themeBtn) {
             themeBtn.addEventListener('click', () => {
                 this.theme = this.theme === 'light' ? 'dark' : 'light';
-                const isDark = this.theme === 'dark';
-                
-                svg.style("background", isDark ? "#0f172a" : "#f8fafc");
-                linkSel.attr("stroke", isDark ? "rgba(100,116,139,0.75)" : "rgba(100,116,139,0.65)");
-                defs.select("marker path").attr("fill", isDark ? "rgba(100,116,139,0.85)" : "rgba(100,116,139,0.75)");
-                
-                // Update node text color
-                nodeSel.selectAll("text").attr("fill", isDark ? "rgba(226,232,240,0.95)" : "rgba(15,23,42,0.9)");
-                
-                // Update node strokes
-                nodeSel.selectAll("circle:not(.glow-ring)").attr("stroke", d => 
-                    d._pinned ? "rgba(239,68,68,0.9)" : (isDark ? "rgba(100,116,139,0.75)" : "rgba(255,255,255,0.9)")
-                );
-                nodeSel.selectAll("rect").attr("stroke", isDark ? "rgba(100,116,139,0.75)" : "rgba(255,255,255,0.9)");
-                
-                // Update icon backgrounds
-                iconSel.selectAll("circle").attr("fill", isDark ? "rgba(30,41,59,0.95)" : "rgba(255,255,255,0.98)");
+                applyGraphTheme();
             });
         }
 
@@ -1012,12 +1542,12 @@ class Graph_Gen {
         const allControlBtns = container.querySelectorAll('.graph-fullscreen-btn, .graph-center-btn, .graph-theme-btn, .graph-settings-btn');
         allControlBtns.forEach(btn => {
             btn.addEventListener('mouseenter', () => {
-                btn.style.background = 'rgba(255,255,255,1)';
+                btn.style.background = getThemeStyle().controlHoverBackground;
                 btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                 btn.style.transform = 'translateY(-1px)';
             });
             btn.addEventListener('mouseleave', () => {
-                btn.style.background = 'rgba(255,255,255,0.95)';
+                btn.style.background = getThemeStyle().controlBackground;
                 btn.style.boxShadow = 'none';
                 btn.style.transform = 'translateY(0)';
             });
@@ -1027,6 +1557,13 @@ class Graph_Gen {
             settingsBtn.addEventListener('click', () => {
                 const isVisible = settingsPanel.style.display !== 'none';
                 settingsPanel.style.display = isVisible ? 'none' : 'flex';
+                if (!isVisible) {
+                    requestAnimationFrame(() => {
+                        container.querySelectorAll('.filter-section-toggle').forEach(toggle => {
+                            toggle.dispatchEvent(new CustomEvent('filter:refresh'));
+                        });
+                    });
+                }
             });
         }
         
@@ -1066,8 +1603,8 @@ class Graph_Gen {
                 simulation.force("link", d3.forceLink(links)
                     .id(d => d.id)
                     .distance(d => {
-                        const source = nodes.find(n => n.id === d.source.id || n.id === d.source);
-                        const target = nodes.find(n => n.id === d.target.id || n.id === d.target);
+                        const source = getNodeById(d.source);
+                        const target = getNodeById(d.target);
                         if (source?.group === 'literal' || target?.group === 'literal') {
                             return val * 0.6; // Shorter for literals
                         }
@@ -1113,9 +1650,9 @@ class Graph_Gen {
                         if (mode === 'labels') {
                             // Show label instead of icon with smaller font
                             textEl.text(d.predicateLabel)
-                                .attr("font-size", "7px")
-                                .attr("font-weight", "500")
-                                .style("fill", "#475569");
+                                .attr("font-size", "8px")
+                                .attr("font-weight", "600")
+                                .attr("fill", getThemeStyle().labelBadgeText);
                             
                             // Get text bounding box and show background
                             const bbox = textEl.node().getBBox();
@@ -1139,7 +1676,7 @@ class Graph_Gen {
                             textEl.text(iconForPredicate(d.predicateLabel))
                                 .attr("font-size", "16px")
                                 .attr("font-weight", "normal")
-                                .style("fill", null);
+                                .attr("fill", getThemeStyle().iconText);
                             
                             // Hide background
                             bgEl.style("display", "none");
@@ -1160,83 +1697,333 @@ class Graph_Gen {
             });
         }
 
-        // Build filter checkboxes (faceted filtering by group)
+        const initializeCollapsibleFilter = (toggleSelector, contentSelector, initiallyExpanded = true) => {
+            const toggleButton = container.querySelector(toggleSelector);
+            const toggleIcon = container.querySelector(`${toggleSelector} .toggle-icon`);
+            const filterContent = container.querySelector(contentSelector);
+
+            if (!toggleButton || !filterContent) {
+                return;
+            }
+
+            let isExpanded = initiallyExpanded;
+            toggleButton.classList.add('filter-section-toggle');
+
+            const getContentHeight = () => {
+                const originalMaxHeight = filterContent.style.maxHeight;
+                const originalVisibility = filterContent.style.visibility;
+                const originalDisplay = filterContent.style.display;
+
+                filterContent.style.maxHeight = 'none';
+                filterContent.style.visibility = 'hidden';
+                filterContent.style.display = 'block';
+
+                const height = filterContent.scrollHeight;
+
+                filterContent.style.maxHeight = originalMaxHeight;
+                filterContent.style.visibility = originalVisibility;
+                filterContent.style.display = originalDisplay;
+
+                return height;
+            };
+
+            const syncState = () => {
+                if (isExpanded) {
+                    const height = getContentHeight();
+                    filterContent.style.display = 'block';
+                    filterContent.style.visibility = 'visible';
+                    filterContent.style.maxHeight = height + 'px';
+                    filterContent.style.opacity = '1';
+                    filterContent.style.overflow = 'hidden';
+                    if (toggleIcon) {
+                        toggleIcon.style.transform = 'rotate(0deg)';
+                    }
+                    setTimeout(() => {
+                        if (isExpanded) {
+                            filterContent.style.overflow = 'auto';
+                        }
+                    }, 300);
+                } else {
+                    filterContent.style.maxHeight = '0px';
+                    filterContent.style.opacity = '0';
+                    filterContent.style.overflow = 'hidden';
+                    if (toggleIcon) {
+                        toggleIcon.style.transform = 'rotate(-90deg)';
+                    }
+
+                    setTimeout(() => {
+                        if (!isExpanded) {
+                            filterContent.style.visibility = 'hidden';
+                        }
+                    }, 300);
+                }
+            };
+
+            syncState();
+
+            toggleButton.addEventListener('click', () => {
+                isExpanded = !isExpanded;
+                syncState();
+            });
+
+            toggleButton.addEventListener('filter:refresh', () => {
+                if (isExpanded) {
+                    syncState();
+                }
+            });
+
+            toggleButton.addEventListener('mouseenter', () => {
+                toggleButton.style.background = 'rgba(226,232,240,0.5)';
+            });
+            toggleButton.addEventListener('mouseleave', () => {
+                toggleButton.style.background = 'transparent';
+            });
+        };
+
         const filterContainer = container.querySelector('.filter-container');
-        if (filterContainer) {
-            const hiddenGroups = new Set();
-            
-            allGroups.forEach(group => {
+        const legendContainer = container.querySelector('.legend-container');
+
+        const createInteractiveFacetChip = (facet, compact = false) => {
+            const chip = document.createElement('button');
+            const isHidden = hiddenNodeFacets.has(facet.label);
+            chip.type = 'button';
+            chip.className = compact ? 'legend-chip' : 'node-filter-chip';
+            chip.dataset.nodeFacet = facet.label;
+            chip.style.cssText = [
+                'display:flex',
+                'align-items:center',
+                'gap:7px',
+                compact ? 'padding:7px 11px' : 'padding:6px 8px',
+                'width:100%',
+                'border-radius:7px',
+                `border:1px solid ${isHidden ? 'rgba(203,213,225,0.95)' : 'rgba(191,219,254,0.95)'}`,
+                `background:${isHidden ? 'rgba(248,250,252,0.88)' : 'rgba(255,255,255,0.98)'}`,
+                `opacity:${isHidden ? '0.65' : '1'}`,
+                'font-size:11px',
+                'color:rgba(15,23,42,0.92)',
+                'font-weight:500',
+                'cursor:pointer',
+                'transition:all 0.2s',
+                compact ? '' : 'text-align:left'
+            ].filter(Boolean).join(';');
+
+            chip.innerHTML = `
+                <span style="width:11px; height:11px; border-radius:50%; background:${facet.color}; box-shadow:0 0 0 2px rgba(255,255,255,0.75); flex-shrink:0;"></span>
+                <span style="font-size:14px; flex-shrink:0;">${nodeTypes[facet.group]?.icon || '🔗'}</span>
+                <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${facet.label}</span>
+                <span style="font-size:10px; color:#64748b; font-weight:600; background:#f1f5f9; padding:1px 6px; border-radius:4px;">${facet.count}</span>
+            `;
+
+            chip.addEventListener('mouseenter', () => {
+                chip.style.transform = 'translateY(-1px)';
+                chip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+            });
+            chip.addEventListener('mouseleave', () => {
+                chip.style.transform = 'translateY(0)';
+                chip.style.boxShadow = 'none';
+            });
+            chip.addEventListener('click', () => {
+                if (hiddenNodeFacets.has(facet.label)) {
+                    hiddenNodeFacets.delete(facet.label);
+                } else {
+                    hiddenNodeFacets.add(facet.label);
+                }
+                applyVisibilityFilters();
+            });
+
+            return chip;
+        };
+
+        const refreshNodeFilterUI = () => {
+            if (!filterContainer) {
+                return;
+            }
+
+            filterContainer.innerHTML = '';
+            currentNodeFacets.forEach(facet => {
                 const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'display:flex; align-items:center; padding:0px 0px; background:rgba(255,255,255,0.9); transition:all 0.2s;';
-                
+                wrapper.style.cssText = 'display:flex; align-items:center; background:transparent; border-radius:6px;';
+
                 const label = document.createElement('label');
-                label.style.cssText = 'display:flex; align-items:center; padding: 2px 4px; gap:8px; cursor:pointer; flex:1;';
-                
+                label.style.cssText = 'display:flex; align-items:center; padding:0; gap:8px; cursor:pointer; flex:1;';
+
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.checked = true;
+                checkbox.checked = !hiddenNodeFacets.has(facet.label);
                 checkbox.style.cssText = 'width:16px; height:16px; cursor:pointer; accent-color:#3b82f6; border-radius:4px; flex-shrink:0;';
-                
-                const textWrapper = document.createElement('span');
-                textWrapper.style.cssText = 'display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(15,23,42,0.9); font-weight:500;';
-                const groupIcon = nodeTypes[group]?.icon || '🔗';
-                textWrapper.innerHTML = `
-                    <span style="font-size:14px; flex-shrink:0;">${groupIcon}</span>
-                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${group}</span>
-                `;
-                
-                label.appendChild(checkbox);
-                label.appendChild(textWrapper);
-                wrapper.appendChild(label);
-                
-                // Add hover effect
-                wrapper.addEventListener('mouseenter', () => {
-                    wrapper.style.background = 'rgba(249,250,251,1)';
-                    wrapper.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-                    wrapper.style.transform = 'translateY(-1px)';
+                checkbox.dataset.nodeFacet = facet.label;
+
+                const chip = createInteractiveFacetChip(facet, false);
+                chip.style.width = 'calc(100% - 24px)';
+                chip.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 });
-                wrapper.addEventListener('mouseleave', () => {
-                    wrapper.style.background = 'rgba(255,255,255,0.9)';
-                    wrapper.style.boxShadow = 'none';
-                    wrapper.style.transform = 'translateY(0)';
-                });
-                
+
                 checkbox.addEventListener('change', () => {
                     if (checkbox.checked) {
-                        hiddenGroups.delete(group);
+                        hiddenNodeFacets.delete(facet.label);
                     } else {
-                        hiddenGroups.add(group);
+                        hiddenNodeFacets.add(facet.label);
                     }
-                    
-                    // Update visibility
-                    nodeSel.style('display', d => hiddenGroups.has(d.group) ? 'none' : null);
-                    linkSel.style('display', d => {
-                        const source = nodes.find(n => n.id === d.source.id || n.id === d.source);
-                        const target = nodes.find(n => n.id === d.target.id || n.id === d.target);
-                        if (hiddenGroups.has(source?.group) || hiddenGroups.has(target?.group)) {
-                            return 'none';
-                        }
-                        return null;
-                    });
-                    iconSel.style('display', d => {
-                        const source = nodes.find(n => n.id === d.source.id || n.id === d.source);
-                        const target = nodes.find(n => n.id === d.target.id || n.id === d.target);
-                        if (hiddenGroups.has(source?.group) || hiddenGroups.has(target?.group)) {
-                            return 'none';
-                        }
-                        return null;
-                    });
+                    applyVisibilityFilters();
                 });
-                
+
+                label.appendChild(checkbox);
+                label.appendChild(chip);
+                wrapper.appendChild(label);
                 filterContainer.appendChild(wrapper);
+            });
+        };
+
+        const refreshLegendUI = () => {
+            if (!legendContainer) {
+                return;
+            }
+
+            legendContainer.innerHTML = '';
+            currentNodeFacets.forEach(facet => {
+                legendContainer.appendChild(createInteractiveFacetChip(facet, true));
+            });
+        };
+
+        const refreshNodeColors = () => {
+            if (!nodeSel) {
+                return;
+            }
+
+            nodeSel.each(function(d) {
+                const g = d3.select(this);
+                const facet = getCurrentFacetForNode(d);
+                const fillColor = colorForFacet(facet);
+
+                g.select('.glow-ring')
+                    .attr('fill', fillColor);
+                g.selectAll('circle:not(.glow-ring)')
+                    .attr('fill', fillColor);
+                g.select('rect')
+                    .attr('fill', fillColor);
+            });
+        };
+
+        const literalFilterInput = container.querySelector('.literal-text-input');
+        const literalFilterStatus = container.querySelector('.literal-filter-status');
+        const clearLiteralFilterBtn = container.querySelector('.clear-literal-filter');
+        const resolverStatus = container.querySelector('.resolver-status');
+        const resolverPatternInput = container.querySelector('.resolver-pattern-input');
+        const resolverPrefRadios = container.querySelectorAll('.resolver-pref-radio');
+
+        const refreshLiteralFilterUI = () => {
+            if (!literalFilterStatus || !literalFilterInput || !clearLiteralFilterBtn) {
+                return;
+            }
+
+            literalFilterInput.value = literalTextFilter;
+            clearLiteralFilterBtn.disabled = !literalTextFilter;
+            clearLiteralFilterBtn.style.opacity = literalTextFilter ? '1' : '0.6';
+            clearLiteralFilterBtn.style.cursor = literalTextFilter ? 'pointer' : 'default';
+
+            const visibleLiteralCount = nodes.filter(node => node.group === 'literal' && literalNodeMatchesFilter(node) && nodeIsReachableFromVisibleEdges(node.id)).length;
+            const totalLiteralCount = nodes.filter(node => node.group === 'literal' && nodeIsReachableFromSelectedEdges(node.id)).length;
+
+            if (!literalTextFilter) {
+                literalFilterStatus.textContent = totalLiteralCount > 0
+                    ? `Showing all ${totalLiteralCount} literal values in the current graph.`
+                    : 'No literal values are currently visible in the graph.';
+                return;
+            }
+
+            literalFilterStatus.textContent = `Showing ${visibleLiteralCount} of ${totalLiteralCount} literal values matching "${literalTextFilter}".`;
+        };
+        const refreshResolverUI = () => {
+            if (!resolverStatus || !resolverPatternInput || resolverPrefRadios.length === 0) {
+                return;
+            }
+
+            resolverPrefRadios.forEach(radio => {
+                radio.checked = radio.value === resolverPreference;
+            });
+
+            resolverPatternInput.value = customResolverPattern;
+            resolverPatternInput.style.display = resolverPreference === 'other' ? 'block' : 'none';
+
+            if (resolverPreference === 'none') {
+                resolverStatus.textContent = 'IRIs currently open directly.';
+            } else if (resolverPreference === 'uriburner') {
+                resolverStatus.textContent = 'IRIs will open through the built-in Linked Data resolver.';
+            } else if (customResolverPattern && customResolverPattern.includes('{uri}')) {
+                resolverStatus.textContent = `IRIs will open using the custom resolver pattern.`;
+            } else {
+                resolverStatus.textContent = 'Enter a custom pattern containing {uri}.';
+            }
+        };
+
+        const selectAllNodesBtn = container.querySelector('.select-all-nodes');
+        const deselectAllNodesBtn = container.querySelector('.deselect-all-nodes');
+
+        if (selectAllNodesBtn) {
+            selectAllNodesBtn.addEventListener('click', () => {
+                hiddenNodeFacets.clear();
+                applyVisibilityFilters();
+            });
+        }
+
+        if (literalFilterInput) {
+            let literalFilterDebounce = null;
+            literalFilterInput.addEventListener('input', (event) => {
+                const nextValue = event.target.value;
+                window.clearTimeout(literalFilterDebounce);
+                literalFilterDebounce = window.setTimeout(() => {
+                    literalTextFilter = nextValue;
+                    applyVisibilityFilters();
+                }, 150);
+            });
+        }
+
+        if (clearLiteralFilterBtn) {
+            clearLiteralFilterBtn.addEventListener('click', () => {
+                if (!literalTextFilter) {
+                    return;
+                }
+                literalTextFilter = '';
+                if (literalFilterInput) {
+                    literalFilterInput.value = '';
+                }
+                applyVisibilityFilters();
+            });
+        }
+
+        if (resolverPrefRadios.length > 0) {
+            resolverPrefRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    resolverPreference = radio.value;
+                    window.localStorage.setItem(resolverPreferenceKey, resolverPreference);
+                    refreshResolverUI();
+                });
+            });
+        }
+
+        if (resolverPatternInput) {
+            resolverPatternInput.addEventListener('input', (event) => {
+                customResolverPattern = event.target.value.trim();
+                window.localStorage.setItem(resolverPatternKey, customResolverPattern);
+                refreshResolverUI();
+            });
+        }
+
+        if (deselectAllNodesBtn) {
+            deselectAllNodesBtn.addEventListener('click', () => {
+                currentNodeFacets.forEach(facet => {
+                    hiddenNodeFacets.add(facet.label);
+                });
+                applyVisibilityFilters();
             });
         }
         
         // Build predicate filter checkboxes
         const predicateCheckboxesContainer = container.querySelector('.predicate-checkboxes');
         if (predicateCheckboxesContainer) {
-            const hiddenPredicates = new Set();
-            
             // Extract unique predicates from links
             const uniquePredicates = [];
             const predicateMap = new Map();
@@ -1313,7 +2100,7 @@ class Graph_Gen {
                 labelSpan.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (predicate.iri) {
-                        window.open(predicate.iri, "_blank", "noopener");
+                        openGraphUri(predicate.iri);
                     }
                 });
                 
@@ -1323,37 +2110,8 @@ class Graph_Gen {
                     } else {
                         hiddenPredicates.add(predicate.label);
                     }
-                    
-                    // Update visibility based on predicate filtering
-                    linkSel.style('display', d => {
-                        const predicateLabel = d.predicateLabel || d.predicateIri;
-                        if (hiddenPredicates.has(predicateLabel)) {
-                            return 'none';
-                        }
-                        return null;
-                    });
-                    
-                    iconSel.style('display', d => {
-                        const predicateLabel = d.predicateLabel || d.predicateIri;
-                        if (hiddenPredicates.has(predicateLabel)) {
-                            return 'none';
-                        }
-                        return null;
-                    });
-                    
-                    // Also hide nodes that have no visible connections
-                    const visibleNodeIds = new Set();
-                    linkSel.filter(d => {
-                        const predicateLabel = d.predicateLabel || d.predicateIri;
-                        return !hiddenPredicates.has(predicateLabel);
-                    }).each(d => {
-                        const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
-                        const targetId = typeof d.target === 'object' ? d.target.id : d.target;
-                        visibleNodeIds.add(sourceId);
-                        visibleNodeIds.add(targetId);
-                    });
-                    
-                    nodeSel.style('display', d => visibleNodeIds.has(d.id) ? null : 'none');
+
+                    applyVisibilityFilters();
                 });
                 
                 predicateCheckboxesContainer.appendChild(wrapper);
@@ -1370,13 +2128,8 @@ class Graph_Gen {
                         checkbox.checked = true;
                     });
                     
-                    // Reset hidden predicates set
                     hiddenPredicates.clear();
-                    
-                    // Show all elements
-                    linkSel.style('display', null);
-                    iconSel.style('display', null);
-                    nodeSel.style('display', null);
+                    applyVisibilityFilters();
                 });
             }
             
@@ -1390,107 +2143,19 @@ class Graph_Gen {
                     predicateCheckboxes.forEach(checkbox => {
                         hiddenPredicates.add(checkbox.dataset.predicateLabel);
                     });
-                    
-                    // Hide all links and icons
-                    linkSel.style('display', 'none');
-                    iconSel.style('display', 'none');
-                    nodeSel.style('display', 'none');
-                });
-            }
-            
-            // Add toggle functionality for Predicate Filtering section
-            const toggleButton = container.querySelector('.predicate-filter-toggle');
-            const toggleIcon = container.querySelector('.predicate-filter-toggle .toggle-icon');
-            const filterContent = container.querySelector('.predicate-filter-content');
-            
-            if (toggleButton && filterContent) {
-                // Initialize toggle state (collapsed by default)
-                let isExpanded = false;
-                
-                // Get the actual height of content when expanded
-                const getContentHeight = () => {
-                    // Temporarily make visible to measure
-                    const originalMaxHeight = filterContent.style.maxHeight;
-                    const originalVisibility = filterContent.style.visibility;
-                    const originalDisplay = filterContent.style.display;
-                    
-                    filterContent.style.maxHeight = 'none';
-                    filterContent.style.visibility = 'hidden';
-                    filterContent.style.display = 'block';
-                    
-                    const height = filterContent.scrollHeight;
-                    
-                    // Restore original values
-                    filterContent.style.maxHeight = originalMaxHeight;
-                    filterContent.style.visibility = originalVisibility;
-                    filterContent.style.display = originalDisplay;
-                    
-                    return height;
-                };
-                
-                toggleButton.addEventListener('click', () => {
-                    isExpanded = !isExpanded;
-                    
-                    if (isExpanded) {
-                        // Calculate height before expanding
-                        const height = getContentHeight();
-                        
-                        // Expand - Safari needs explicit height
-                        filterContent.style.display = 'block';
-                        filterContent.style.visibility = 'visible';
-                        filterContent.style.maxHeight = height + 'px';
-                        filterContent.style.opacity = '1';
-                        filterContent.style.overflow = 'hidden'; // Keep hidden during transition
-                        toggleIcon.style.transform = 'rotate(0deg)';
-                        
-                        // After transition completes, allow overflow for checkboxes
-                        setTimeout(() => {
-                            if (isExpanded) { // Check if still expanded
-                                filterContent.style.overflow = 'auto';
-                            }
-                        }, 300); // Match transition duration
-                    } else {
-                        // Collapse
-                        filterContent.style.maxHeight = '0px';
-                        filterContent.style.opacity = '0';
-                        filterContent.style.overflow = 'hidden';
-                        toggleIcon.style.transform = 'rotate(-90deg)';
-                        
-                        // Hide completely after transition
-                        setTimeout(() => {
-                            if (!isExpanded) { // Check if still collapsed
-                                filterContent.style.visibility = 'hidden';
-                            }
-                        }, 300); // Match transition duration
-                    }
-                });
-                
-                // Add hover effect to toggle button
-                toggleButton.addEventListener('mouseenter', () => {
-                    toggleButton.style.background = 'rgba(226,232,240,0.5)';
-                });
-                toggleButton.addEventListener('mouseleave', () => {
-                    toggleButton.style.background = 'transparent';
+
+                    applyVisibilityFilters();
                 });
             }
         }
 
-        // Build legend
-        const legendContainer = container.querySelector('.legend-container');
-        if (legendContainer) {
-            allGroups.forEach(group => {
-                const chip = document.createElement('div');
-                chip.className = 'legend-chip';
-                chip.style.cssText = 'display:flex; align-items:center; gap:7px; padding:7px 11px; border:1px solid rgba(226,232,240,0.8); border-radius:7px; background:rgba(255,255,255,0.9); font-size:11px; color:rgba(15,23,42,0.9); font-weight:500;';
-                const groupIcon = nodeTypes[group]?.icon || '🔗';
-                chip.innerHTML = `
-                    <span style="width:11px; height:11px; border-radius:50%; background:${colorForGroup(group)}; box-shadow:0 0 0 2px rgba(255,255,255,0.5);"></span>
-                    <span style="font-size:14px;">${groupIcon}</span>
-                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${group}</span>
-                `;
-                legendContainer.appendChild(chip);
-            });
-        }
+        initializeCollapsibleFilter('.node-filter-toggle', '.node-filter-content', false);
+        initializeCollapsibleFilter('.edge-filter-toggle', '.edge-filter-content', false);
+        initializeCollapsibleFilter('.literal-filter-toggle', '.literal-filter-content', false);
+        initializeCollapsibleFilter('.resolver-filter-toggle', '.resolver-filter-content', false);
+        refreshResolverUI();
+        applyGraphTheme();
+        applyVisibilityFilters();
 
         // Initial zoom with smooth animation (reduced to fit ~90% of graph in viewport)
         svg.call(zoom.transform, d3.zoomIdentity.scale(0.65));
