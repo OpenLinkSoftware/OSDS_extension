@@ -454,15 +454,15 @@ class Graph_Gen {
                             <div class="resolver-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
                                 <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Choose how IRIs open from the graph:</div>
                                 <div class="resolver-options" style="display:flex; flex-direction:column; gap:6px; padding:0 12px 8px;">
-                                    <label class="resolver-option" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                    <label class="resolver-option" data-value="none" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s; background:rgba(255,255,255,0);">
                                         <span style="font-size:12px; color:#1e293b;">None</span>
                                         <input type="radio" name="graph-resolver-preference" value="none" class="resolver-pref-radio" style="accent-color:#6366f1;">
                                     </label>
-                                    <label class="resolver-option" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                    <label class="resolver-option" data-value="uriburner" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s; background:rgba(255,255,255,0);">
                                         <span style="font-size:12px; color:#1e293b;">https://linkeddata.uriburner.com/describe/?url=&#123;uri&#125;</span>
                                         <input type="radio" name="graph-resolver-preference" value="uriburner" class="resolver-pref-radio" style="accent-color:#6366f1;">
                                     </label>
-                                    <label class="resolver-option" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                    <label class="resolver-option" data-value="other" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s; background:rgba(255,255,255,0);">
                                         <span style="font-size:12px; color:#1e293b;">Other</span>
                                         <input type="radio" name="graph-resolver-preference" value="other" class="resolver-pref-radio" style="accent-color:#6366f1;">
                                     </label>
@@ -1913,6 +1913,7 @@ class Graph_Gen {
         const resolverStatus = container.querySelector('.resolver-status');
         const resolverPatternInput = container.querySelector('.resolver-pattern-input');
         const resolverPrefRadios = container.querySelectorAll('.resolver-pref-radio');
+        const resolverOptionLabels = container.querySelectorAll('.resolver-option');
 
         const refreshLiteralFilterUI = () => {
             if (!literalFilterStatus || !literalFilterInput || !clearLiteralFilterBtn) {
@@ -1957,6 +1958,17 @@ class Graph_Gen {
             } else {
                 resolverStatus.textContent = 'Enter a custom pattern containing {uri}.';
             }
+            markResolverSelection();
+        };
+        const markResolverSelection = () => {
+            resolverOptionLabels.forEach(label => {
+                const optionValue = label.dataset.value;
+                const isSelected = optionValue === resolverPreference;
+                label.style.borderColor = isSelected ? '#3b82f6' : '#e2e8f0';
+                label.style.background = isSelected ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0)';
+                label.style.boxShadow = isSelected ? '0 8px 24px rgba(59,130,246,0.25)' : 'none';
+                label.style.fontWeight = isSelected ? '600' : '500';
+            });
         };
 
         const selectAllNodesBtn = container.querySelector('.select-all-nodes');
@@ -1978,6 +1990,14 @@ class Graph_Gen {
                     literalTextFilter = nextValue;
                     applyVisibilityFilters();
                 }, 150);
+            });
+            literalFilterInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    literalTextFilter = event.target.value;
+                    window.clearTimeout(literalFilterDebounce);
+                    applyVisibilityFilters();
+                }
             });
         }
 
