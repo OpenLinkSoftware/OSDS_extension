@@ -422,12 +422,12 @@ class Graph_Gen {
                                 <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Node Filtering</div>
                             </div>
                             <div class="node-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
-                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Select node types to include in graph:</div>
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Use the chips below to include or hide semantic types in the graph. Each chip inherits the color shown in the legend.</div>
                                 <div style="display:flex; gap:8px; margin-bottom:8px; padding:0 12px;">
                                     <button class="select-all-nodes" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Select all node types">Select All</button>
                                     <button class="deselect-all-nodes" style="flex:1; padding:6px 12px; font-size:11px; font-weight:500; background:#f1f5f9; color:#334155; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer; transition:all 0.2s;" title="Deselect all node types">Deselect All</button>
                                 </div>
-                                <div class="filter-container" style="display:grid; grid-template-columns:repeat(1,1fr); gap:6px; max-height:220px; overflow-y:auto; padding:0 12px 12px;"></div>
+                                <div class="filter-container" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; max-height:260px; overflow-y:auto; padding:0 12px 12px;"></div>
                             </div>
                         </div>
                         <!-- Literal Text Filtering -->
@@ -445,13 +445,13 @@ class Graph_Gen {
                                 <div class="literal-filter-status" style="font-size:10px; color:#64748b; padding:0 12px 12px;">No literal text filter applied.</div>
                             </div>
                         </div>
-                        <!-- Literal Text Filtering -->
+                        <!-- Resolver Preference -->
                         <div style="margin-bottom:16px;">
                             <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="resolver-filter-toggle">
                                 <span class="toggle-icon" style="font-size:14px; transition:transform 0.2s; transform:rotate(-90deg);">▶</span>
                                 <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Resolver Preference</div>
                             </div>
-                            <div class="resolver-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
+                        <div class="resolver-filter-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
                                 <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Choose how IRIs open from the graph:</div>
                                 <div class="resolver-options" style="display:flex; flex-direction:column; gap:6px; padding:0 12px 8px;">
                                     <label class="resolver-option" data-value="none" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s; background:rgba(255,255,255,0);">
@@ -473,10 +473,37 @@ class Graph_Gen {
                                 <div class="resolver-status" style="font-size:10px; color:#64748b; padding:0 12px 12px;">IRIs currently open directly.</div>
                             </div>
                         </div>
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-bottom:4px; padding:8px; border-radius:6px; transition:background 0.2s;" class="arrow-style-toggle">
+                                <span class="toggle-icon" style="font-size:14px; transition:transform 0.2s; transform:rotate(-90deg);">▶</span>
+                                <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b;">Arrow Style</div>
+                            </div>
+                            <div class="arrow-style-content" style="max-height:0px; overflow:hidden; border:1px solid #e2e8f0; border-radius:8px; padding:0px; transition:all 0.3s ease; display:block; opacity:0; visibility:hidden; background:rgba(255,255,255,0.98);">
+                                <div style="font-size:11px; color:#64748b; margin-bottom:8px; padding:12px 12px 0;">Choose how to merge reciprocal predicates:</div>
+                                <div class="arrow-style-options" style="padding:0 12px 8px; display:flex; flex-direction:column; gap:6px;">
+                                    <label class="arrow-style-option" data-value="dual" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                        <div>
+                                            <div style="font-size:12px; font-weight:600; color:#1e293b;">Dual arrows</div>
+                                            <div style="font-size:11px; color:#475569;">Render every triple individually.</div>
+                                        </div>
+                                        <input type="radio" name="graph-arrow-style" value="dual" class="arrow-style-radio" style="accent-color:#6366f1;">
+                                    </label>
+                                    <label class="arrow-style-option" data-value="single" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; transition:all 0.15s;">
+                                        <div>
+                                            <div style="font-size:12px; font-weight:600; color:#1e293b;">Single arrow</div>
+                                            <div style="font-size:11px; color:#475569;">Merge mutual predicates into one connector.</div>
+                                        </div>
+                                        <input type="radio" name="graph-arrow-style" value="single" class="arrow-style-radio" style="accent-color:#6366f1;">
+                                    </label>
+                                </div>
+                                <div class="arrow-style-status" style="font-size:10px; color:#64748b; padding:0 12px 12px;">Dual arrows are active.</div>
+                            </div>
+                        </div>
                         <!-- Legend -->
                         <div style="margin-bottom:16px;">
-                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:14px;">Node Colors By Type</div>
-                            <div class="legend-container" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
+                            <div style="font-size:12px; font-weight:600; letter-spacing:0.05em; color:#64748b; margin-bottom:6px;">Node Colors By Type</div>
+                            <div style="font-size:11px; color:#475569; margin-bottom:10px;">Tap a chip to toggle that type (colors stay consistent with the graph).</div>
+                            <div class="legend-container" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px;"></div>
                         </div>
                         <!-- Tips -->
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
@@ -558,12 +585,12 @@ class Graph_Gen {
         const themeStyles = {
             dark: {
                 background: '#081122',
-                link: 'rgba(148,163,184,0.34)',
+                link: 'rgba(148,163,184,0.58)',
                 linkHover: 'rgba(125,211,252,0.95)',
-                arrow: 'rgba(148,163,184,0.68)',
-                nodeLabel: 'rgba(248,250,252,0.98)',
-                nodeLabelHalo: 'rgba(3,7,18,0.96)',
-                literalLabel: 'rgba(236,253,245,0.98)',
+                arrow: 'rgba(148,163,184,0.85)',
+                nodeLabel: '#f1f5f9',
+                nodeLabelHalo: 'rgba(5,10,18,0.98)',
+                literalLabel: '#f4fcff',
                 nodeStroke: 'rgba(226,232,240,0.74)',
                 pinnedStroke: 'rgba(251,113,133,0.95)',
                 literalStroke: 'rgba(226,232,240,0.6)',
@@ -694,16 +721,44 @@ class Graph_Gen {
             connectedNodeIds.add(sourceId);
             connectedNodeIds.add(targetId);
         });
+        const predicateLabelForLink = (link) => link.predicateLabel || link.predicateIri || 'predicate';
+        const linkPairs = new Map();
+        links.forEach(link => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            const predicate = predicateLabelForLink(link);
+            const directKey = `${predicate}|${sourceId}|${targetId}`;
+            const reverseKey = `${predicate}|${targetId}|${sourceId}`;
+            if (linkPairs.has(reverseKey)) {
+                const partner = linkPairs.get(reverseKey);
+                partner.hasMutual = true;
+                partner.hideInSingleMode = false;
+                link.hasMutual = true;
+                link.hideInSingleMode = true;
+                link.pairKey = reverseKey;
+                partner.pairKey = reverseKey;
+            } else {
+                linkPairs.set(directKey, link);
+                link.hasMutual = false;
+                link.hideInSingleMode = false;
+                link.pairKey = directKey;
+            }
+        });
         
         const hiddenNodeFacets = new Set();
         const hiddenPredicates = new Set();
         const effectiveNodeFacetById = new Map();
         let currentNodeFacets = [];
         let literalTextFilter = '';
+        const literalFocusNodeIds = new Set();
+        const literalFocusLinkKeys = new Set();
+        const visibleEdgeKeys = new Set();
         const resolverPreferenceKey = 'osds.graph.resolverPreference';
         const resolverPatternKey = 'osds.graph.resolverPattern';
+        const arrowStyleKey = 'osds.graph.arrowStyle';
         let resolverPreference = window.localStorage.getItem(resolverPreferenceKey) || 'none';
         let customResolverPattern = window.localStorage.getItem(resolverPatternKey) || '';
+        let arrowStyle = window.localStorage.getItem(arrowStyleKey) || 'dual';
 
         const getNodeById = (nodeRef) => {
             const nodeId = typeof nodeRef === 'object' ? nodeRef.id : nodeRef;
@@ -734,6 +789,57 @@ class Graph_Gen {
             window.open(buildResolvedUri(uri), "_blank", "noopener");
         };
 
+        const getLinkEndpoints = (link) => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+            return { sourceId, targetId };
+        };
+
+        const getLinkKey = (link) => {
+            const { sourceId, targetId } = getLinkEndpoints(link);
+            const predicate = link.predicateLabel || link.predicateIri || 'predicate';
+            return link.key || link.pairKey || `${predicate}|${sourceId}|${targetId}`;
+        };
+
+        const recomputeLiteralFocus = () => {
+            literalFocusNodeIds.clear();
+            literalFocusLinkKeys.clear();
+            const filterValue = normalizedLiteralFilter();
+            if (!filterValue) {
+                return;
+            }
+
+            links.forEach(link => {
+                const { sourceId, targetId } = getLinkEndpoints(link);
+                const sourceNode = getNodeById(sourceId);
+                const targetNode = getNodeById(targetId);
+                const sourceMatches = sourceNode?.group === 'literal' && literalNodeMatchesFilter(sourceNode);
+                const targetMatches = targetNode?.group === 'literal' && literalNodeMatchesFilter(targetNode);
+
+                if (sourceMatches || targetMatches) {
+                    literalFocusNodeIds.add(sourceId);
+                    literalFocusNodeIds.add(targetId);
+                    literalFocusLinkKeys.add(getLinkKey(link));
+                }
+            });
+        };
+
+        const isEdgeForcedVisibleByLiteral = (link) => literalFocusLinkKeys.has(getLinkKey(link));
+
+        const recomputeVisibleEdgeKeys = () => {
+            visibleEdgeKeys.clear();
+            const hasLiteralFilter = !!normalizedLiteralFilter();
+            links.forEach(link => {
+                if (arrowStyle === 'single' && link.hideInSingleMode) return;
+                if (hasLiteralFilter && !isEdgeForcedVisibleByLiteral(link)) return;
+                if (isEdgeVisibleBySelection(link)) {
+                    visibleEdgeKeys.add(getLinkKey(link));
+                }
+            });
+        };
+
+        const linkIsVisibleInGraph = (link) => visibleEdgeKeys.has(getLinkKey(link));
+
         const normalizedLiteralFilter = () => literalTextFilter.trim().toLowerCase();
         const literalNodeMatchesFilter = (node) => {
             if (!node || node.group !== 'literal') {
@@ -759,32 +865,16 @@ class Graph_Gen {
         };
 
         const isPredicateVisible = (link) => !hiddenPredicates.has(link.predicateLabel || link.predicateIri);
-        const isEdgeVisibleBySelection = (link) => isPredicateVisible(link);
+        const isEdgeVisibleBySelection = (link) => isPredicateVisible(link) || isEdgeForcedVisibleByLiteral(link);
         const nodeIsReachableFromSelectedEdges = (nodeId) => links.some(link => {
-            if (!isEdgeVisibleBySelection(link)) {
+            if (!linkIsVisibleInGraph(link)) {
                 return false;
             }
             const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
             const targetId = typeof link.target === 'object' ? link.target.id : link.target;
             return sourceId === nodeId || targetId === nodeId;
         });
-        const linkPassesEdgeAndLiteralSelection = (link) => {
-            if (!isEdgeVisibleBySelection(link)) {
-                return false;
-            }
-
-            const source = getNodeById(link.source);
-            const target = getNodeById(link.target);
-            return literalNodeMatchesFilter(source) && literalNodeMatchesFilter(target);
-        };
-        const nodeIsReachableFromVisibleEdges = (nodeId) => links.some(link => {
-            if (!linkPassesEdgeAndLiteralSelection(link)) {
-                return false;
-            }
-            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-            const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-            return sourceId === nodeId || targetId === nodeId;
-        });
+        const nodeIsReachableFromVisibleEdges = nodeIsReachableFromSelectedEdges;
         const getActiveNodeFacet = (node) => {
             if (!node) {
                 return null;
@@ -794,7 +884,7 @@ class Graph_Gen {
             const visibleTypes = [];
 
             links.forEach(link => {
-                if (!isTypePredicate(link) || !isEdgeVisibleBySelection(link)) {
+                if (!isTypePredicate(link) || !linkIsVisibleInGraph(link)) {
                     return;
                 }
 
@@ -836,7 +926,10 @@ class Graph_Gen {
                 return colorForGroup('resource');
             }
             const key = typeof facet === 'string' ? facet : facet.label;
-            return facetPalette[hashString(key) % facetPalette.length];
+            const hue = hashString(key) % 360;
+            const saturation = 60 + (hashString(key + 'sat') % 20); // 60-79
+            const lightness = facet.group === 'literal' ? 55 : 48;
+            return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
         };
 
         const recomputeNodeFacetState = () => {
@@ -890,8 +983,12 @@ class Graph_Gen {
         };
 
         const isNodeVisible = (node) => {
-            if (!literalNodeMatchesFilter(node)) {
+            if (!literalNodeMatchesFilter(node) && !literalFocusNodeIds.has(node.id)) {
                 return false;
+            }
+
+            if (literalFocusNodeIds.has(node.id)) {
+                return true;
             }
 
             return !hiddenNodeFacets.has(getCurrentFacetForNode(node).label);
@@ -899,20 +996,22 @@ class Graph_Gen {
         const isLinkVisible = (link) => {
             const source = getNodeById(link.source);
             const target = getNodeById(link.target);
-            return !!source && !!target && isNodeVisible(source) && isNodeVisible(target) && isEdgeVisibleBySelection(link);
+            return !!source && !!target && isNodeVisible(source) && isNodeVisible(target) && linkIsVisibleInGraph(link);
         };
 
         const applyVisibilityFilters = () => {
+            recomputeLiteralFocus();
+            recomputeVisibleEdgeKeys();
             recomputeNodeFacetState();
             const connectedVisibleNodes = new Set();
 
-            linkSel.each(function(d) {
-                if (isLinkVisible(d)) {
-                    const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
-                    const targetId = typeof d.target === 'object' ? d.target.id : d.target;
-                    connectedVisibleNodes.add(sourceId);
-                    connectedVisibleNodes.add(targetId);
+            links.forEach(link => {
+                if (!linkIsVisibleInGraph(link)) {
+                    return;
                 }
+                const { sourceId, targetId } = getLinkEndpoints(link);
+                connectedVisibleNodes.add(sourceId);
+                connectedVisibleNodes.add(targetId);
             });
 
             nodeSel.style('display', d => {
@@ -923,11 +1022,15 @@ class Graph_Gen {
                 const hasVisibleConnection = connectedVisibleNodes.has(d.id);
                 const isStandalone = !connectedNodeIds.has(d.id);
 
-                return hasVisibleConnection || isStandalone ? null : 'none';
+                if (!hasVisibleConnection && !isStandalone && !literalFocusNodeIds.has(d.id)) {
+                    return 'none';
+                }
+
+                return null;
             });
 
-            linkSel.style('display', d => isLinkVisible(d) ? null : 'none');
-            iconSel.style('display', d => isLinkVisible(d) ? null : 'none');
+            linkSel.style('display', d => linkIsVisibleInGraph(d) ? null : 'none');
+            iconSel.style('display', d => linkIsVisibleInGraph(d) ? null : 'none');
             refreshNodeFilterUI();
             refreshLegendUI();
             refreshLiteralFilterUI();
@@ -2032,6 +2135,36 @@ class Graph_Gen {
             });
         }
 
+        const arrowStyleRadios = container.querySelectorAll('.arrow-style-radio');
+        const arrowStyleOptionLabels = container.querySelectorAll('.arrow-style-option');
+        const arrowStyleStatus = container.querySelector('.arrow-style-status');
+        const refreshArrowStyleUI = () => {
+            arrowStyleRadios.forEach(radio => {
+                radio.checked = radio.value === arrowStyle;
+            });
+            arrowStyleOptionLabels.forEach(label => {
+                const isSelected = label.dataset.value === arrowStyle;
+                label.style.borderColor = isSelected ? '#3b82f6' : '#e2e8f0';
+                label.style.background = isSelected ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0)';
+                label.style.boxShadow = isSelected ? '0 8px 24px rgba(59,130,246,0.25)' : 'none';
+            });
+            if (arrowStyleStatus) {
+                arrowStyleStatus.textContent = arrowStyle === 'single'
+                    ? 'Mutual predicates are merged into one connector.'
+                    : 'Dual arrows are active.';
+            }
+        };
+        if (arrowStyleRadios.length > 0) {
+            arrowStyleRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    arrowStyle = radio.value;
+                    window.localStorage.setItem(arrowStyleKey, arrowStyle);
+                    refreshArrowStyleUI();
+                    applyVisibilityFilters();
+                });
+            });
+        }
+
         if (deselectAllNodesBtn) {
             deselectAllNodesBtn.addEventListener('click', () => {
                 currentNodeFacets.forEach(facet => {
@@ -2174,6 +2307,7 @@ class Graph_Gen {
         initializeCollapsibleFilter('.literal-filter-toggle', '.literal-filter-content', false);
         initializeCollapsibleFilter('.resolver-filter-toggle', '.resolver-filter-content', false);
         refreshResolverUI();
+        refreshArrowStyleUI();
         applyGraphTheme();
         applyVisibilityFilters();
 
