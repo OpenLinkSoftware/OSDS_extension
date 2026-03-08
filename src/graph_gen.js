@@ -329,6 +329,12 @@ class Graph_Gen {
                     <div style="font-size:11px; color:#64748b;">Nodes: ${fullGraph.nodes.length} | Edges: ${fullGraph.links.length}</div>
                 </div>
                 <div class="graph-controls" style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:8px;">
+                    <button class="graph-sparql-btn" data-graph-id="${graphId}" style="padding:8px; background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:#475569; transition:all 0.2s; backdrop-filter:blur(8px);" title="SPARQL CONSTRUCT of current selection">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 6h16M4 10h16M4 14h8M4 18h8"/>
+                            <path d="M16 16l2 2-2 2M20 16l-2 2 2 2"/>
+                        </svg>
+                    </button>
                     <button class="graph-fullscreen-btn" data-graph-id="${graphId}" style="padding:8px; background:rgba(255,255,255,0.95); border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; font-size:12px; font-weight:500; color:#475569; transition:all 0.2s; backdrop-filter:blur(8px);" title="Fullscreen">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
@@ -809,6 +815,7 @@ class Graph_Gen {
                 return;
             }
 
+            // Phase 1: direct focus — IRI nodes immediately connected to matching literals
             links.forEach(link => {
                 const { sourceId, targetId } = getLinkEndpoints(link);
                 const sourceNode = getNodeById(sourceId);
@@ -822,6 +829,31 @@ class Graph_Gen {
                     literalFocusLinkKeys.add(getLinkKey(link));
                 }
             });
+
+            // Phase 2: backward-only BFS — expand to IRI nodes that POINT TO already-focused
+            // IRI nodes (parent/container nodes in the RDF hierarchy).
+            // Finds FAQ pages containing focused questions, questions having focused answers, etc.
+            // Does NOT expand forward (children/siblings), so hub nodes like schema:Article
+            // do not pull in the entire connected graph.
+            // Terminates naturally at root nodes (nothing points to them).
+            let frontier = new Set(
+                [...literalFocusNodeIds].filter(id => getNodeById(id)?.group !== 'literal')
+            );
+            while (frontier.size > 0) {
+                const next = new Set();
+                links.forEach(link => {
+                    const { sourceId, targetId } = getLinkEndpoints(link);
+                    const sourceNode = getNodeById(sourceId);
+                    const targetNode = getNodeById(targetId);
+                    if (sourceNode?.group === 'literal' || targetNode?.group === 'literal') return;
+                    // Backward only: source points TO a focused target → add source
+                    if (frontier.has(targetId) && !literalFocusNodeIds.has(sourceId)) {
+                        literalFocusNodeIds.add(sourceId);
+                        next.add(sourceId);
+                    }
+                });
+                frontier = next;
+            }
         };
 
         const isEdgeForcedVisibleByLiteral = (link) => literalFocusLinkKeys.has(getLinkKey(link));
@@ -831,7 +863,16 @@ class Graph_Gen {
             const hasLiteralFilter = !!normalizedLiteralFilter();
             links.forEach(link => {
                 if (arrowStyle === 'single' && link.hideInSingleMode) return;
-                if (hasLiteralFilter && !isEdgeForcedVisibleByLiteral(link)) return;
+                if (hasLiteralFilter) {
+                    const { sourceId, targetId } = getLinkEndpoints(link);
+                    const sourceNode = getNodeById(sourceId);
+                    const targetNode = getNodeById(targetId);
+                    const bothFocusedIri = sourceNode?.group !== 'literal'
+                        && targetNode?.group !== 'literal'
+                        && literalFocusNodeIds.has(sourceId)
+                        && literalFocusNodeIds.has(targetId);
+                    if (!isEdgeForcedVisibleByLiteral(link) && !bothFocusedIri) return;
+                }
                 if (isEdgeVisibleBySelection(link)) {
                     visibleEdgeKeys.add(getLinkKey(link));
                 }
@@ -1005,32 +1046,47 @@ class Graph_Gen {
             recomputeNodeFacetState();
             const connectedVisibleNodes = new Set();
 
+            // Build connected set from edges where the source node passes the facet filter.
+            // Both endpoints are added so that target nodes (e.g. class nodes like schema:FAQPage)
+            // remain visible even when their own facet is not in the selected set.
             links.forEach(link => {
                 if (!linkIsVisibleInGraph(link)) {
                     return;
                 }
                 const { sourceId, targetId } = getLinkEndpoints(link);
-                connectedVisibleNodes.add(sourceId);
-                connectedVisibleNodes.add(targetId);
+                const source = getNodeById(sourceId);
+                if (source && isNodeVisible(source)) {
+                    connectedVisibleNodes.add(sourceId);
+                    connectedVisibleNodes.add(targetId);
+                }
             });
 
             nodeSel.style('display', d => {
-                if (!isNodeVisible(d)) {
-                    return 'none';
-                }
-
+                const nodeVisible = isNodeVisible(d);
                 const hasVisibleConnection = connectedVisibleNodes.has(d.id);
                 const isStandalone = !connectedNodeIds.has(d.id);
 
-                if (!hasVisibleConnection && !isStandalone && !literalFocusNodeIds.has(d.id)) {
+                // Hide if not visible by facet AND not reachable from a visible-facet source
+                if (!nodeVisible && !hasVisibleConnection) {
+                    return 'none';
+                }
+                // Visible-by-facet nodes still need a connection (or be standalone)
+                if (nodeVisible && !hasVisibleConnection && !isStandalone && !literalFocusNodeIds.has(d.id)) {
                     return 'none';
                 }
 
                 return null;
             });
 
-            linkSel.style('display', d => linkIsVisibleInGraph(d) ? null : 'none');
-            iconSel.style('display', d => linkIsVisibleInGraph(d) ? null : 'none');
+            // Hide an edge if its source node is hidden by the facet filter.
+            // Targets (e.g. class nodes) are allowed to be invisible by facet —
+            // they render because they are reachable from a visible source.
+            const isLinkVisibleForDisplay = (link) => {
+                const source = getNodeById(link.source);
+                return !!source && isNodeVisible(source) && linkIsVisibleInGraph(link);
+            };
+            linkSel.style('display', d => isLinkVisibleForDisplay(d) ? null : 'none');
+            iconSel.style('display', d => isLinkVisibleForDisplay(d) ? null : 'none');
             refreshNodeFilterUI();
             refreshLegendUI();
             refreshLiteralFilterUI();
@@ -1636,13 +1692,121 @@ class Graph_Gen {
             });
         }
 
+        // SPARQL CONSTRUCT panel
+        const sparqlBtn = container.querySelector('.graph-sparql-btn');
+        if (sparqlBtn) {
+            const buildSparqlConstruct = () => {
+                const visibleLinks = links.filter(link => {
+                    const source = getNodeById(link.source);
+                    return !!source && isNodeVisible(source) && linkIsVisibleInGraph(link);
+                });
+                if (visibleLinks.length === 0) return null;
+
+                const usedPrefixes = new Map();
+                const iriTerm = (iri) => {
+                    if (!iri) return null;
+                    if (!this.namespaceMap) this.initNamespaces();
+                    for (const [nsUri, prefix] of this.namespaceMap) {
+                        if (iri.startsWith(nsUri)) {
+                            const local = iri.slice(nsUri.length);
+                            if (/^[a-zA-Z_][a-zA-Z0-9_\-]*$/.test(local)) {
+                                usedPrefixes.set(prefix, nsUri);
+                                return `${prefix}:${local}`;
+                            }
+                        }
+                    }
+                    return `<${iri}>`;
+                };
+                const literalTerm = (value) => {
+                    const v = String(value);
+                    const escaped = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+                    return `"${escaped}"`;
+                };
+
+                const tripleLines = visibleLinks.map(link => {
+                    const { sourceId, targetId } = getLinkEndpoints(link);
+                    const sourceNode = getNodeById(sourceId);
+                    const targetNode = getNodeById(targetId);
+                    const s = iriTerm(sourceNode?.iri || sourceId);
+                    const p = iriTerm(link.predicateIri);
+                    const o = targetNode?.group === 'literal'
+                        ? literalTerm(targetNode.id)
+                        : iriTerm(targetNode?.iri || targetId);
+                    if (!s || !p || !o) return null;
+                    return `  ${s} ${p} ${o} .`;
+                }).filter(Boolean);
+
+                if (tripleLines.length === 0) return null;
+
+                const prefixLines = Array.from(usedPrefixes.entries())
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([prefix, uri]) => `PREFIX ${prefix}: <${uri}>`);
+
+                const parts = [];
+                if (prefixLines.length > 0) { parts.push(...prefixLines); parts.push(''); }
+                parts.push('CONSTRUCT {'); parts.push(...tripleLines); parts.push('}');
+                parts.push('WHERE {'); parts.push(...tripleLines); parts.push('}');
+                return parts.join('\n');
+            };
+
+            sparqlBtn.addEventListener('click', () => {
+                // Remove any existing SPARQL modal
+                const existing = container.querySelector('.graph-sparql-modal');
+                if (existing) { existing.remove(); return; }
+
+                const query = buildSparqlConstruct();
+                const theme = getThemeStyle();
+                const modal = document.createElement('div');
+                modal.className = 'graph-sparql-modal';
+                modal.style.cssText = `position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:50; width:min(560px,90%); max-height:80%; display:flex; flex-direction:column; background:${theme.labelBadgeFill}; border:1px solid ${theme.labelBadgeStroke}; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden;`;
+
+                const header = document.createElement('div');
+                header.style.cssText = `display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid ${theme.labelBadgeStroke}; flex-shrink:0;`;
+                header.innerHTML = `<span style="font-size:13px; font-weight:600; color:${theme.labelBadgeText};">SPARQL CONSTRUCT — current selection</span>`;
+
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = '✕';
+                closeBtn.style.cssText = `background:none; border:none; cursor:pointer; font-size:14px; color:${theme.iconText}; padding:2px 6px; border-radius:4px;`;
+                closeBtn.addEventListener('click', () => modal.remove());
+                header.appendChild(closeBtn);
+
+                const body = document.createElement('div');
+                body.style.cssText = 'padding:12px 16px; overflow:auto; flex:1;';
+
+                const queryText = query || '# No visible triples match the current selection.';
+                const textarea = document.createElement('textarea');
+                textarea.readOnly = true;
+                textarea.value = queryText;
+                textarea.style.cssText = `width:100%; min-height:240px; font-family:monospace; font-size:12px; line-height:1.5; background:${theme.background}; color:${theme.labelBadgeText}; border:1px solid ${theme.labelBadgeStroke}; border-radius:6px; padding:10px; resize:vertical; box-sizing:border-box; outline:none;`;
+                body.appendChild(textarea);
+
+                const footer = document.createElement('div');
+                footer.style.cssText = `display:flex; justify-content:flex-end; gap:8px; padding:10px 16px; border-top:1px solid ${theme.labelBadgeStroke}; flex-shrink:0;`;
+                const copyBtn = document.createElement('button');
+                copyBtn.textContent = 'Copy';
+                copyBtn.style.cssText = `padding:6px 14px; background:#3b82f6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;`;
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(queryText).then(() => {
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+                    }).catch(() => { textarea.select(); document.execCommand('copy'); });
+                });
+                footer.appendChild(copyBtn);
+
+                modal.appendChild(header);
+                modal.appendChild(body);
+                modal.appendChild(footer);
+                container.appendChild(modal);
+            });
+        }
+
         // Settings panel
         const settingsBtn = container.querySelector('.graph-settings-btn');
         const settingsPanel = container.querySelector('.graph-settings-panel');
         const settingsCloseBtn = container.querySelector('.settings-close-btn');
-        
+
         // Add hover effects to all control buttons
-        const allControlBtns = container.querySelectorAll('.graph-fullscreen-btn, .graph-center-btn, .graph-theme-btn, .graph-settings-btn');
+        const allControlBtns = container.querySelectorAll('.graph-sparql-btn, .graph-fullscreen-btn, .graph-center-btn, .graph-theme-btn, .graph-settings-btn');
         allControlBtns.forEach(btn => {
             btn.addEventListener('mouseenter', () => {
                 btn.style.background = getThemeStyle().controlHoverBackground;
