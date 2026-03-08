@@ -124,7 +124,7 @@ Browser.api.runtime.onMessage.addListener(async function(request, sender, sendRe
     else if (request.cmd === "gpt_page_content" && request.tabId)  { // request from popup panel
       const chat = new ChatService();
       await chat.load_settings();
-      chat.askChatGPT_page_content({pageUrl:request.url},{id:request.tabId}); 
+      await chat.askChatGPT_page_content({pageUrl:request.url},{id:request.tabId});
     }
   } catch(e) {
     console.log("OSDS: onMsg="+e);

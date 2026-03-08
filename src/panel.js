@@ -167,11 +167,9 @@ function showPopup(tabId)
   if (doc_URL)
     g_RestCons.load(doc_URL);
 
-  DOM.iSel("chat_btn").onclick = async (e) => {
-    const curTabs = await getCurTab();
-    if (curTabs.length > 0) {
-      Browser.api.runtime.sendMessage({ cmd: 'gpt_page_content', tabId: curTabs[0].id, url: curTabs[0].url });
-      close();
+  DOM.iSel("chat_btn").onclick = (e) => {
+    if (g_tabId) {
+      Browser.api.runtime.sendMessage({ cmd: 'gpt_page_content', tabId: g_tabId, url: doc_URL });
     }
   }
 
