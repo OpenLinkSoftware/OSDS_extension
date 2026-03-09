@@ -925,7 +925,10 @@ class Graph_Gen {
             const visibleTypes = [];
 
             links.forEach(link => {
-                if (!isTypePredicate(link) || !linkIsVisibleInGraph(link)) {
+                // Use isPredicateVisible (not linkIsVisibleInGraph) so that node colors
+                // are stable across literal filter changes — the type of a node is intrinsic
+                // and should only change when the user explicitly hides the rdf:type predicate.
+                if (!isTypePredicate(link) || !isPredicateVisible(link)) {
                     return;
                 }
 
