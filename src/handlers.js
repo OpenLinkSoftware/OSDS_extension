@@ -198,6 +198,40 @@ class Handle_Microdata {
 }
 
 
+// Fix @base IRIs ending with '#': N3.js _basePath strips the fragment so <LocalName>
+// resolves via path-merge giving wrong result (e.g. base "skills#" + <Skill> → "main/Skill").
+// We preprocess the Turtle text and expand relative bare-name IRIs to absolute form.
+function _preprocessHashBase(text) {
+  // Match @base declarations whose IRI ends with '#'
+  const basePattern = /@base\s+<([^>]+#)>\s*\.?/g;
+  const segments = [];
+  let match;
+  while ((match = basePattern.exec(text)) !== null) {
+    segments.push({ matchStart: match.index, matchEnd: match.index + match[0].length, base: match[1] });
+  }
+  if (segments.length === 0) return text;
+
+  let result = '';
+  let pos = 0;
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    const nextMatchStart = (i + 1 < segments.length) ? segments[i + 1].matchStart : text.length;
+    // Keep text up to end of @base declaration unchanged
+    result += text.slice(pos, seg.matchEnd);
+    // Expand relative <LocalName> IRIs in the text governed by this base
+    const segText = text.slice(seg.matchEnd, nextMatchStart);
+    result += segText.replace(/<([^>]*)>/g, (m, iri) => {
+      if (!iri) return m;                                 // empty IRI <> — leave as-is
+      if (/^[/?#]/.test(iri)) return m;                  // starts with /, ?, # — leave as-is
+      if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(iri)) return m; // already absolute — leave as-is
+      return `<${seg.base}${iri}>`;                       // concatenate base + localname
+    });
+    pos = nextMatchStart;
+  }
+  return result;
+}
+
+
 class Handle_Turtle {
   constructor(start_id, mode, for_query, bnode_types, skip_docpref) 
   {
@@ -305,6 +339,8 @@ class Handle_Turtle {
 
         if (self.ns_pref!==null)
           ttl_data = self.ns_pref + ttl_data;
+
+        ttl_data = _preprocessHashBase(ttl_data);
 
         parser.parse(ttl_data,
           function (error, tr, prefixes) {
@@ -559,6 +595,7 @@ class Handle_JSONLD {
   async parse(textData, docURL, bnode_types)
   {
     var output = [];
+    var allNquads = [];
 
     for(var i=0; i < textData.length; i++)
     {
@@ -589,25 +626,44 @@ class Handle_JSONLD {
           var expanded = await jsonld.expand(jsonld_data, {base:_base});
           var nquads = await jsonld.toRDF(expanded, {base:_base, format: 'application/nquads', includeRelativeUrls: true});
 
-          var handler = new Handle_Quads(this.start_id, this._mode, false, bnode_types);
-          handler.skip_error = false;
-          var ret = await handler.parse([nquads], _base);
-          if (ret.errors.length > 0) {
-            this.skipped_error = this.skipped_error.concat(ret.errors);
+          if (this._mode === 'html_graph') {
+            // Collect nquads for unified graph rendering after the loop
+            allNquads.push(nquads);
           } else {
-            output = output.concat(ret.data);
-            this.start_id = handler.start_id;
+            var handler = new Handle_Quads(this.start_id, this._mode, false, bnode_types);
+            handler.skip_error = false;
+            var ret = await handler.parse([nquads], _base);
+            if (ret.errors.length > 0) {
+              this.skipped_error = this.skipped_error.concat(ret.errors);
+            } else {
+              output = output.concat(ret.data);
+              this.start_id = handler.start_id;
+            }
           }
         }
       } catch (ex) {
         if (textData[i].replace(/\s/g, '').length > 1) {
           if (this.skip_error)
             this.skipped_error.push(""+ex.toString());
-          else 
+          else
             throw ex;
         }
       }
     }
+
+    // For graph mode, combine all blocks into one N-Quads string and render a single graph
+    if (this._mode === 'html_graph' && allNquads.length > 0) {
+      var handler = new Handle_Quads(this.start_id, this._mode, false, bnode_types);
+      handler.skip_error = false;
+      var ret = await handler.parse([allNquads.join('\n')], docURL);
+      if (ret.errors.length > 0) {
+        this.skipped_error = this.skipped_error.concat(ret.errors);
+      } else {
+        output = output.concat(ret.data);
+        this.start_id = handler.start_id;
+      }
+    }
+
     return {data:output, errors: this.skipped_error};
   }
 
