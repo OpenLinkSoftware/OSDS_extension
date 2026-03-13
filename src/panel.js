@@ -170,6 +170,8 @@ function showPopup(tabId)
   DOM.iSel("chat_btn").onclick = (e) => {
     if (g_tabId) {
       Browser.api.runtime.sendMessage({ cmd: 'gpt_page_content', tabId: g_tabId, url: doc_URL });
+    } else {
+      alert('Error: No active tab found.\nPlease close and reopen the extension panel.');
     }
   }
 

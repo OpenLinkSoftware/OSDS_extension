@@ -454,6 +454,12 @@
     }
   }
 
+  // Register handlers synchronously (required by Chrome MV3 — listeners must be
+  // registered at the top-level of the service worker, not inside async callbacks).
+  // Separately, eagerly reload settings from chrome.storage.local so that
+  // handle_json/csv/xml reflect the user's saved choices from the first request
+  // after each service worker restart (the in-memory wStore is lost on restart).
   init_handlers();
+  reload_settings();
 
 })();

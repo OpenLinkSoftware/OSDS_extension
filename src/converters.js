@@ -1293,7 +1293,12 @@ class Convert_JSON {
         obj_type = `${xsd}#double`;
       }
     } else if (typeof o === 'string') {
-      b.push(`${subj} ${pred} ${this.str2obj_val(o)} .`);
+      if (/^https?:\/\/\S+$/.test(o)) {
+        b.push(`${subj} ${pred} <${o}> .`);
+        obj_type = `${xsd}#anyURI`;
+      } else {
+        b.push(`${subj} ${pred} ${this.str2obj_val(o)} .`);
+      }
     } else if (typeof o === 'boolean') {
       b.push(`${subj} ${pred} "${o}"^^<${xsd}#boolean> .`);
       obj_type = `${xsd}#boolean`;

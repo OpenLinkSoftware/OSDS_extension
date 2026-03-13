@@ -76,6 +76,8 @@ class ChatService {
     } catch(e) {
       console.log(e);
       this.prompt_id = null;
+      alert('Error: Could not read LLM service settings.\nPlease check the extension settings.');
+      return;
     }
     await this.loadState();
   }
@@ -159,8 +161,9 @@ class ChatService {
   async openChatWin()
   {
     if (this.prompt_id && this.prompt_url) {
-      // Open GPT window
       Browser.createTab(this.prompt_url);
+    } else {
+      alert('Error: LLM service URL not configured.\nPlease set "Chat Service" in the extension settings.');
     }
   }
 
@@ -184,52 +187,30 @@ class ChatService {
       self.openChatWin();
     }
 
-    async function handle_resp(resp)
-    {
-      if (Browser.api.runtime.lastError) {
-        new_llm_win();
-        return;
-      }
-
-      if (resp && resp.ping === 1 && resp.chat_id === self.prompt_id) {
-
-        // GPT window opened
-        if (!self.prompt_in_new_window && resp.winId && resp.tabId) {
-          self.activateChatWin({windowId:resp.winId, id:resp.tabId}, ask);
-        }
-        else {
-          self.waited_ask = ask;
-          await self.saveState();
-          self.openChatWin();
-        }
-      }
-      else {
-        self.waited_ask = ask;
-        await self.saveState();
-        self.openChatWin();
-      }
-    }
-  
     if (this.tab && this.tab.id) {
-      if (Browser.is_ff || Browser.is_chrome_v3) {
+      try {
+        // Use tabs.get() to check tab existence — no content-script round-trip needed.
+        // Also verify the tab is still on the expected LLM service origin so we don't
+        // accidentally reuse a tab that has been navigated elsewhere.
+        const existingTab = await Browser.api.tabs.get(this.tab.id);
+        let sameOrigin = false;
         try {
-          const resp = await Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_ping"});
-          handle_resp(resp);
-        } catch(ex) {
-          console.log(ex);
-          new_llm_win();
+          sameOrigin = self.prompt_url && existingTab.url &&
+                       new URL(existingTab.url).origin === new URL(self.prompt_url).origin;
+        } catch(_) {}
+
+        if (!self.prompt_in_new_window && sameOrigin) {
+          self.activateChatWin({windowId: existingTab.windowId, id: existingTab.id}, ask);
+        } else {
+          await new_llm_win();
         }
-      }
-      else {
-        try {
-          Browser.api.tabs.sendMessage(this.tab.id, {cmd:"gpt_ping"}, handle_resp);
-        } catch(ex) {
-          console.log(ex);
-        }
+      } catch(ex) {
+        // Tab no longer exists
+        await new_llm_win();
       }
     }
     else {
-      new_llm_win();
+      await new_llm_win();
     }
   }
 
@@ -272,9 +253,11 @@ class ChatService {
 
     async function handle_resp(resp)
     {
-      if (Browser.api.runtime.lastError)
+      if (Browser.api.runtime.lastError) {
+        // Content script unreachable; open LLM tab without page content
+        self.askChatGPT({text:'', url:info.pageUrl}, tab, 'content');
         return;
-      // content received send it to ChatService
+      }
       if (resp && resp.page_content) {
         if (resp.dom && resp.dom===1 && resp.frames>0) {
           page_text = resp.page_content;
@@ -282,7 +265,10 @@ class ChatService {
         }
         else
           self.askChatGPT({text:resp.page_content, url:info.pageUrl}, tab, 'content');
-
+      }
+      else {
+        // No content available (restricted page etc.); open LLM tab with just the URL
+        self.askChatGPT({text:'', url:info.pageUrl}, tab, 'content');
       }
     }
 
@@ -292,6 +278,8 @@ class ChatService {
         .then(resp => { handle_resp(resp)})
         .catch(err => {
           console.log(err);
+          // Content script unavailable (e.g. chrome:// page); open LLM tab without page content
+          self.askChatGPT({text:'', url:info.pageUrl}, tab, 'content');
         });
     else
       Browser.api.tabs.sendMessage(tab.id, {cmd:"page_content"}, handle_resp);
