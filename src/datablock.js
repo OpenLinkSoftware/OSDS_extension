@@ -797,7 +797,7 @@ class Microdata_Block extends DataBlock_Prepare {
     var data = JSON.parse(this.text[0]);
     var handler = new Handle_Microdata('ttl');
     var rc = await handler.parse(data, this.baseURL);
-    return {ttl: [rc.data], error: rc.errors};
+    return {ttl: rc.data, error: rc.errors};
   }
 
 

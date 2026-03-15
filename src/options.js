@@ -403,6 +403,9 @@ async function loadPref()
 
     changeHandleAll();
 
+    const idp_rec = await Browser.api.storage.local.get('oidc_last_idp');
+    DOM.iSel('oidc-idp-url').value = idp_rec['oidc_last_idp'] || 'https://linkeddata.uriburner.com';
+
     var sparql_ep = await gPref.getValue("upload_sparql_endpoint");
     DOM.iSel('upload_sparql_endpoint').value = sparql_ep;
 
@@ -713,6 +716,9 @@ async function savePref()
    var import_srv = DOM.qSel('#import-srv option:checked').id;
    await gPref.setValue("ext.osds.import.srv", import_srv);
    await gPref.setValue("ext.osds.import.url", DOM.iSel('import-url').value.trim());
+
+   const idp_val = DOM.iSel('oidc-idp-url').value.trim() || 'https://linkeddata.uriburner.com';
+   await Browser.api.storage.local.set({'oidc_last_idp': idp_val});
 
    await gPref.setValue("upload_sparql_endpoint", DOM.iSel('upload_sparql_endpoint').value.trim());
    await gPref.setValue("upload_sparql_timeout", DOM.iSel('upload_sparql_timeout').value.trim());

@@ -86,12 +86,23 @@ class OidcWeb {
 
   async logout()
   {
+    await this.localStore_remove('oidc_saved_tokens');
+    await this.localStore_remove('oidc_code');
     const session = this.authClient.getDefaultSession();
     if (session && session.info && session.info.isLoggedIn) {
-      await this.localStore_remove('oidc_saved_tokens');
-      await this.localStore_remove('oidc_code');
       await this.authClient.logout();
     }
+  }
+
+  async saveLastIdp(url)
+  {
+    await this.localStore_save('oidc_last_idp', url);
+  }
+
+  async loadLastIdp()
+  {
+    const stored = await this.localStore_get('oidc_last_idp');
+    return stored || 'https://linkeddata.uriburner.com';
   }
 
   login(idp_url, autologin) 

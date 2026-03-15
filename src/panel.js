@@ -90,26 +90,29 @@ function showPopup(tabId)
     g_RestCons.show();
   }
 
-  gOidc.restoreConn().then(rc => {
+  gOidc.restoreConn().then(async rc => {
     Download_exec_update_state();
-  })
+  });
 
-  Download_exec_update_state();
+  Browser.api.runtime.onMessage.addListener(async function(request) {
+    if (request.cmd === 'store_updated' && request.key === 'oidc_code') {
+      await gOidc.restoreConn();
+      Download_exec_update_state();
+    }
+  });
 
   async function click_login() {
     if (gOidc.getWebId()) {
       await gOidc.logout();
       Download_exec_update_state();
     } else {
+      const idp = await gOidc.loadLastIdp();
       Browser.api.runtime.sendMessage({ cmd: 'reset_uploads' });
-      gOidc.login();
+      gOidc.login(idp, true);
     }
   }
 
-  DOM.iSel('oidc-login-btn').onclick = (e) => { click_login() }
-  DOM.iSel('oidc-login-btn1').onclick = (e) => { click_login() }
-
-  DOM.iSel("login_btn").onclick = (e) => { Login_exec() }
+  DOM.iSel("login_btn").onclick = (e) => { click_login() }
   DOM.iSel("slink_btn").onclick = (e) => { SuperLinks_exec() }
   DOM.iSel("import_btn").onclick = (e) => { Import_doc() }
   DOM.iSel("rww_btn").onclick = (e) => { Rww_exec(); }
@@ -229,7 +232,6 @@ async function loadPopup()
   $("#save-confirm").hide();
   $("#alert-dlg").hide();
   $("#query_place").hide();
-  $("#login-dlg").hide();
 
   hideDataTabs();
   selectTab('posh');
@@ -998,24 +1000,6 @@ function Prefs_exec()
   return false;
 }
 
-function Login_exec()
-{
-  Download_exec_update_state();
-
-  var dlg = $("#login-dlg").dialog({
-    resizable: true,
-    width: 500,
-    height: 200,
-    modal: true,
-    buttons: {
-      "OK": function () {
-        $(this).dialog("destroy");
-      }
-    }
-  });
-
-  return false;
-}
 
 
 
@@ -1023,17 +1007,6 @@ async function Download_exec_update_state(pod)
 {
   try {
     const webid = gOidc.getWebId();
-    const webid_href = DOM.iSel('oidc-webid');
-    const webid1_href = DOM.iSel('oidc-webid1');
-
-    webid1_href.href = webid_href.href = webid ? webid : '';
-    webid1_href.title = webid_href.title = webid ? webid : '';
-    webid1_href.style.display = webid_href.style.display = webid ? 'initial' : 'none';
-
-    const oidc_login_btn = DOM.iSel('oidc-login-btn');
-    const oidc_login_btn1 = DOM.iSel('oidc-login-btn1');
-    oidc_login_btn1.innerText = oidc_login_btn.innerText = webid ? 'Logout' : 'Login';
-
     const login_tab = DOM.iSel('login_btn');
     if (webid) {
       login_tab.title = "Logged as " + webid;
@@ -1052,15 +1025,12 @@ async function Download_exec_update_state(pod)
     $('#save-file').hide();
 
   if (cmd === 'fileupload') {
-    $('#login-fmt-item').show();
     $('#oidc-upload').show();
   }
   else if (cmd === 'sparqlupload') {
-    $('#login-fmt-item').show();
     $('#oidc-upload').hide();
   }
   else {
-    $('#login-fmt-item').hide();
     $('#oidc-upload').hide();
   }
 
