@@ -30,15 +30,8 @@ class Convert_Turtle{
 
   async prepare_query(ttlData, baseURL)
   {
+    // it is required for clear and polish query data
     var self = this;
-
-    // Non-TTL blocks (JSON-LD, RDFa, etc.) with for_query=true already return
-    // structured {pref, ttl, triples, prefixes} objects from TTL_Gen.load().
-    // Only re-parse raw TTL text strings through N3.js.
-    if (Array.isArray(ttlData) && ttlData.length > 0 && typeof ttlData[0] === 'object') {
-      return ttlData;
-    }
-
     var handler = new Handle_Turtle(0, 'ttl', true);
     handler.skip_error = false;
     var ret = await handler.parse(ttlData, baseURL);
