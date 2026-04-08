@@ -8348,7 +8348,7 @@ function _escapeVal(value) {
   return value;
 }
 function _escapeIri(value) {
-  if (test_uri.test(value)) return encodeURI(value);else return _escapeVal(value).replaceAll(' ', '%20').replaceAll(',', '%2C');
+  if (test_uri.test(value)) return value.replace(/%(?![0-9A-Fa-f]{2})|[ <>"{}|\\^`]/g, c => encodeURIComponent(c));else return _escapeVal(value).replaceAll(' ', '%20').replaceAll(',', '%2C');
 }
 
 /***/ }),

@@ -786,7 +786,9 @@ class Graph_Gen {
                 return uri;
             }
 
-            return pattern.replaceAll('{uri}', encodeURIComponent(uri));
+            let normalizedUri;
+            try { normalizedUri = decodeURIComponent(uri); } catch(e) { normalizedUri = uri; }
+            return pattern.replaceAll('{uri}', encodeURIComponent(normalizedUri));
         };
         const openGraphUri = (uri) => {
             if (!uri) {
