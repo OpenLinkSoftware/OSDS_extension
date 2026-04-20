@@ -452,6 +452,11 @@ Nano.llm_chats = {
                        code:'pre code',
                        url: ['https://aistudio.google.com/app/prompts']
                      }, 
+             google: { menu:'select#code_type option:checked', 
+                       sel: [{ parentNode:4 }],
+                       code:'pre code',
+                       url: ['https://www.google.com/search']
+                     }, 
 
            }
 

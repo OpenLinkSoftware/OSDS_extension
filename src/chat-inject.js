@@ -640,6 +640,22 @@
     }
   }
 
+  function scan_code_google()
+  {
+    let lst = document.querySelectorAll('pre > code');
+    for(const v of lst)
+    {
+      const blk = v.parentNode.parentNode.parentNode;
+      const child = blk?.firstChild;
+      if (child) {
+        const dd_el = blk.querySelector('#code_type');
+        if (dd_el)
+          continue;
+        child.insertAdjacentHTML('beforeend', dropDown_claude);
+      }
+    }
+  }
+  
   
   var gMutationObserver = new MutationObserver(debounce((v) => {
       if (g_top) {
@@ -794,6 +810,11 @@
         g_top = document.querySelector('body');
         setInterval(scan_code_aistudio, 3*1000);
       }
+      else if (g_chat_id === 'ch_google') {
+        scan_code_google();
+        g_top = document.querySelector('body');
+        setInterval(scan_code_google, 3*1000);
+      }
 
       if (g_top && use_mutation_observer) {
         gMutationObserver.observe(g_top, {childList:true, subtree:true, characterData: false });
@@ -892,8 +913,8 @@
       return 'ch_diffy';
     else if (location.href.startsWith('https://aistudio.google.com/app/prompts'))
       return 'ch_aistudio';
-
-    
+    else if (location.href.startsWith('https://www.google.com/search'))
+      return 'ch_google';
     else
      return null;
   }
